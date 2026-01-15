@@ -45,18 +45,18 @@ function renderFileList() {
     }
 }
 
-// --- PARÁMETROS (AJUSTADOS PARA RECUPERAR EL CONTRASTE OSCURO) ---
+// --- PARÁMETROS ---
 const params = {
     bgColor: 0x000000, floorColor: 0x998133, maskOpacity: 1.0,
     camFOV: 45, camPos: { x: 0, y: 0, z: 90 }, camRot: { x: 0, y: 0, z: -0.2 },
     
-    // LUCES: Bajamos intensidad para evitar el "efecto lavado"
-    lightInt: 600,      // Antes 900. Bajado para más contraste.
+    // LUCES (Ajustadas para contraste)
+    lightInt: 600, 
     lightColor: 0xffffff, 
     lightSpeed: 0.5, 
     
-    // ENTORNO: ESTA ES LA CLAVE DEL COLOR METÁLICO
-    envInt: 0.4,   // Antes 1.0. Bajado drásticamente para que el 1K no queme el metal.
+    // ENTORNO
+    envInt: 0.4,   
     envRot: 0.2,   
     
     // MATERIALES
@@ -87,11 +87,17 @@ scene.background = new THREE.Color(params.bgColor);
 const camera = new THREE.PerspectiveCamera(params.camFOV, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(params.camPos.x, params.camPos.y, params.camPos.z); 
 camera.rotation.set(params.camRot.x, params.camRot.y, params.camRot.z);
+
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+// --- OPTIMIZACIÓN RENDIMIENTO MÓVIL ---
+// Si es móvil, bajamos la calidad de renderizado para que vaya FLUIDO
+const pixelRatio = window.devicePixelRatio;
+renderer.setPixelRatio(Math.min(pixelRatio, window.innerWidth < 768 ? 1.5 : 2)); 
+
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0; // Exposición estándar
+renderer.toneMappingExposure = 1.0; 
 document.body.appendChild(renderer.domElement);
 
 // --- MATERIALES BASE ---
@@ -126,7 +132,7 @@ light1.position.set(20, 20, 20); scene.add(light1);
 const light2 = new THREE.PointLight(params.lightColor, params.lightInt);
 light2.position.set(-20, -10, 20); scene.add(light2);
 
-// --- CARGA DE ENTORNO LOCAL (studio_v2.exr) ---
+// --- CARGA DE ENTORNO LOCAL ---
 new EXRLoader().load('studio_v2.exr', (texture) => {
     texture.mapping = THREE.EquirectangularReflectionMapping;
     texture.offset.x = params.envRot;
@@ -229,11 +235,12 @@ loader.load('diamante.glb', (gltf) => {
     aboutGroup.add(diamond); diamondBase = diamond;
 });
 
-// INTERACTION
+// --- INTERACTIVIDAD TÁCTIL (CORREGIDA) ---
 let isDragging = false;
 let previousMousePosition = { x: 0, y: 0 };
 const interactionZone = document.getElementById('custom-section');
 
+// Eventos de ratón (PC)
 window.addEventListener('mousedown', (e) => { 
     if (e.target.closest('.config-dot')) return;
     if(finalRingGroup.visible) { isDragging = true; interactionZone.classList.add('grabbing'); previousMousePosition = { x: e.clientX, y: e.clientY }; }
@@ -248,20 +255,31 @@ window.addEventListener('mousemove', (e) => {
         previousMousePosition = { x: e.clientX, y: e.clientY };
     }
 });
-window.addEventListener('touchstart', (e) => { 
+
+// Eventos Táctiles (MOVIL)
+// Usamos el contenedor especifico para bloquear scroll SOLO AHI
+interactionZone.addEventListener('touchstart', (e) => { 
     if (e.target.closest('.config-dot')) return;
-    if(finalRingGroup.visible) { isDragging = true; previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }
-});
+    if(finalRingGroup.visible) { 
+        isDragging = true; 
+        previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }; 
+    }
+}, { passive: false });
+
 window.addEventListener('touchend', () => isDragging = false);
-window.addEventListener('touchmove', (e) => {
+
+interactionZone.addEventListener('touchmove', (e) => {
     if (isDragging && finalRingGroup.visible && finalRingModel) {
+        // ESTO BLOQUEA EL SCROLL MIENTRAS ROTAS
+        e.preventDefault(); 
+        
         const deltaX = e.touches[0].clientX - previousMousePosition.x;
         const deltaY = e.touches[0].clientY - previousMousePosition.y;
         finalRingModel.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), deltaX * 0.005);
         finalRingModel.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), deltaY * 0.005);
         previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     }
-});
+}, { passive: false }); // 'passive: false' es vital para que funcione el bloqueo
 
 function setVisibility(element, opacity, blur, clickable = false) {
     if(!element) return;
@@ -282,6 +300,7 @@ window.addEventListener('scroll', () => {
         homeGroup.position.y = 0; aboutGroup.position.y = -60; contactGroup.position.y = -200; 
         finalRingGroup.visible = false; homeGroup.visible = true; if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
         setVisibility(aboutSection, 0, 20); setVisibility(customSection, 0, 0); setVisibility(contactSection, 0, 30);
+        if(contactSection) contactSection.classList.remove('active'); // OCULTAR FORMULARIO
         if(diamondMat) diamondMat.opacity = 1; if(diamondBase) diamondBase.visible = true; 
     } else if (scrollPercent > 0.10 && scrollPercent <= 0.25) {
         const p = (scrollPercent - 0.10) / 0.15; homeGroup.position.y = p * 80; aboutGroup.position.y = -60 + (p * 60); 
@@ -304,6 +323,7 @@ window.addEventListener('scroll', () => {
         if(diamondMat) diamondMat.opacity = 0; if(diamondBase) diamondBase.visible = false; homeGroup.visible = false; 
         if(customSection) customSection.style.opacity = 1; if(interactionZone) interactionZone.classList.add('interactive');
         setVisibility(contactSection, 0, 30); contactGroup.position.y = -200;
+        if(contactSection) contactSection.classList.remove('active'); // ASEGURAR QUE FORM ESTA OCULTO
         const pCustom = (scrollPercent - 0.60) / 0.20; 
         if(pCustom <= 1.0) {
             const step = 1 / 3; if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
@@ -324,6 +344,7 @@ window.addEventListener('scroll', () => {
         if(customSection) customSection.style.opacity = 1 - pForm; 
         if(finalRingModel) { finalRingModel.traverse(c => { if(c.isMesh) c.material.opacity = 1 - pForm; }); }
         const blurVal = 30 - (pForm * 30); setVisibility(contactSection, pForm, blurVal, true); contactGroup.position.y = -200 + (pForm * 200); 
+        if(pForm > 0.5 && contactSection) contactSection.classList.add('active'); // MOSTRAR FORM
     }
 });
 
