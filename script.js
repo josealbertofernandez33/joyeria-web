@@ -47,14 +47,20 @@ function renderFileList() {
     }
 }
 
-// --- PARÁMETROS ---
+// --- PARÁMETROS GENERALES ---
 const params = {
     bgColor: 0x000000, floorColor: 0x998133, maskOpacity: 1.0,
     camFOV: 45, camPos: { x: 0, y: 0, z: 90 }, camRot: { x: 0, y: 0, z: -0.2 },
-    lightInt: 900, lightColor: 0xffffff, lightSpeed: 0.5, envInt: 1.0, envRot: 0.2,
+    lightInt: 900, lightColor: 0xffffff, lightSpeed: 0.5, 
+    envInt: 2.0, // Intensidad del HDRI (Ajustado para studio_02)
+    envRot: 0.2,
+    
+    // Parametros base para el cristal (Home)
     cryFlat: false, cryTrans: 1.0, cryOp: 1.0, cryIOR: 2.463, cryThick: 0.41, 
     cryDisp: 0.8, crySpec: 4.105, cryClear: 0.0, cryEnv: 1.5, cryAttDist: 6.74, 
     cryAttColor: 0xededed, cryColor: 0xffffff, metalColor: 0xffffff, metalRough: 0.086, metalMetal: 1.0,
+    
+    // Animacion
     floatYBase: 1.5, floatSpeed: 0.8, floatAmp: 0.15,
     diaScale: 0.7, diaPosX: 0.0, diaPosY: 0.0, diaPosZ: 4.8,       
     diaRotX: 0.0, diaRotY: 1.6, diaRotZ: 0.911061, diaAnimSpeed: 0.208, 
@@ -83,33 +89,54 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 document.body.appendChild(renderer.domElement);
 
-// --- MATERIALES BASE (SECCIONES 1 y 2) ---
+// --- MATERIALES BASE (Home / About) ---
 const crystalMat = new THREE.MeshPhysicalMaterial({ color: params.cryColor, transmission: params.cryTrans, opacity: params.cryOp, metalness: 0.0, roughness: 0.0, ior: params.cryIOR, thickness: params.cryThick, dispersion: params.cryDisp, envMapIntensity: params.cryEnv, specularIntensity: params.crySpec, clearcoat: params.cryClear, side: THREE.DoubleSide, flatShading: params.cryFlat, attenuationColor: new THREE.Color(params.cryAttColor), attenuationDistance: params.cryAttDist });
 const diamondMat = new THREE.MeshPhysicalMaterial({ color: params.d_Tint, transmission: params.d_Trans, opacity: 1.0, metalness: 0.0, roughness: 0.0, ior: params.d_IOR, thickness: params.d_Thick, dispersion: params.d_Disp, envMapIntensity: params.d_Env, specularIntensity: params.d_Spec, side: THREE.DoubleSide, flatShading: false, attenuationColor: new THREE.Color(params.d_AbsColor), attenuationDistance: params.d_AbsDist, transparent: true });
 const silverMat = new THREE.MeshPhysicalMaterial({ color: params.metalColor, metalness: params.metalMetal, roughness: params.metalRough, envMapIntensity: 1.0 });
 
-// --- MATERIALES CONFIGURADOR (BLOQUE 3) - MEJORADOS ---
-function createGemMaterial(colorHex, attColorHex) {
+// =====================================================================
+// --- MATERIALES DEL CONFIGURADOR (BLOQUE 3) - MEJORADOS
+// =====================================================================
+
+// Función para crear gemas transparentes con color profundo
+function createGemMaterial(colorHex, attColorHex, iorVal) {
     return new THREE.MeshPhysicalMaterial({ 
-        color: colorHex, transmission: params.cryTrans, opacity: params.cryOp, 
-        metalness: 0.0, roughness: 0.0, ior: params.cryIOR, thickness: params.cryThick, 
-        dispersion: params.cryDisp, envMapIntensity: params.cryEnv, specularIntensity: params.crySpec,
-        clearcoat: params.cryClear, side: THREE.DoubleSide, 
-        attenuationColor: new THREE.Color(attColorHex), attenuationDistance: params.cryAttDist 
+        color: colorHex, 
+        transmission: 0.98, // Muy transparente (cristal)
+        opacity: 1.0, 
+        metalness: 0.0, 
+        roughness: 0.0, 
+        ior: iorVal, // Indice de refraccion real
+        thickness: 2.5, // Grosor para calcular absorcion
+        dispersion: 0.6, // Destellos de colores
+        envMapIntensity: 2.0, 
+        specularIntensity: 1.0,
+        clearcoat: 1.0,
+        side: THREE.DoubleSide, 
+        attenuationColor: new THREE.Color(attColorHex), 
+        attenuationDistance: 5.0 // Distancia corta para color intenso
     });
 }
 
-const emeraldMat = createGemMaterial(0x00ff00, 0x004400); 
-const rubyMat = createGemMaterial(0xff0000, 0x440000);    
-const sapphireMat = createGemMaterial(0x0000ff, 0x000044); 
-const diamondStoneMat = createGemMaterial(0xffffff, 0xffffff); 
+const emeraldMat = createGemMaterial(0x00ff00, 0x003300, 1.57); // Verde profundo
+const rubyMat = createGemMaterial(0xff0000, 0x440000, 1.76);    // Rojo sangre
+const sapphireMat = createGemMaterial(0x0000ff, 0x000044, 1.76); // Azul profundo
+const diamondStoneMat = createGemMaterial(0xffffff, 0xffffff, 2.42); // Blanco brillante
 
+// Oro 18K (Tono cálido realista)
 const goldMat = new THREE.MeshPhysicalMaterial({ 
-    color: 0xFFC96F, metalness: 1.0, roughness: 0.1, envMapIntensity: 2.0, clearcoat: 0.5, clearcoatRoughness: 0.1 
+    color: 0xFFC96F, 
+    metalness: 1.0, 
+    roughness: 0.1, 
+    envMapIntensity: 2.5, 
+    clearcoat: 0.8, 
+    clearcoatRoughness: 0.1 
 });
 
+// Mapas para cambio rápido
 const stoneOptions = { 'diamond': diamondStoneMat, 'ruby': rubyMat, 'sapphire': sapphireMat, 'emerald': emeraldMat };
 const metalOptions = { 'silver': silverMat, 'gold': goldMat };
+// =====================================================================
 
 // --- LUCES ---
 const light1 = new THREE.PointLight(params.lightColor, params.lightInt);
@@ -117,18 +144,21 @@ light1.position.set(20, 20, 20); scene.add(light1);
 const light2 = new THREE.PointLight(params.lightColor, params.lightInt);
 light2.position.set(-20, -10, 20); scene.add(light2);
 
-// FOCO SUPERIOR EXTRA (SOLO PARA DAR BRILLO AL ANILLO DE FOTOS)
-const light3 = new THREE.SpotLight(0xffffff, 1500);
-light3.position.set(0, 40, 0); 
-light3.angle = Math.PI / 4;
+// FOCO SUPERIOR EXTRA (Para resaltar el anillo Custom)
+const light3 = new THREE.SpotLight(0xffffff, 2500); // Alta intensidad
+light3.position.set(0, 50, 0); // Justo encima
+light3.angle = 0.5;
 light3.penumbra = 0.5;
+light3.decay = 2;
+light3.distance = 100;
 scene.add(light3);
 
-// --- CARGA DE ENTORNO (FIX: USANDO CDN OPTIMIZADO) ---
-new EXRLoader().load('https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/1k/studio_small_09_1k.exr', (texture) => {
+// --- CARGA DE ENTORNO (HDRI Studio Small 02 - Enlace Directo Optimizado) ---
+new EXRLoader().load('https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/1k/studio_small_02_1k.exr', (texture) => {
     texture.mapping = THREE.EquirectangularReflectionMapping;
     texture.offset.x = params.envRot;
-    scene.environment = texture; scene.environmentIntensity = params.envInt;
+    scene.environment = texture; 
+    scene.environmentIntensity = params.envInt;
 });
 
 const homeGroup = new THREE.Group(); scene.add(homeGroup);
@@ -158,7 +188,7 @@ loader.load('Alianza.glb', (gltf) => {
     ringContainer.add(ring); ring.rotation.set(1.17, 0, -0.03); 
 });
 
-// CUSTOM RING (CONFIGURATOR)
+// CUSTOM RING (CONFIGURADOR)
 let finalRingModel = null;
 loader.load('anillofotos.glb', (gltf) => {
     finalRingModel = gltf.scene;
@@ -170,6 +200,7 @@ loader.load('anillofotos.glb', (gltf) => {
         if(c.isMesh) { 
             c.material.transparent = true; c.material.opacity = 0; 
             
+            // Asignación inicial de materiales
             if(c.material.name.includes('Material.003')) {
                 c.userData.isMainStone = true; 
                 c.material = emeraldMat.clone();
@@ -180,7 +211,7 @@ loader.load('anillofotos.glb', (gltf) => {
                 c.userData.isMetal = true; 
                 c.material = silverMat.clone();
             }
-            c.material.transparent = true; 
+            c.material.transparent = true; // Asegurar transparencia para fade in
         }
     });
     
@@ -189,7 +220,7 @@ loader.load('anillofotos.glb', (gltf) => {
     finalRingGroup.add(finalRingModel);
 });
 
-// LOGICA CAMBIO MATERIAL
+// LOGICA CAMBIO MATERIAL (CONSOLA CONFIGURADOR)
 window.updateRingConfig = function(type, value) {
     if(!finalRingModel) return;
     
@@ -210,7 +241,7 @@ window.updateRingConfig = function(type, value) {
                 const currentOp = c.material.opacity; 
                 c.material = newMat.clone();
                 c.material.transparent = true; 
-                c.material.opacity = currentOp;
+                c.material.opacity = currentOp; // Mantener visibilidad actual
             }
         }
     });
