@@ -50,21 +50,17 @@ const params = {
     bgColor: 0x000000, floorColor: 0x998133, maskOpacity: 1.0,
     camFOV: 45, camPos: { x: 0, y: 0, z: 90 }, camRot: { x: 0, y: 0, z: -0.2 },
     
-    // LUCES (Ajustadas para contraste)
     lightInt: 600, 
     lightColor: 0xffffff, 
     lightSpeed: 0.5, 
     
-    // ENTORNO
     envInt: 0.4,   
     envRot: 0.2,   
     
-    // MATERIALES
     cryFlat: false, cryTrans: 1.0, cryOp: 1.0, cryIOR: 2.463, cryThick: 0.41, 
     cryDisp: 0.8, crySpec: 4.105, cryClear: 0.0, cryEnv: 1.5, cryAttDist: 6.74, 
     cryAttColor: 0xededed, cryColor: 0xffffff, metalColor: 0xffffff, metalRough: 0.086, metalMetal: 1.0,
     
-    // ANIMACIÓN
     floatYBase: 1.5, floatSpeed: 0.8, floatAmp: 0.15,
     diaScale: 0.7, diaPosX: 0.0, diaPosY: 0.0, diaPosZ: 4.8,       
     diaRotX: 0.0, diaRotY: 1.6, diaRotZ: 0.911061, diaAnimSpeed: 0.208, 
@@ -91,10 +87,10 @@ camera.rotation.set(params.camRot.x, params.camRot.y, params.camRot.z);
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 
-// --- MEJORA VISUAL: NITIDEZ EN MÓVIL ---
-// Antes estaba en 1.0 (borroso). Ahora permitimos hasta 2.0 incluso en móvil.
-// Compensaremos el rendimiento quitando el espejo real en móviles.
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0)); 
+// --- CALIDAD ORIGINAL RESTAURADA ---
+// Usamos la densidad de píxeles nativa del dispositivo (hasta 2x)
+// Esto asegura nitidez máxima en móviles Retina/alta definición.
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); 
 
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0; 
@@ -205,36 +201,23 @@ loader.load('piedras.glb', (gltf) => {
     stonesClone.position.set(0, 0, -15); stonesClone.scale.set(0.8, 0.8, 0.8); stonesClone.rotation.set(0.5, 0.5, 0); contactGroup.add(stonesClone);
 });
 
-// --- OPTIMIZACIÓN ESTRATÉGICA DEL SUELO ---
+// --- LÓGICA DEL SUELO (MODIFICADA) ---
 const isMobile = window.innerWidth < 768;
-let floorMesh;
 
-if (isMobile) {
-    // MOVIL: SUELO "FALSO" PERO ELEGANTE (No consume recursos)
-    // Usamos un plano negro satinado que refleja la luz del HDRI, pero no los objetos.
-    const floorGeo = new THREE.PlaneGeometry(800, 800);
-    const floorMat = new THREE.MeshStandardMaterial({
-        color: params.floorColor,
-        roughness: 0.2, // Un poco de brillo
-        metalness: 0.6,
-        envMapIntensity: 1.0 // Usa el HDRI para que se vea integrado
-    });
-    floorMesh = new THREE.Mesh(floorGeo, floorMat);
-    floorMesh.rotation.x = -Math.PI/2;
-    floorMesh.position.y = -7;
-    homeGroup.add(floorMesh);
-} else {
-    // PC: SUELO "ESPEJO REAL" (Consume mucho, pero se ve increíble)
+if (!isMobile) {
+    // SOLO EN PC: SUELO "ESPEJO REAL"
     const groundMirror = new Reflector(new THREE.PlaneGeometry(800, 800), { clipBias: 0.003, textureWidth: window.innerWidth*window.devicePixelRatio, textureHeight: window.innerHeight*window.devicePixelRatio, color: params.floorColor });
     groundMirror.rotation.x = -Math.PI/2; groundMirror.position.y = -7; 
     homeGroup.add(groundMirror);
-}
 
-const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 1024; const ctx = canvas.getContext('2d');
-const grad = ctx.createRadialGradient(512, 512, 0, 512, 512, 512); grad.addColorStop(0, 'rgba(0,0,0,0)'); grad.addColorStop(0.12, 'rgba(0,0,0,1)'); 
-ctx.fillStyle = grad; ctx.fillRect(0, 0, 1024, 1024); 
-const maskPlane = new THREE.Mesh(new THREE.PlaneGeometry(800, 800), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, opacity: params.maskOpacity }));
-maskPlane.rotation.x = -Math.PI/2; maskPlane.position.y = -6.99; homeGroup.add(maskPlane);
+    // Máscara del espejo (solo necesaria si hay espejo)
+    const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 1024; const ctx = canvas.getContext('2d');
+    const grad = ctx.createRadialGradient(512, 512, 0, 512, 512, 512); grad.addColorStop(0, 'rgba(0,0,0,0)'); grad.addColorStop(0.12, 'rgba(0,0,0,1)'); 
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, 1024, 1024); 
+    const maskPlane = new THREE.Mesh(new THREE.PlaneGeometry(800, 800), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, opacity: params.maskOpacity }));
+    maskPlane.rotation.x = -Math.PI/2; maskPlane.position.y = -6.99; homeGroup.add(maskPlane);
+}
+// EN MÓVIL: NO SE AÑADE NADA. Esto elimina el "halo dorado".
 
 let diamondBase = null;
 loader.load('diamante.glb', (gltf) => {
@@ -246,7 +229,6 @@ loader.load('diamante.glb', (gltf) => {
     aboutGroup.add(diamond); diamondBase = diamond;
 });
 
-// --- INTERACTIVIDAD TÁCTIL ---
 let isDragging = false;
 let previousMousePosition = { x: 0, y: 0 };
 const interactionZone = document.getElementById('custom-section');
@@ -374,7 +356,6 @@ window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    // Recalcular pixel ratio al cambiar tamaño (por si gira el movil)
-    const isMobile = window.innerWidth < 768;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.0 : 2.0)); // Si sigue lento, baja el 2.0 a 1.5 aquí
+    // MANTENER CALIDAD ALTA SIEMPRE AL REDIMENSIONAR
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });
