@@ -50,21 +50,17 @@ const params = {
     bgColor: 0x000000, floorColor: 0x998133, maskOpacity: 1.0,
     camFOV: 45, camPos: { x: 0, y: 0, z: 90 }, camRot: { x: 0, y: 0, z: -0.2 },
     
-    // LUCES (Ajustadas para contraste)
     lightInt: 600, 
     lightColor: 0xffffff, 
     lightSpeed: 0.5, 
     
-    // ENTORNO
     envInt: 0.4,   
     envRot: 0.2,   
     
-    // MATERIALES
     cryFlat: false, cryTrans: 1.0, cryOp: 1.0, cryIOR: 2.463, cryThick: 0.41, 
     cryDisp: 0.8, crySpec: 4.105, cryClear: 0.0, cryEnv: 1.5, cryAttDist: 6.74, 
     cryAttColor: 0xededed, cryColor: 0xffffff, metalColor: 0xffffff, metalRough: 0.086, metalMetal: 1.0,
     
-    // ANIMACIÓN
     floatYBase: 1.5, floatSpeed: 0.8, floatAmp: 0.15,
     diaScale: 0.7, diaPosX: 0.0, diaPosY: 0.0, diaPosZ: 4.8,       
     diaRotX: 0.0, diaRotY: 1.6, diaRotZ: 0.911061, diaAnimSpeed: 0.208, 
@@ -91,21 +87,19 @@ camera.rotation.set(params.camRot.x, params.camRot.y, params.camRot.z);
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 
-// --- OPTIMIZACIÓN RENDIMIENTO MÓVIL ---
-// Si es móvil, bajamos la calidad de renderizado para que vaya FLUIDO
-const pixelRatio = window.devicePixelRatio;
-renderer.setPixelRatio(Math.min(pixelRatio, window.innerWidth < 768 ? 1.5 : 2)); 
+// --- CORRECCIÓN RENDIMIENTO MOVIL ---
+// Forzamos resolucion 1.0 en móviles. La diferencia visual es mínima, el rendimiento es x4.
+const isMobile = window.innerWidth < 768;
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.0 : 2.0));
 
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0; 
 document.body.appendChild(renderer.domElement);
 
-// --- MATERIALES BASE ---
 const crystalMat = new THREE.MeshPhysicalMaterial({ color: params.cryColor, transmission: params.cryTrans, opacity: params.cryOp, metalness: 0.0, roughness: 0.0, ior: params.cryIOR, thickness: params.cryThick, dispersion: params.cryDisp, envMapIntensity: params.cryEnv, specularIntensity: params.crySpec, clearcoat: params.cryClear, side: THREE.DoubleSide, flatShading: params.cryFlat, attenuationColor: new THREE.Color(params.cryAttColor), attenuationDistance: params.cryAttDist });
 const diamondMat = new THREE.MeshPhysicalMaterial({ color: params.d_Tint, transmission: params.d_Trans, opacity: 1.0, metalness: 0.0, roughness: 0.0, ior: params.d_IOR, thickness: params.d_Thick, dispersion: params.d_Disp, envMapIntensity: params.d_Env, specularIntensity: params.d_Spec, side: THREE.DoubleSide, flatShading: false, attenuationColor: new THREE.Color(params.d_AbsColor), attenuationDistance: params.d_AbsDist, transparent: true });
 const silverMat = new THREE.MeshPhysicalMaterial({ color: params.metalColor, metalness: params.metalMetal, roughness: params.metalRough, envMapIntensity: 1.0 });
 
-// --- MATERIALES CONFIGURADOR ---
 function createGemMaterial(colorHex, attColorHex, iorVal) {
     return new THREE.MeshPhysicalMaterial({ 
         color: colorHex, transmission: 0.98, opacity: 1.0, metalness: 0.0, roughness: 0.0, 
@@ -119,20 +113,15 @@ const rubyMat = createGemMaterial(0xff0000, 0x440000, 1.76);
 const sapphireMat = createGemMaterial(0x0000ff, 0x000044, 1.76); 
 const diamondStoneMat = createGemMaterial(0xffffff, 0xffffff, 2.42); 
 
-const goldMat = new THREE.MeshPhysicalMaterial({ 
-    color: 0xFFC96F, metalness: 1.0, roughness: 0.1, envMapIntensity: 2.5, clearcoat: 0.8, clearcoatRoughness: 0.1 
-});
-
+const goldMat = new THREE.MeshPhysicalMaterial({ color: 0xFFC96F, metalness: 1.0, roughness: 0.1, envMapIntensity: 2.5, clearcoat: 0.8, clearcoatRoughness: 0.1 });
 const stoneOptions = { 'diamond': diamondStoneMat, 'ruby': rubyMat, 'sapphire': sapphireMat, 'emerald': emeraldMat };
 const metalOptions = { 'silver': silverMat, 'gold': goldMat };
 
-// --- LUCES ---
 const light1 = new THREE.PointLight(params.lightColor, params.lightInt);
 light1.position.set(20, 20, 20); scene.add(light1);
 const light2 = new THREE.PointLight(params.lightColor, params.lightInt);
 light2.position.set(-20, -10, 20); scene.add(light2);
 
-// --- CARGA DE ENTORNO LOCAL ---
 new EXRLoader().load('studio_v2.exr', (texture) => {
     texture.mapping = THREE.EquirectangularReflectionMapping;
     texture.offset.x = params.envRot;
@@ -157,7 +146,6 @@ const loader = new GLTFLoader();
 const individualStones = []; 
 const contactStones = [];    
 
-// HOME RING
 loader.load('Alianza.glb', (gltf) => {
     const ring = gltf.scene;
     const box = new THREE.Box3().setFromObject(ring);
@@ -167,14 +155,12 @@ loader.load('Alianza.glb', (gltf) => {
     ringContainer.add(ring); ring.rotation.set(1.17, 0, -0.03); 
 });
 
-// CUSTOM RING
 let finalRingModel = null;
 loader.load('anillofotos.glb', (gltf) => {
     finalRingModel = gltf.scene;
     const box = new THREE.Box3().setFromObject(finalRingModel);
     const center = box.getCenter(new THREE.Vector3());
     finalRingModel.position.sub(center);
-    
     finalRingModel.traverse(c => { 
         if(c.isMesh) { 
             c.material.transparent = true; c.material.opacity = 0; 
@@ -189,7 +175,6 @@ loader.load('anillofotos.glb', (gltf) => {
     finalRingGroup.add(finalRingModel);
 });
 
-// CHANGE MATERIALS
 window.updateRingConfig = function(type, value) {
     if(!finalRingModel) return;
     let newMat;
@@ -235,7 +220,7 @@ loader.load('diamante.glb', (gltf) => {
     aboutGroup.add(diamond); diamondBase = diamond;
 });
 
-// --- INTERACTIVIDAD TÁCTIL (CORREGIDA) ---
+// --- INTERACTIVIDAD TÁCTIL MEJORADA ---
 let isDragging = false;
 let previousMousePosition = { x: 0, y: 0 };
 const interactionZone = document.getElementById('custom-section');
@@ -256,10 +241,22 @@ window.addEventListener('mousemove', (e) => {
     }
 });
 
-// Eventos Táctiles (MOVIL)
-// Usamos el contenedor especifico para bloquear scroll SOLO AHI
+// EVENTOS TÁCTILES INTELIGENTES (MOVIL)
 interactionZone.addEventListener('touchstart', (e) => { 
     if (e.target.closest('.config-dot')) return;
+    
+    // ZONAS DE SEGURIDAD PARA SCROLL
+    const touchX = e.touches[0].clientX;
+    const width = window.innerWidth;
+    const margin = width * 0.15; // 15% a cada lado para hacer scroll
+
+    // Si toca los bordes, NO es interacción 3D, dejamos que el navegador haga scroll
+    if (touchX < margin || touchX > width - margin) {
+        isDragging = false;
+        return; 
+    }
+
+    // Si toca el centro y el anillo es visible, atrapamos el evento
     if(finalRingGroup.visible) { 
         isDragging = true; 
         previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }; 
@@ -270,7 +267,7 @@ window.addEventListener('touchend', () => isDragging = false);
 
 interactionZone.addEventListener('touchmove', (e) => {
     if (isDragging && finalRingGroup.visible && finalRingModel) {
-        // ESTO BLOQUEA EL SCROLL MIENTRAS ROTAS
+        // BLOQUEAR SCROLL SOLO SI ESTAMOS ARRASTRANDO EL ANILLO
         e.preventDefault(); 
         
         const deltaX = e.touches[0].clientX - previousMousePosition.x;
@@ -279,7 +276,7 @@ interactionZone.addEventListener('touchmove', (e) => {
         finalRingModel.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), deltaY * 0.005);
         previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     }
-}, { passive: false }); // 'passive: false' es vital para que funcione el bloqueo
+}, { passive: false }); // 'passive: false' permite usar preventDefault()
 
 function setVisibility(element, opacity, blur, clickable = false) {
     if(!element) return;
@@ -295,12 +292,20 @@ resetLayer(layer1, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); resetLay
 
 window.addEventListener('scroll', () => {
     const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+    
+    // GESTIÓN DE POINTER EVENTS DEL ANILLO (Para no bloquear scroll fuera de su zona)
+    if (scrollPercent > 0.60 && scrollPercent < 0.92) {
+        if(customSection) customSection.classList.add('active-interaction');
+    } else {
+        if(customSection) customSection.classList.remove('active-interaction');
+    }
+
     if (scrollPercent <= 0.10) {
         const p = scrollPercent / 0.10; camera.position.z = params.camPos.z - (p * 10); ringContainer.rotation.y = 0.2 + (p * 0.3);
         homeGroup.position.y = 0; aboutGroup.position.y = -60; contactGroup.position.y = -200; 
         finalRingGroup.visible = false; homeGroup.visible = true; if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
         setVisibility(aboutSection, 0, 20); setVisibility(customSection, 0, 0); setVisibility(contactSection, 0, 30);
-        if(contactSection) contactSection.classList.remove('active'); // OCULTAR FORMULARIO
+        if(contactSection) contactSection.classList.remove('active'); 
         if(diamondMat) diamondMat.opacity = 1; if(diamondBase) diamondBase.visible = true; 
     } else if (scrollPercent > 0.10 && scrollPercent <= 0.25) {
         const p = (scrollPercent - 0.10) / 0.15; homeGroup.position.y = p * 80; aboutGroup.position.y = -60 + (p * 60); 
@@ -323,7 +328,7 @@ window.addEventListener('scroll', () => {
         if(diamondMat) diamondMat.opacity = 0; if(diamondBase) diamondBase.visible = false; homeGroup.visible = false; 
         if(customSection) customSection.style.opacity = 1; if(interactionZone) interactionZone.classList.add('interactive');
         setVisibility(contactSection, 0, 30); contactGroup.position.y = -200;
-        if(contactSection) contactSection.classList.remove('active'); // ASEGURAR QUE FORM ESTA OCULTO
+        if(contactSection) contactSection.classList.remove('active'); 
         const pCustom = (scrollPercent - 0.60) / 0.20; 
         if(pCustom <= 1.0) {
             const step = 1 / 3; if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
@@ -344,7 +349,7 @@ window.addEventListener('scroll', () => {
         if(customSection) customSection.style.opacity = 1 - pForm; 
         if(finalRingModel) { finalRingModel.traverse(c => { if(c.isMesh) c.material.opacity = 1 - pForm; }); }
         const blurVal = 30 - (pForm * 30); setVisibility(contactSection, pForm, blurVal, true); contactGroup.position.y = -200 + (pForm * 200); 
-        if(pForm > 0.5 && contactSection) contactSection.classList.add('active'); // MOSTRAR FORM
+        if(pForm > 0.5 && contactSection) contactSection.classList.add('active'); 
     }
 });
 
