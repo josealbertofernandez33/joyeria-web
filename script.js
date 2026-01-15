@@ -88,8 +88,6 @@ const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 
 // --- CALIDAD ORIGINAL RESTAURADA ---
-// Usamos la densidad de píxeles nativa del dispositivo (hasta 2x)
-// Esto asegura nitidez máxima en móviles Retina/alta definición.
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); 
 
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -210,14 +208,12 @@ if (!isMobile) {
     groundMirror.rotation.x = -Math.PI/2; groundMirror.position.y = -7; 
     homeGroup.add(groundMirror);
 
-    // Máscara del espejo (solo necesaria si hay espejo)
     const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 1024; const ctx = canvas.getContext('2d');
     const grad = ctx.createRadialGradient(512, 512, 0, 512, 512, 512); grad.addColorStop(0, 'rgba(0,0,0,0)'); grad.addColorStop(0.12, 'rgba(0,0,0,1)'); 
     ctx.fillStyle = grad; ctx.fillRect(0, 0, 1024, 1024); 
     const maskPlane = new THREE.Mesh(new THREE.PlaneGeometry(800, 800), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, opacity: params.maskOpacity }));
     maskPlane.rotation.x = -Math.PI/2; maskPlane.position.y = -6.99; homeGroup.add(maskPlane);
 }
-// EN MÓVIL: NO SE AÑADE NADA. Esto elimina el "halo dorado".
 
 let diamondBase = null;
 loader.load('diamante.glb', (gltf) => {
@@ -274,7 +270,7 @@ function setVisibility(element, opacity, blur, clickable = false) {
     if(!element) return;
     element.style.opacity = opacity; element.style.filter = `blur(${blur}px)`; element.style.pointerEvents = clickable ? "all" : "none";
 }
-function resetLayer(element, baseZ) { if(element) { element.style.transform = `rotateZ(-90deg) translateZ(${baseZ}px)`; element.style.opacity = 1; } }
+function resetLayer(element, baseZ) { if(element) { element.style.transform = `rotateZ(-90deg) translateZ(${baseZ}px)`; element.style.opacity = 1; element.style.display = 'block'; } }
 function liftLayerDone(element) { if(element) { element.style.transform = `rotateZ(-90deg) translateZ(500px)`; element.style.opacity = 0; } }
 function updateLuxuryLayer(element, progress, baseZ) {
     if(element) { const lift = baseZ + (progress * 450); const opacity = 1 - Math.pow(progress, 2); element.style.transform = `rotateZ(-90deg) translateZ(${lift}px)`; element.style.opacity = opacity; }
@@ -282,10 +278,17 @@ function updateLuxuryLayer(element, progress, baseZ) {
 
 resetLayer(layer1, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); resetLayer(layer4, 0);
 
+// --- SCROLL TIMELINE AJUSTADO PARA EVITAR SOLAPAMIENTO ---
 window.addEventListener('scroll', () => {
     const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
-    if (scrollPercent > 0.60 && scrollPercent < 0.92) { if(customSection) customSection.classList.add('active-interaction'); } 
-    else { if(customSection) customSection.classList.remove('active-interaction'); }
+    
+    if (scrollPercent > 0.60 && scrollPercent < 0.92) { 
+        if(customSection) customSection.classList.add('active-interaction'); 
+        if(layer4) layer4.style.display = 'none'; // SOLUCIÓN AL RECTANGULO: OCULTARLO EN ZONA INTERACTIVA
+    } else { 
+        if(customSection) customSection.classList.remove('active-interaction'); 
+        if(layer4) layer4.style.display = 'block';
+    }
 
     if (scrollPercent <= 0.10) {
         const p = scrollPercent / 0.10; camera.position.z = params.camPos.z - (p * 10); ringContainer.rotation.y = 0.2 + (p * 0.3);
@@ -316,15 +319,36 @@ window.addEventListener('scroll', () => {
         if(customSection) customSection.style.opacity = 1; if(interactionZone) interactionZone.classList.add('interactive');
         setVisibility(contactSection, 0, 30); contactGroup.position.y = -200;
         if(contactSection) contactSection.classList.remove('active'); 
+        
+        // --- SECUENCIA AJUSTADA PARA EVITAR CHOQUE ENTRE L3 Y ANILLO ---
         const pCustom = (scrollPercent - 0.60) / 0.20; 
         if(pCustom <= 1.0) {
-            const step = 1 / 3; if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
-            if (pCustom <= step) { let p = pCustom / step; updateLuxuryLayer(layer1, p, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); finalRingGroup.visible = false; } 
-            else if (pCustom <= step * 2) { liftLayerDone(layer1); let p = (pCustom - step) / step; updateLuxuryLayer(layer2, p, 60); resetLayer(layer3, 30); finalRingGroup.visible = false; } 
-            else { liftLayerDone(layer1); liftLayerDone(layer2); let p = (pCustom - (step * 2)) / step; if(p > 1) p = 1; updateLuxuryLayer(layer3, p, 30); if(finalRingModel) { finalRingGroup.visible = true; finalRingModel.traverse(c => { if(c.isMesh) c.material.opacity = p; }); let scale = 0.8 + (p * 0.2); finalRingModel.scale.set(scale, scale, scale); } }
-            resetLayer(layer4, 0);
+            // Dividimos en 4 pasos ahora para dar aire
+            const step = 1 / 4; 
+            if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
+            
+            if (pCustom <= step) { 
+                // Paso 1: Mover L1
+                let p = pCustom / step; updateLuxuryLayer(layer1, p, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); finalRingGroup.visible = false; 
+            } else if (pCustom <= step * 2) { 
+                // Paso 2: Mover L2
+                liftLayerDone(layer1); let p = (pCustom - step) / step; updateLuxuryLayer(layer2, p, 60); resetLayer(layer3, 30); finalRingGroup.visible = false; 
+            } else if (pCustom <= step * 3) {
+                // Paso 3: Mover L3 FUERA (Solo mover capa, sin anillo aun)
+                liftLayerDone(layer1); liftLayerDone(layer2); let p = (pCustom - step*2) / step; updateLuxuryLayer(layer3, p, 30); finalRingGroup.visible = false;
+            } else {
+                // Paso 4: AHORA SÍ, aparece el anillo (L3 ya se fue)
+                liftLayerDone(layer1); liftLayerDone(layer2); liftLayerDone(layer3);
+                let p = (pCustom - step*3) / step; 
+                if(finalRingModel) { 
+                    finalRingGroup.visible = true; 
+                    finalRingModel.traverse(c => { if(c.isMesh) c.material.opacity = p; }); 
+                    let scale = 0.8 + (p * 0.2); finalRingModel.scale.set(scale, scale, scale); 
+                }
+            }
+            if(layer4) layer4.style.opacity = 0; // Asegurar ocultar L4
         } else {
-            liftLayerDone(layer1); liftLayerDone(layer2); liftLayerDone(layer3); resetLayer(layer4, 0);
+            liftLayerDone(layer1); liftLayerDone(layer2); liftLayerDone(layer3); if(layer4) layer4.style.opacity = 0;
             if(configUI) { configUI.style.opacity = 1; configUI.style.pointerEvents = "auto"; }
             if(finalRingModel) { finalRingGroup.visible = true; finalRingModel.traverse(c => { if(c.isMesh) c.material.opacity = 1; }); finalRingModel.scale.set(1, 1, 1); }
         }
@@ -356,6 +380,5 @@ window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    // MANTENER CALIDAD ALTA SIEMPRE AL REDIMENSIONAR
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });
