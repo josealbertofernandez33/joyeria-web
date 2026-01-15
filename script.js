@@ -51,16 +51,22 @@ function renderFileList() {
 const params = {
     bgColor: 0x000000, floorColor: 0x998133, maskOpacity: 1.0,
     camFOV: 45, camPos: { x: 0, y: 0, z: 90 }, camRot: { x: 0, y: 0, z: -0.2 },
-    lightInt: 900, lightColor: 0xffffff, lightSpeed: 0.5, 
-    envInt: 2.0, // Intensidad del HDRI (Ajustado para studio_02)
-    envRot: 0.2,
     
-    // Parametros base para el cristal (Home)
+    // ILUMINACIÓN
+    lightInt: 900, 
+    lightColor: 0xffffff, 
+    lightSpeed: 0.5, 
+    
+    // ENTORNO (HDRI LOCAL)
+    envInt: 1.5,   // Ajuste para el 1K local
+    envRot: 0.2,   
+    
+    // MATERIALES
     cryFlat: false, cryTrans: 1.0, cryOp: 1.0, cryIOR: 2.463, cryThick: 0.41, 
     cryDisp: 0.8, crySpec: 4.105, cryClear: 0.0, cryEnv: 1.5, cryAttDist: 6.74, 
     cryAttColor: 0xededed, cryColor: 0xffffff, metalColor: 0xffffff, metalRough: 0.086, metalMetal: 1.0,
     
-    // Animacion
+    // ANIMACIÓN
     floatYBase: 1.5, floatSpeed: 0.8, floatAmp: 0.15,
     diaScale: 0.7, diaPosX: 0.0, diaPosY: 0.0, diaPosZ: 4.8,       
     diaRotX: 0.0, diaRotY: 1.6, diaRotZ: 0.911061, diaAnimSpeed: 0.208, 
@@ -89,41 +95,35 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 document.body.appendChild(renderer.domElement);
 
-// --- MATERIALES BASE (Home / About) ---
+// --- MATERIALES ---
 const crystalMat = new THREE.MeshPhysicalMaterial({ color: params.cryColor, transmission: params.cryTrans, opacity: params.cryOp, metalness: 0.0, roughness: 0.0, ior: params.cryIOR, thickness: params.cryThick, dispersion: params.cryDisp, envMapIntensity: params.cryEnv, specularIntensity: params.crySpec, clearcoat: params.cryClear, side: THREE.DoubleSide, flatShading: params.cryFlat, attenuationColor: new THREE.Color(params.cryAttColor), attenuationDistance: params.cryAttDist });
 const diamondMat = new THREE.MeshPhysicalMaterial({ color: params.d_Tint, transmission: params.d_Trans, opacity: 1.0, metalness: 0.0, roughness: 0.0, ior: params.d_IOR, thickness: params.d_Thick, dispersion: params.d_Disp, envMapIntensity: params.d_Env, specularIntensity: params.d_Spec, side: THREE.DoubleSide, flatShading: false, attenuationColor: new THREE.Color(params.d_AbsColor), attenuationDistance: params.d_AbsDist, transparent: true });
 const silverMat = new THREE.MeshPhysicalMaterial({ color: params.metalColor, metalness: params.metalMetal, roughness: params.metalRough, envMapIntensity: 1.0 });
 
-// =====================================================================
-// --- MATERIALES DEL CONFIGURADOR (BLOQUE 3) - MEJORADOS
-// =====================================================================
-
-// Función para crear gemas transparentes con color profundo
 function createGemMaterial(colorHex, attColorHex, iorVal) {
     return new THREE.MeshPhysicalMaterial({ 
         color: colorHex, 
-        transmission: 0.98, // Muy transparente (cristal)
+        transmission: 0.98, 
         opacity: 1.0, 
         metalness: 0.0, 
         roughness: 0.0, 
-        ior: iorVal, // Indice de refraccion real
-        thickness: 2.5, // Grosor para calcular absorcion
-        dispersion: 0.6, // Destellos de colores
+        ior: iorVal, 
+        thickness: 2.5, 
+        dispersion: 0.6, 
         envMapIntensity: 2.0, 
         specularIntensity: 1.0,
         clearcoat: 1.0,
         side: THREE.DoubleSide, 
         attenuationColor: new THREE.Color(attColorHex), 
-        attenuationDistance: 5.0 // Distancia corta para color intenso
+        attenuationDistance: 5.0 
     });
 }
 
-const emeraldMat = createGemMaterial(0x00ff00, 0x003300, 1.57); // Verde profundo
-const rubyMat = createGemMaterial(0xff0000, 0x440000, 1.76);    // Rojo sangre
-const sapphireMat = createGemMaterial(0x0000ff, 0x000044, 1.76); // Azul profundo
-const diamondStoneMat = createGemMaterial(0xffffff, 0xffffff, 2.42); // Blanco brillante
+const emeraldMat = createGemMaterial(0x00ff00, 0x003300, 1.57); 
+const rubyMat = createGemMaterial(0xff0000, 0x440000, 1.76);    
+const sapphireMat = createGemMaterial(0x0000ff, 0x000044, 1.76); 
+const diamondStoneMat = createGemMaterial(0xffffff, 0xffffff, 2.42); 
 
-// Oro 18K (Tono cálido realista)
 const goldMat = new THREE.MeshPhysicalMaterial({ 
     color: 0xFFC96F, 
     metalness: 1.0, 
@@ -133,28 +133,24 @@ const goldMat = new THREE.MeshPhysicalMaterial({
     clearcoatRoughness: 0.1 
 });
 
-// Mapas para cambio rápido
 const stoneOptions = { 'diamond': diamondStoneMat, 'ruby': rubyMat, 'sapphire': sapphireMat, 'emerald': emeraldMat };
 const metalOptions = { 'silver': silverMat, 'gold': goldMat };
-// =====================================================================
 
-// --- LUCES ---
 const light1 = new THREE.PointLight(params.lightColor, params.lightInt);
 light1.position.set(20, 20, 20); scene.add(light1);
 const light2 = new THREE.PointLight(params.lightColor, params.lightInt);
 light2.position.set(-20, -10, 20); scene.add(light2);
 
-// FOCO SUPERIOR EXTRA (Para resaltar el anillo Custom)
-const light3 = new THREE.SpotLight(0xffffff, 2500); // Alta intensidad
-light3.position.set(0, 50, 0); // Justo encima
+const light3 = new THREE.SpotLight(0xffffff, 2500); 
+light3.position.set(0, 50, 0); 
 light3.angle = 0.5;
 light3.penumbra = 0.5;
 light3.decay = 2;
 light3.distance = 100;
 scene.add(light3);
 
-// --- CARGA DE ENTORNO (HDRI Studio Small 02 - Enlace Directo Optimizado) ---
-new EXRLoader().load('https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/1k/studio_small_02_1k.exr', (texture) => {
+// --- CARGA DE ENTORNO LOCAL (Ahora que pesa 1MB es seguro hacerlo así) ---
+new EXRLoader().load('studio_v2.exr', (texture) => {
     texture.mapping = THREE.EquirectangularReflectionMapping;
     texture.offset.x = params.envRot;
     scene.environment = texture; 
@@ -178,7 +174,6 @@ const loader = new GLTFLoader();
 const individualStones = []; 
 const contactStones = [];    
 
-// HOME RING
 loader.load('Alianza.glb', (gltf) => {
     const ring = gltf.scene;
     const box = new THREE.Box3().setFromObject(ring);
@@ -188,7 +183,6 @@ loader.load('Alianza.glb', (gltf) => {
     ringContainer.add(ring); ring.rotation.set(1.17, 0, -0.03); 
 });
 
-// CUSTOM RING (CONFIGURADOR)
 let finalRingModel = null;
 loader.load('anillofotos.glb', (gltf) => {
     finalRingModel = gltf.scene;
@@ -200,7 +194,6 @@ loader.load('anillofotos.glb', (gltf) => {
         if(c.isMesh) { 
             c.material.transparent = true; c.material.opacity = 0; 
             
-            // Asignación inicial de materiales
             if(c.material.name.includes('Material.003')) {
                 c.userData.isMainStone = true; 
                 c.material = emeraldMat.clone();
@@ -211,7 +204,7 @@ loader.load('anillofotos.glb', (gltf) => {
                 c.userData.isMetal = true; 
                 c.material = silverMat.clone();
             }
-            c.material.transparent = true; // Asegurar transparencia para fade in
+            c.material.transparent = true; 
         }
     });
     
@@ -220,7 +213,6 @@ loader.load('anillofotos.glb', (gltf) => {
     finalRingGroup.add(finalRingModel);
 });
 
-// LOGICA CAMBIO MATERIAL (CONSOLA CONFIGURADOR)
 window.updateRingConfig = function(type, value) {
     if(!finalRingModel) return;
     
@@ -241,7 +233,7 @@ window.updateRingConfig = function(type, value) {
                 const currentOp = c.material.opacity; 
                 c.material = newMat.clone();
                 c.material.transparent = true; 
-                c.material.opacity = currentOp; // Mantener visibilidad actual
+                c.material.opacity = currentOp; 
             }
         }
     });
@@ -276,7 +268,6 @@ loader.load('diamante.glb', (gltf) => {
     aboutGroup.add(diamond); diamondBase = diamond;
 });
 
-// --- INTERACTIVIDAD ---
 let isDragging = false;
 let previousMousePosition = { x: 0, y: 0 };
 const interactionZone = document.getElementById('custom-section');
@@ -339,7 +330,6 @@ resetLayer(layer1, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); resetLay
 window.addEventListener('scroll', () => {
     const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
     
-    // 1. HOME
     if (scrollPercent <= 0.10) {
         const p = scrollPercent / 0.10;
         camera.position.z = params.camPos.z - (p * 10); 
@@ -351,7 +341,6 @@ window.addEventListener('scroll', () => {
         if(diamondMat) diamondMat.opacity = 1;
         if(diamondBase) diamondBase.visible = true; 
     } 
-    // 2. TRANSICION
     else if (scrollPercent > 0.10 && scrollPercent <= 0.25) {
         const p = (scrollPercent - 0.10) / 0.15; 
         homeGroup.position.y = p * 80; aboutGroup.position.y = -60 + (p * 60); 
@@ -359,7 +348,6 @@ window.addEventListener('scroll', () => {
         if(diamondMat) diamondMat.opacity = 1;
         if(diamondBase) diamondBase.visible = true;
     }
-    // 3. ABOUT
     else if (scrollPercent > 0.25 && scrollPercent <= 0.40) {
         homeGroup.position.y = 80; aboutGroup.position.y = 0; contactGroup.position.y = -200;
         const pText = (scrollPercent - 0.25) / 0.05; let o = pText; if(o>1) o=1; let b = 20 - (pText * 20); if(b<0) b=0;
@@ -367,7 +355,6 @@ window.addEventListener('scroll', () => {
         if(diamondMat) diamondMat.opacity = 1;
         if(diamondBase) diamondBase.visible = true;
     }
-    // 4. FADE OUT
     else if (scrollPercent > 0.40 && scrollPercent <= 0.50) {
         const pOut = (scrollPercent - 0.40) / 0.10; aboutGroup.position.y = 0; 
         setVisibility(aboutSection, 1 - pOut, pOut * 20);
@@ -379,7 +366,6 @@ window.addEventListener('scroll', () => {
         setVisibility(contactSection, 0, 30); contactGroup.position.y = -200;
         finalRingGroup.visible = false;
     }
-    // 5. FADE IN IMAGENES
     else if (scrollPercent > 0.50 && scrollPercent <= 0.60) {
         aboutGroup.position.y = 0; if(diamondMat) diamondMat.opacity = 0;
         if(diamondBase) diamondBase.visible = false; 
@@ -390,7 +376,6 @@ window.addEventListener('scroll', () => {
         finalRingGroup.visible = false;
         homeGroup.visible = false;
     }
-    // 6. STACK + MAGIC REVEAL (60% - 92%)
     else if (scrollPercent > 0.60 && scrollPercent <= 0.92) {
         if(diamondMat) diamondMat.opacity = 0;
         if(diamondBase) diamondBase.visible = false; homeGroup.visible = false; 
@@ -439,7 +424,6 @@ window.addEventListener('scroll', () => {
             }
         }
     }
-    // 7. FORMULARIO (92% - 100%)
     else {
         homeGroup.position.y = 200; aboutGroup.position.y = 200;
         homeGroup.visible = false; if(diamondBase) diamondBase.visible = false;
