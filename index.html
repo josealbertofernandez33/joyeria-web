@@ -1,31 +1,113 @@
-<div id="config-ui">
-    <div class="ui-top">
-        <div class="config-label">Metal Selection</div>
-        <div class="metal-row">
-            <div class="config-dot dot-gold" onclick="updateRingConfig('metal', 'gold')" data-name="18k Gold"></div>
-            <div class="config-dot dot-silver" onclick="updateRingConfig('metal', 'silver')" data-name="Sterling Silver"></div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Design Jewelry - Bespoke Experience</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+          "lil-gui": "https://unpkg.com/lil-gui@0.19.1/dist/lil-gui.module.min.js"
+        }
+      }
+    </script>
+</head>
+<body>
+
+    <header>
+        <div class="nav-item" onclick="scrollToPercent(0)">HOME</div>
+        <div class="nav-item" onclick="scrollToPercent(0.35)">ABOUT</div>
+        <div class="nav-item" onclick="scrollToPercent(0.75)">CUSTOM</div>
+        <div class="nav-item" onclick="scrollToPercent(1.0)">ORDER</div>
+    </header>
+
+    <div id="about-section">
+        <h2>The Art of Bespoke</h2>
+        <p>
+            Jewelry is not just an accessory; it is an extension of your essence.<br>
+            We combine traditional craftsmanship with digital precision<br>
+            to create pieces that tell your unique story.
+        </p>
+        <div class="signature">Maison Design</div>
+    </div>
+
+    <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 2;">
+        <div class="stack-wrapper">
+            <div id="l1" class="layer"></div>
+            <div id="l2" class="layer"></div>
+            <div id="l3" class="layer"></div>
+            <div id="l4" class="layer"></div>
         </div>
     </div>
 
-    <div class="ui-bottom">
-        <div class="stone-group">
-            <div class="config-label">Center Stone</div>
-            <div class="stone-row">
-                <div class="config-dot dot-diamond" onclick="updateRingConfig('main', 'diamond')"></div>
-                <div class="config-dot dot-ruby" onclick="updateRingConfig('main', 'ruby')"></div>
-                <div class="config-dot dot-sapphire" onclick="updateRingConfig('main', 'sapphire')"></div>
-                <div class="config-dot dot-emerald" onclick="updateRingConfig('main', 'emerald')"></div>
+    <div id="custom-section"></div>
+
+    <div id="config-ui">
+        <div class="ui-top">
+            <div class="config-label">Metal Selection</div>
+            <div class="metal-row">
+                <div class="config-dot dot-gold" onclick="updateRingConfig('metal', 'gold')" data-name="18k Gold"></div>
+                <div class="config-dot dot-silver" onclick="updateRingConfig('metal', 'silver')" data-name="Sterling Silver"></div>
             </div>
         </div>
-        
-        <div class="stone-group">
-            <div class="config-label">Side Stones</div>
-            <div class="stone-row">
-                <div class="config-dot dot-diamond" onclick="updateRingConfig('side', 'diamond')"></div>
-                <div class="config-dot dot-ruby" onclick="updateRingConfig('side', 'ruby')"></div>
-                <div class="config-dot dot-sapphire" onclick="updateRingConfig('side', 'sapphire')"></div>
-                <div class="config-dot dot-emerald" onclick="updateRingConfig('side', 'emerald')"></div>
+    
+        <div class="ui-bottom">
+            <div class="stone-group">
+                <div class="config-label">Center Stone</div>
+                <div class="stone-row">
+                    <div class="config-dot dot-diamond" onclick="updateRingConfig('main', 'diamond')"></div>
+                    <div class="config-dot dot-ruby" onclick="updateRingConfig('main', 'ruby')"></div>
+                    <div class="config-dot dot-sapphire" onclick="updateRingConfig('main', 'sapphire')"></div>
+                    <div class="config-dot dot-emerald" onclick="updateRingConfig('main', 'emerald')"></div>
+                </div>
+            </div>
+            
+            <div class="stone-group">
+                <div class="config-label">Side Stones</div>
+                <div class="stone-row">
+                    <div class="config-dot dot-diamond" onclick="updateRingConfig('side', 'diamond')"></div>
+                    <div class="config-dot dot-ruby" onclick="updateRingConfig('side', 'ruby')"></div>
+                    <div class="config-dot dot-sapphire" onclick="updateRingConfig('side', 'sapphire')"></div>
+                    <div class="config-dot dot-emerald" onclick="updateRingConfig('side', 'emerald')"></div>
+                </div>
             </div>
         </div>
     </div>
-</div>
+
+    <div id="contact-section">
+        <div class="glass-card">
+            <h2>Start Your Creation</h2>
+            <form action="https://formspree.io/f/tu-codigo-aqui" method="POST" enctype="multipart/form-data">
+                <div class="input-row">
+                    <div class="input-group">
+                        <input type="text" name="name" class="styled-input" placeholder="Your Name" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="email" name="email" class="styled-input" placeholder="Email Address" required>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <textarea name="message" placeholder="Tell us about your dream piece..." required></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label for="attachment" class="file-upload-label">
+                        + Add Reference Images / PDF
+                    </label>
+                    <input type="file" id="attachment" name="attachment" multiple accept="image/*,.pdf">
+                    <div id="file-list"></div>
+                </div>
+
+                <button type="submit" class="submit-btn">Send Request</button>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
