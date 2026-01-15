@@ -50,17 +50,21 @@ const params = {
     bgColor: 0x000000, floorColor: 0x998133, maskOpacity: 1.0,
     camFOV: 45, camPos: { x: 0, y: 0, z: 90 }, camRot: { x: 0, y: 0, z: -0.2 },
     
+    // LUCES (Ajustadas para contraste)
     lightInt: 600, 
     lightColor: 0xffffff, 
     lightSpeed: 0.5, 
     
+    // ENTORNO
     envInt: 0.4,   
     envRot: 0.2,   
     
+    // MATERIALES
     cryFlat: false, cryTrans: 1.0, cryOp: 1.0, cryIOR: 2.463, cryThick: 0.41, 
     cryDisp: 0.8, crySpec: 4.105, cryClear: 0.0, cryEnv: 1.5, cryAttDist: 6.74, 
     cryAttColor: 0xededed, cryColor: 0xffffff, metalColor: 0xffffff, metalRough: 0.086, metalMetal: 1.0,
     
+    // ANIMACIÓN
     floatYBase: 1.5, floatSpeed: 0.8, floatAmp: 0.15,
     diaScale: 0.7, diaPosX: 0.0, diaPosY: 0.0, diaPosZ: 4.8,       
     diaRotX: 0.0, diaRotY: 1.6, diaRotZ: 0.911061, diaAnimSpeed: 0.208, 
@@ -87,10 +91,10 @@ camera.rotation.set(params.camRot.x, params.camRot.y, params.camRot.z);
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 
-// --- CORRECCIÓN RENDIMIENTO MOVIL ---
-// Forzamos resolucion 1.0 en móviles. La diferencia visual es mínima, el rendimiento es x4.
-const isMobile = window.innerWidth < 768;
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.0 : 2.0));
+// --- MEJORA VISUAL: NITIDEZ EN MÓVIL ---
+// Antes estaba en 1.0 (borroso). Ahora permitimos hasta 2.0 incluso en móvil.
+// Compensaremos el rendimiento quitando el espejo real en móviles.
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0)); 
 
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0; 
@@ -201,8 +205,30 @@ loader.load('piedras.glb', (gltf) => {
     stonesClone.position.set(0, 0, -15); stonesClone.scale.set(0.8, 0.8, 0.8); stonesClone.rotation.set(0.5, 0.5, 0); contactGroup.add(stonesClone);
 });
 
-const groundMirror = new Reflector(new THREE.PlaneGeometry(800, 800), { clipBias: 0.003, textureWidth: window.innerWidth*window.devicePixelRatio, textureHeight: window.innerHeight*window.devicePixelRatio, color: params.floorColor });
-groundMirror.rotation.x = -Math.PI/2; groundMirror.position.y = -7; homeGroup.add(groundMirror);
+// --- OPTIMIZACIÓN ESTRATÉGICA DEL SUELO ---
+const isMobile = window.innerWidth < 768;
+let floorMesh;
+
+if (isMobile) {
+    // MOVIL: SUELO "FALSO" PERO ELEGANTE (No consume recursos)
+    // Usamos un plano negro satinado que refleja la luz del HDRI, pero no los objetos.
+    const floorGeo = new THREE.PlaneGeometry(800, 800);
+    const floorMat = new THREE.MeshStandardMaterial({
+        color: params.floorColor,
+        roughness: 0.2, // Un poco de brillo
+        metalness: 0.6,
+        envMapIntensity: 1.0 // Usa el HDRI para que se vea integrado
+    });
+    floorMesh = new THREE.Mesh(floorGeo, floorMat);
+    floorMesh.rotation.x = -Math.PI/2;
+    floorMesh.position.y = -7;
+    homeGroup.add(floorMesh);
+} else {
+    // PC: SUELO "ESPEJO REAL" (Consume mucho, pero se ve increíble)
+    const groundMirror = new Reflector(new THREE.PlaneGeometry(800, 800), { clipBias: 0.003, textureWidth: window.innerWidth*window.devicePixelRatio, textureHeight: window.innerHeight*window.devicePixelRatio, color: params.floorColor });
+    groundMirror.rotation.x = -Math.PI/2; groundMirror.position.y = -7; 
+    homeGroup.add(groundMirror);
+}
 
 const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 1024; const ctx = canvas.getContext('2d');
 const grad = ctx.createRadialGradient(512, 512, 0, 512, 512, 512); grad.addColorStop(0, 'rgba(0,0,0,0)'); grad.addColorStop(0.12, 'rgba(0,0,0,1)'); 
@@ -220,12 +246,11 @@ loader.load('diamante.glb', (gltf) => {
     aboutGroup.add(diamond); diamondBase = diamond;
 });
 
-// --- INTERACTIVIDAD TÁCTIL MEJORADA ---
+// --- INTERACTIVIDAD TÁCTIL ---
 let isDragging = false;
 let previousMousePosition = { x: 0, y: 0 };
 const interactionZone = document.getElementById('custom-section');
 
-// Eventos de ratón (PC)
 window.addEventListener('mousedown', (e) => { 
     if (e.target.closest('.config-dot')) return;
     if(finalRingGroup.visible) { isDragging = true; interactionZone.classList.add('grabbing'); previousMousePosition = { x: e.clientX, y: e.clientY }; }
@@ -241,42 +266,27 @@ window.addEventListener('mousemove', (e) => {
     }
 });
 
-// EVENTOS TÁCTILES INTELIGENTES (MOVIL)
 interactionZone.addEventListener('touchstart', (e) => { 
     if (e.target.closest('.config-dot')) return;
-    
-    // ZONAS DE SEGURIDAD PARA SCROLL
     const touchX = e.touches[0].clientX;
     const width = window.innerWidth;
-    const margin = width * 0.15; // 15% a cada lado para hacer scroll
-
-    // Si toca los bordes, NO es interacción 3D, dejamos que el navegador haga scroll
-    if (touchX < margin || touchX > width - margin) {
-        isDragging = false;
-        return; 
-    }
-
-    // Si toca el centro y el anillo es visible, atrapamos el evento
-    if(finalRingGroup.visible) { 
-        isDragging = true; 
-        previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }; 
-    }
+    const margin = width * 0.15; 
+    if (touchX < margin || touchX > width - margin) { isDragging = false; return; }
+    if(finalRingGroup.visible) { isDragging = true; previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }
 }, { passive: false });
 
 window.addEventListener('touchend', () => isDragging = false);
 
 interactionZone.addEventListener('touchmove', (e) => {
     if (isDragging && finalRingGroup.visible && finalRingModel) {
-        // BLOQUEAR SCROLL SOLO SI ESTAMOS ARRASTRANDO EL ANILLO
         e.preventDefault(); 
-        
         const deltaX = e.touches[0].clientX - previousMousePosition.x;
         const deltaY = e.touches[0].clientY - previousMousePosition.y;
         finalRingModel.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), deltaX * 0.005);
         finalRingModel.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), deltaY * 0.005);
         previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     }
-}, { passive: false }); // 'passive: false' permite usar preventDefault()
+}, { passive: false });
 
 function setVisibility(element, opacity, blur, clickable = false) {
     if(!element) return;
@@ -292,13 +302,8 @@ resetLayer(layer1, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); resetLay
 
 window.addEventListener('scroll', () => {
     const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
-    
-    // GESTIÓN DE POINTER EVENTS DEL ANILLO (Para no bloquear scroll fuera de su zona)
-    if (scrollPercent > 0.60 && scrollPercent < 0.92) {
-        if(customSection) customSection.classList.add('active-interaction');
-    } else {
-        if(customSection) customSection.classList.remove('active-interaction');
-    }
+    if (scrollPercent > 0.60 && scrollPercent < 0.92) { if(customSection) customSection.classList.add('active-interaction'); } 
+    else { if(customSection) customSection.classList.remove('active-interaction'); }
 
     if (scrollPercent <= 0.10) {
         const p = scrollPercent / 0.10; camera.position.z = params.camPos.z - (p * 10); ringContainer.rotation.y = 0.2 + (p * 0.3);
@@ -369,4 +374,7 @@ window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    // Recalcular pixel ratio al cambiar tamaño (por si gira el movil)
+    const isMobile = window.innerWidth < 768;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.0 : 2.0)); // Si sigue lento, baja el 2.0 a 1.5 aquí
 });
