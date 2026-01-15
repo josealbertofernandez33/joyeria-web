@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { Reflector } from 'three/addons/objects/Reflector.js';
-import GUI from 'lil-gui'; // IMPORTAMOS EL PANEL DE CONTROL
 
 // --- NAVEGACIÓN ---
 window.scrollToPercent = function(percentage) {
@@ -34,31 +33,44 @@ function renderFileList() {
     for (let i = 0; i < dt.files.length; i++) {
         const file = dt.files[i];
         const item = document.createElement('div'); item.className = 'file-item';
-        const name = document.createElement('span'); name.className = 'file-name'; name.textContent = file.name; 
-        item.appendChild(name); fileListDisplay.appendChild(item);
+        if (file.type.startsWith('image/')) {
+            const img = document.createElement('img'); img.src = URL.createObjectURL(file); img.className = 'file-preview-img';
+            img.onload = () => URL.revokeObjectURL(img.src); item.appendChild(img);
+        } else {
+            const icon = document.createElement('div'); icon.className = 'file-icon'; icon.innerText = "PDF"; item.appendChild(icon);
+        }
+        const name = document.createElement('span'); name.className = 'file-name'; name.textContent = file.name; item.appendChild(name);
+        const size = document.createElement('span'); size.className = 'file-size'; size.textContent = (file.size/1024/1024).toFixed(2)+" MB"; item.appendChild(size);
+        fileListDisplay.appendChild(item);
     }
 }
 
-// --- PARÁMETROS INICIALES ---
+// --- PARÁMETROS ORIGINALES (ESTRICTOS) ---
 const params = {
-    bgColor: 0x000000, 
-    floorColor: 0x998133, 
-    maskOpacity: 1.0,
-    camFOV: 45, 
+    bgColor: 0x000000, floorColor: 0x998133, maskOpacity: 1.0,
+    camFOV: 45, camPos: { x: 0, y: 0, z: 90 }, camRot: { x: 0, y: 0, z: -0.2 },
     
-    // !!! JUEGA CON ESTOS VALORES EN EL PANEL !!!
-    envInt: 1.0,        // Intensidad del HDRI (Bájalo si se ve blanco)
-    envRot: 0.2,        // Rotación del reflejo
-    exposure: 1.0,      // Exposición de cámara (Clave para el contraste)
+    // LUCES ORIGINALES
+    lightInt: 900, 
+    lightColor: 0xffffff, 
+    lightSpeed: 0.5, 
     
-    lightInt: 900,      // Luz puntual lateral
-    spotInt: 2500,      // Foco superior
+    // ENTORNO ORIGINAL
+    envInt: 1.0,   // RESTAURADO A 1.0 (El 1.5 quemaba el oro)
+    envRot: 0.2,   // Mantenemos rotación original
     
-    // Animación
+    // MATERIALES CRISTAL
+    cryFlat: false, cryTrans: 1.0, cryOp: 1.0, cryIOR: 2.463, cryThick: 0.41, 
+    cryDisp: 0.8, crySpec: 4.105, cryClear: 0.0, cryEnv: 1.5, cryAttDist: 6.74, 
+    cryAttColor: 0xededed, cryColor: 0xffffff, metalColor: 0xffffff, metalRough: 0.086, metalMetal: 1.0,
+    
+    // ANIMACIÓN
     floatYBase: 1.5, floatSpeed: 0.8, floatAmp: 0.15,
     diaScale: 0.7, diaPosX: 0.0, diaPosY: 0.0, diaPosZ: 4.8,       
     diaRotX: 0.0, diaRotY: 1.6, diaRotZ: 0.911061, diaAnimSpeed: 0.208, 
-    diaFloatSpeed: 0.438, diaFloatAmp: 0.3
+    diaFloatSpeed: 0.438, diaFloatAmp: 0.3, d_Thick: 0.0, d_AbsDist: 5.88, 
+    d_Env: 1.5, d_Spec: 4.1, d_Tint: 0xffffff, d_AbsColor: 0xededed, 
+    d_Trans: 1.0, d_IOR: 2.626, d_Disp: 0.8
 };
 
 const aboutSection = document.getElementById('about-section');
@@ -73,34 +85,32 @@ const layer4 = document.getElementById('l4');
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(params.bgColor); 
 const camera = new THREE.PerspectiveCamera(params.camFOV, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 0, 90); 
-camera.rotation.set(0, 0, -0.2);
-
+camera.position.set(params.camPos.x, params.camPos.y, params.camPos.z); 
+camera.rotation.set(params.camRot.x, params.camRot.y, params.camRot.z);
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = params.exposure; // APLICAMOS EXPOSICIÓN
 document.body.appendChild(renderer.domElement);
 
 // --- MATERIALES BASE ---
-const crystalMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, transmission: 1.0, opacity: 1.0, metalness: 0.0, roughness: 0.0, ior: 2.463, thickness: 0.41, dispersion: 0.8, envMapIntensity: 1.5, specularIntensity: 4.1, side: THREE.DoubleSide });
-const diamondMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, transmission: 1.0, opacity: 1.0, metalness: 0.0, roughness: 0.0, ior: 2.626, thickness: 0.0, dispersion: 0.8, envMapIntensity: 1.5, specularIntensity: 4.1, side: THREE.DoubleSide, transparent: true });
-const silverMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 1.0, roughness: 0.086, envMapIntensity: 1.0 });
+const crystalMat = new THREE.MeshPhysicalMaterial({ color: params.cryColor, transmission: params.cryTrans, opacity: params.cryOp, metalness: 0.0, roughness: 0.0, ior: params.cryIOR, thickness: params.cryThick, dispersion: params.cryDisp, envMapIntensity: params.cryEnv, specularIntensity: params.crySpec, clearcoat: params.cryClear, side: THREE.DoubleSide, flatShading: params.cryFlat, attenuationColor: new THREE.Color(params.cryAttColor), attenuationDistance: params.cryAttDist });
+const diamondMat = new THREE.MeshPhysicalMaterial({ color: params.d_Tint, transmission: params.d_Trans, opacity: 1.0, metalness: 0.0, roughness: 0.0, ior: params.d_IOR, thickness: params.d_Thick, dispersion: params.d_Disp, envMapIntensity: params.d_Env, specularIntensity: params.d_Spec, side: THREE.DoubleSide, flatShading: false, attenuationColor: new THREE.Color(params.d_AbsColor), attenuationDistance: params.d_AbsDist, transparent: true });
+const silverMat = new THREE.MeshPhysicalMaterial({ color: params.metalColor, metalness: params.metalMetal, roughness: params.metalRough, envMapIntensity: 1.0 });
 
 // --- MATERIALES CONFIGURADOR ---
-function createGemMaterial(colorHex, iorVal) {
+function createGemMaterial(colorHex, attColorHex, iorVal) {
     return new THREE.MeshPhysicalMaterial({ 
         color: colorHex, transmission: 0.98, opacity: 1.0, metalness: 0.0, roughness: 0.0, 
         ior: iorVal, thickness: 2.5, dispersion: 0.6, envMapIntensity: 2.0, specularIntensity: 1.0,
-        clearcoat: 1.0, side: THREE.DoubleSide, attenuationDistance: 5.0 
+        clearcoat: 1.0, side: THREE.DoubleSide, attenuationColor: new THREE.Color(attColorHex), attenuationDistance: 5.0 
     });
 }
 
-const emeraldMat = createGemMaterial(0x00ff00, 1.57); 
-const rubyMat = createGemMaterial(0xff0000, 1.76);    
-const sapphireMat = createGemMaterial(0x0000ff, 1.76); 
-const diamondStoneMat = createGemMaterial(0xffffff, 2.42); 
+const emeraldMat = createGemMaterial(0x00ff00, 0x003300, 1.57); 
+const rubyMat = createGemMaterial(0xff0000, 0x440000, 1.76);    
+const sapphireMat = createGemMaterial(0x0000ff, 0x000044, 1.76); 
+const diamondStoneMat = createGemMaterial(0xffffff, 0xffffff, 2.42); 
 
 const goldMat = new THREE.MeshPhysicalMaterial({ 
     color: 0xFFC96F, metalness: 1.0, roughness: 0.1, envMapIntensity: 2.5, clearcoat: 0.8, clearcoatRoughness: 0.1 
@@ -109,16 +119,13 @@ const goldMat = new THREE.MeshPhysicalMaterial({
 const stoneOptions = { 'diamond': diamondStoneMat, 'ruby': rubyMat, 'sapphire': sapphireMat, 'emerald': emeraldMat };
 const metalOptions = { 'silver': silverMat, 'gold': goldMat };
 
-// --- LUCES ---
+// --- LUCES (SOLO LAS ORIGINALES) ---
 const light1 = new THREE.PointLight(params.lightColor, params.lightInt);
 light1.position.set(20, 20, 20); scene.add(light1);
 const light2 = new THREE.PointLight(params.lightColor, params.lightInt);
 light2.position.set(-20, -10, 20); scene.add(light2);
 
-const light3 = new THREE.SpotLight(0xffffff, params.spotInt); 
-light3.position.set(0, 50, 0); 
-light3.angle = 0.5; light3.penumbra = 0.5; light3.decay = 2; light3.distance = 100;
-scene.add(light3);
+// [ELIMINADO] light3 (El foco superior que blanqueaba el oro ha sido borrado)
 
 // --- CARGA DE ENTORNO LOCAL ---
 new EXRLoader().load('studio_v2.exr', (texture) => {
@@ -131,7 +138,9 @@ new EXRLoader().load('studio_v2.exr', (texture) => {
 const homeGroup = new THREE.Group(); scene.add(homeGroup);
 const aboutGroup = new THREE.Group(); scene.add(aboutGroup); aboutGroup.position.y = -60;
 const contactGroup = new THREE.Group(); scene.add(contactGroup); contactGroup.position.y = -200; 
-const finalRingGroup = new THREE.Group(); scene.add(finalRingGroup); finalRingGroup.visible = false; 
+
+const finalRingGroup = new THREE.Group(); 
+scene.add(finalRingGroup); finalRingGroup.visible = false; 
 
 const ringContainer = new THREE.Group();
 const stonesContainer = new THREE.Group(); 
@@ -143,6 +152,7 @@ const loader = new GLTFLoader();
 const individualStones = []; 
 const contactStones = [];    
 
+// HOME RING
 loader.load('Alianza.glb', (gltf) => {
     const ring = gltf.scene;
     const box = new THREE.Box3().setFromObject(ring);
@@ -152,6 +162,7 @@ loader.load('Alianza.glb', (gltf) => {
     ringContainer.add(ring); ring.rotation.set(1.17, 0, -0.03); 
 });
 
+// CUSTOM RING
 let finalRingModel = null;
 loader.load('anillofotos.glb', (gltf) => {
     finalRingModel = gltf.scene;
@@ -172,6 +183,7 @@ loader.load('anillofotos.glb', (gltf) => {
     finalRingGroup.add(finalRingModel);
 });
 
+// CHANGE MATERIALS
 window.updateRingConfig = function(type, value) {
     if(!finalRingModel) return;
     let newMat;
@@ -217,13 +229,13 @@ loader.load('diamante.glb', (gltf) => {
     aboutGroup.add(diamond); diamondBase = diamond;
 });
 
-// --- INTERACTIVIDAD ---
+// INTERACTION
 let isDragging = false;
 let previousMousePosition = { x: 0, y: 0 };
 const interactionZone = document.getElementById('custom-section');
 
 window.addEventListener('mousedown', (e) => { 
-    if (e.target.closest('.config-dot') || e.target.closest('.lil-gui')) return; // IGNORAR CLICS EN GUI
+    if (e.target.closest('.config-dot')) return;
     if(finalRingGroup.visible) { isDragging = true; interactionZone.classList.add('grabbing'); previousMousePosition = { x: e.clientX, y: e.clientY }; }
 });
 window.addEventListener('mouseup', () => { isDragging = false; interactionZone.classList.remove('grabbing'); });
@@ -234,6 +246,20 @@ window.addEventListener('mousemove', (e) => {
         finalRingModel.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), deltaX * 0.005);
         finalRingModel.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), deltaY * 0.005);
         previousMousePosition = { x: e.clientX, y: e.clientY };
+    }
+});
+window.addEventListener('touchstart', (e) => { 
+    if (e.target.closest('.config-dot')) return;
+    if(finalRingGroup.visible) { isDragging = true; previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }
+});
+window.addEventListener('touchend', () => isDragging = false);
+window.addEventListener('touchmove', (e) => {
+    if (isDragging && finalRingGroup.visible && finalRingModel) {
+        const deltaX = e.touches[0].clientX - previousMousePosition.x;
+        const deltaY = e.touches[0].clientY - previousMousePosition.y;
+        finalRingModel.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), deltaX * 0.005);
+        finalRingModel.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), deltaY * 0.005);
+        previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     }
 });
 
@@ -318,22 +344,3 @@ window.addEventListener('resize', () => {
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
-
-// ==========================================
-//   PANEL DE DEBUG (LIL-GUI)
-// ==========================================
-const gui = new GUI({ title: 'Ajustes de Luz' });
-
-const folderEnv = gui.addFolder('Entorno & Cámara');
-folderEnv.add(params, 'envInt', 0, 10, 0.1).name('Intensidad HDRI').onChange(v => { scene.environmentIntensity = v; });
-folderEnv.add(params, 'envRot', 0, Math.PI * 2, 0.1).name('Rotación HDRI').onChange(v => {
-    if(scene.environment) scene.environment.offset.x = v; 
-});
-folderEnv.add(params, 'exposure', 0, 5, 0.1).name('Exposición Cámara').onChange(v => { renderer.toneMappingExposure = v; });
-
-const folderLights = gui.addFolder('Focos');
-folderLights.add(light3, 'intensity', 0, 5000, 50).name('Foco Superior');
-folderLights.add(light1, 'intensity', 0, 2000, 50).name('Luz Lat 1');
-folderLights.add(light2, 'intensity', 0, 2000, 50).name('Luz Lat 2');
-
-folderEnv.open();
