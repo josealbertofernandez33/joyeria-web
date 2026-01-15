@@ -1,0 +1,101 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Maison - Bespoke Experience</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="nav-item" onclick="scrollToPercent(0)">HOME</div>
+        <div class="nav-item" onclick="scrollToPercent(0.32)">ABOUT</div>
+        <div class="nav-item" onclick="scrollToPercent(0.75)">CUSTOM</div>
+        <div class="nav-item" onclick="scrollToPercent(1.0)">ORDER</div>
+    </header>
+
+    <section id="about-section">
+        <h2>El Artesano</h2>
+        <p>MI NOMBRE ES JOSE ALBERTO, SOY DISEÑADOR DE JOYAS Y TENGO MUCHA EXPERIENCIA NO SOLO EN EL DISEÑO ESTÉTICO DE LA JOYA, SINO EN LA FABRICACIÓN. TRABAJANDO ASÍ CON DIVERSOS MATERIALES Y PIEDRAS.</p>
+        <p>LA LIMITACIÓN SOLO ES UNA PALABRA.</p>
+        <div class="signature">JUNTOS PODEMOS HACER LO QUE DESEES</div>
+    </section>
+
+    <section id="custom-section">
+        <div class="stack-wrapper">
+            <div id="l1" class="layer"></div>
+            <div id="l2" class="layer"></div>
+            <div id="l3" class="layer"></div>
+            <div id="l4" class="layer"></div>
+        </div>
+
+        <div id="config-ui">
+            <div class="config-column left">
+                <div class="config-label">Main Stone</div>
+                <div class="config-group">
+                    <div class="config-dot dot-diamond" data-name="Diamond" onclick="updateRingConfig('main', 'diamond')"></div>
+                    <div class="config-dot dot-ruby" data-name="Ruby" onclick="updateRingConfig('main', 'ruby')"></div>
+                    <div class="config-dot dot-sapphire" data-name="Sapphire" onclick="updateRingConfig('main', 'sapphire')"></div>
+                    <div class="config-dot dot-emerald" data-name="Emerald" onclick="updateRingConfig('main', 'emerald')"></div>
+                </div>
+            </div>
+
+            <div class="config-column right">
+                <div>
+                    <div class="config-label">Side Stones</div>
+                    <div class="config-group">
+                        <div class="config-dot dot-diamond" data-name="Diamond" onclick="updateRingConfig('side', 'diamond')"></div>
+                        <div class="config-dot dot-ruby" data-name="Ruby" onclick="updateRingConfig('side', 'ruby')"></div>
+                        <div class="config-dot dot-sapphire" data-name="Sapphire" onclick="updateRingConfig('side', 'sapphire')"></div>
+                        <div class="config-dot dot-emerald" data-name="Emerald" onclick="updateRingConfig('side', 'emerald')"></div>
+                    </div>
+                </div>
+                <div style="margin-top: 30px;">
+                    <div class="config-label">Metal</div>
+                    <div class="config-group">
+                        <div class="config-dot dot-silver" data-name="Silver" onclick="updateRingConfig('metal', 'silver')"></div>
+                        <div class="config-dot dot-gold" data-name="Gold" onclick="updateRingConfig('metal', 'gold')"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact-section">
+        <div class="glass-card">
+            <h2>DESCRIBE YOUR JEWEL</h2>
+            <form action="https://formspree.io/f/TU_ID_DE_FORMSPREE" method="POST" enctype="multipart/form-data">
+                <div class="input-group">
+                    <textarea name="description" placeholder="Describe your vision, materials, stones, sizes, and details..." required></textarea>
+                </div>
+                <label class="file-upload-label" for="attachment">
+                    + ATTACH REFERENCES (IMG / PDF)
+                </label>
+                <input type="file" id="attachment" name="attachment" accept="image/*,.pdf" multiple>
+                <div id="file-list"></div>
+                <div class="input-row">
+                    <input class="styled-input" type="email" name="email" placeholder="Email Address" required>
+                    <input class="styled-input" type="tel" name="phone" placeholder="Phone Number">
+                </div>
+                <div class="input-group">
+                    <input class="styled-input" type="text" name="country" placeholder="Country of Residence">
+                </div>
+                <button type="submit" class="submit-btn">SEND REQUEST</button>
+            </form>
+        </div>
+    </section>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.164.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.164.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
