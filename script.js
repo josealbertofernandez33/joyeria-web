@@ -45,21 +45,21 @@ function renderFileList() {
     }
 }
 
-// --- PARÁMETROS ORIGINALES (ESTRICTOS) ---
+// --- PARÁMETROS (AJUSTADOS PARA RECUPERAR EL CONTRASTE OSCURO) ---
 const params = {
     bgColor: 0x000000, floorColor: 0x998133, maskOpacity: 1.0,
     camFOV: 45, camPos: { x: 0, y: 0, z: 90 }, camRot: { x: 0, y: 0, z: -0.2 },
     
-    // LUCES ORIGINALES
-    lightInt: 900, 
+    // LUCES: Bajamos intensidad para evitar el "efecto lavado"
+    lightInt: 600,      // Antes 900. Bajado para más contraste.
     lightColor: 0xffffff, 
     lightSpeed: 0.5, 
     
-    // ENTORNO ORIGINAL
-    envInt: 1.0,   // RESTAURADO A 1.0 (El 1.5 quemaba el oro)
-    envRot: 0.2,   // Mantenemos rotación original
+    // ENTORNO: ESTA ES LA CLAVE DEL COLOR METÁLICO
+    envInt: 0.4,   // Antes 1.0. Bajado drásticamente para que el 1K no queme el metal.
+    envRot: 0.2,   
     
-    // MATERIALES CRISTAL
+    // MATERIALES
     cryFlat: false, cryTrans: 1.0, cryOp: 1.0, cryIOR: 2.463, cryThick: 0.41, 
     cryDisp: 0.8, crySpec: 4.105, cryClear: 0.0, cryEnv: 1.5, cryAttDist: 6.74, 
     cryAttColor: 0xededed, cryColor: 0xffffff, metalColor: 0xffffff, metalRough: 0.086, metalMetal: 1.0,
@@ -91,6 +91,7 @@ const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0; // Exposición estándar
 document.body.appendChild(renderer.domElement);
 
 // --- MATERIALES BASE ---
@@ -119,15 +120,13 @@ const goldMat = new THREE.MeshPhysicalMaterial({
 const stoneOptions = { 'diamond': diamondStoneMat, 'ruby': rubyMat, 'sapphire': sapphireMat, 'emerald': emeraldMat };
 const metalOptions = { 'silver': silverMat, 'gold': goldMat };
 
-// --- LUCES (SOLO LAS ORIGINALES) ---
+// --- LUCES ---
 const light1 = new THREE.PointLight(params.lightColor, params.lightInt);
 light1.position.set(20, 20, 20); scene.add(light1);
 const light2 = new THREE.PointLight(params.lightColor, params.lightInt);
 light2.position.set(-20, -10, 20); scene.add(light2);
 
-// [ELIMINADO] light3 (El foco superior que blanqueaba el oro ha sido borrado)
-
-// --- CARGA DE ENTORNO LOCAL ---
+// --- CARGA DE ENTORNO LOCAL (studio_v2.exr) ---
 new EXRLoader().load('studio_v2.exr', (texture) => {
     texture.mapping = THREE.EquirectangularReflectionMapping;
     texture.offset.x = params.envRot;
@@ -169,6 +168,7 @@ loader.load('anillofotos.glb', (gltf) => {
     const box = new THREE.Box3().setFromObject(finalRingModel);
     const center = box.getCenter(new THREE.Vector3());
     finalRingModel.position.sub(center);
+    
     finalRingModel.traverse(c => { 
         if(c.isMesh) { 
             c.material.transparent = true; c.material.opacity = 0; 
