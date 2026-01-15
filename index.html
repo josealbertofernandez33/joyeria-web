@@ -50,8 +50,8 @@
         <div class="ui-top">
             <div class="config-label">Metal Selection</div>
             <div class="metal-row">
-                <div class="config-dot dot-gold" onclick="updateRingConfig('metal', 'gold')" data-name="18k Gold"></div>
-                <div class="config-dot dot-silver" onclick="updateRingConfig('metal', 'silver')" data-name="Sterling Silver"></div>
+                <div class="config-dot dot-gold" onclick="updateRingConfig('metal', 'gold')" title="18k Gold"></div>
+                <div class="config-dot dot-silver" onclick="updateRingConfig('metal', 'silver')" title="Sterling Silver"></div>
             </div>
         </div>
     
@@ -90,19 +90,14 @@
                         <input type="email" name="email" class="styled-input" placeholder="Email Address" required>
                     </div>
                 </div>
-                
                 <div class="input-group">
                     <textarea name="message" placeholder="Tell us about your dream piece..." required></textarea>
                 </div>
-
                 <div class="input-group">
-                    <label for="attachment" class="file-upload-label">
-                        + Add Reference Images / PDF
-                    </label>
+                    <label for="attachment" class="file-upload-label">+ Add Reference Images / PDF</label>
                     <input type="file" id="attachment" name="attachment" multiple accept="image/*,.pdf">
                     <div id="file-list"></div>
                 </div>
-
                 <button type="submit" class="submit-btn">Send Request</button>
             </form>
         </div>
