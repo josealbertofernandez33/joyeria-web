@@ -15,19 +15,22 @@ const fileListDisplay = document.getElementById('file-list');
 const dt = new DataTransfer();
 const MAX_SIZE_MB = 25;
 
-fileInput.addEventListener('change', function() {
-    let totalSize = 0;
-    for(let i=0; i<dt.items.length; i++) totalSize += dt.items[i].getAsFile().size;
-    for (let i = 0; i < this.files.length; i++) {
-        let file = this.files[i];
-        if (file.size > MAX_SIZE_MB * 1024 * 1024) { alert(`File "${file.name}" is too big.`); continue; }
-        if (totalSize + file.size > MAX_SIZE_MB * 1024 * 1024) { alert(`Total size limit (25MB) reached.`); continue; }
-        dt.items.add(file); totalSize += file.size;
-    }
-    this.files = dt.files; renderFileList();
-});
+if(fileInput) {
+    fileInput.addEventListener('change', function() {
+        let totalSize = 0;
+        for(let i=0; i<dt.items.length; i++) totalSize += dt.items[i].getAsFile().size;
+        for (let i = 0; i < this.files.length; i++) {
+            let file = this.files[i];
+            if (file.size > MAX_SIZE_MB * 1024 * 1024) { alert(`File "${file.name}" is too big.`); continue; }
+            if (totalSize + file.size > MAX_SIZE_MB * 1024 * 1024) { alert(`Total size limit (25MB) reached.`); continue; }
+            dt.items.add(file); totalSize += file.size;
+        }
+        this.files = dt.files; renderFileList();
+    });
+}
 
 function renderFileList() {
+    if(!fileListDisplay) return;
     fileListDisplay.innerHTML = ''; if (dt.files.length === 0) return;
     for (let i = 0; i < dt.files.length; i++) {
         const file = dt.files[i];
@@ -80,12 +83,12 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 document.body.appendChild(renderer.domElement);
 
-// --- MATERIALES BASE ---
+// --- MATERIALES BASE (SECCIONES 1 y 2) ---
 const crystalMat = new THREE.MeshPhysicalMaterial({ color: params.cryColor, transmission: params.cryTrans, opacity: params.cryOp, metalness: 0.0, roughness: 0.0, ior: params.cryIOR, thickness: params.cryThick, dispersion: params.cryDisp, envMapIntensity: params.cryEnv, specularIntensity: params.crySpec, clearcoat: params.cryClear, side: THREE.DoubleSide, flatShading: params.cryFlat, attenuationColor: new THREE.Color(params.cryAttColor), attenuationDistance: params.cryAttDist });
 const diamondMat = new THREE.MeshPhysicalMaterial({ color: params.d_Tint, transmission: params.d_Trans, opacity: 1.0, metalness: 0.0, roughness: 0.0, ior: params.d_IOR, thickness: params.d_Thick, dispersion: params.d_Disp, envMapIntensity: params.d_Env, specularIntensity: params.d_Spec, side: THREE.DoubleSide, flatShading: false, attenuationColor: new THREE.Color(params.d_AbsColor), attenuationDistance: params.d_AbsDist, transparent: true });
 const silverMat = new THREE.MeshPhysicalMaterial({ color: params.metalColor, metalness: params.metalMetal, roughness: params.metalRough, envMapIntensity: 1.0 });
 
-// --- MATERIALES CONFIGURADOR (BLOQUE 3) ---
+// --- MATERIALES CONFIGURADOR (BLOQUE 3) - MEJORADOS ---
 function createGemMaterial(colorHex, attColorHex) {
     return new THREE.MeshPhysicalMaterial({ 
         color: colorHex, transmission: params.cryTrans, opacity: params.cryOp, 
@@ -114,14 +117,15 @@ light1.position.set(20, 20, 20); scene.add(light1);
 const light2 = new THREE.PointLight(params.lightColor, params.lightInt);
 light2.position.set(-20, -10, 20); scene.add(light2);
 
-// FOCO SUPERIOR PARA ANILLO 3D
+// FOCO SUPERIOR EXTRA (SOLO PARA DAR BRILLO AL ANILLO DE FOTOS)
 const light3 = new THREE.SpotLight(0xffffff, 1500);
 light3.position.set(0, 40, 0); 
 light3.angle = Math.PI / 4;
 light3.penumbra = 0.5;
 scene.add(light3);
 
-new EXRLoader().load('studio_v2.exr', (texture) => {
+// --- CARGA DE ENTORNO (FIX: USANDO CDN OPTIMIZADO) ---
+new EXRLoader().load('https://dl.polyhaven.org/file/ph-assets/HDRIs/exr/1k/studio_small_09_1k.exr', (texture) => {
     texture.mapping = THREE.EquirectangularReflectionMapping;
     texture.offset.x = params.envRot;
     scene.environment = texture; scene.environmentIntensity = params.envInt;
@@ -144,6 +148,7 @@ const loader = new GLTFLoader();
 const individualStones = []; 
 const contactStones = [];    
 
+// HOME RING
 loader.load('Alianza.glb', (gltf) => {
     const ring = gltf.scene;
     const box = new THREE.Box3().setFromObject(ring);
@@ -153,6 +158,7 @@ loader.load('Alianza.glb', (gltf) => {
     ringContainer.add(ring); ring.rotation.set(1.17, 0, -0.03); 
 });
 
+// CUSTOM RING (CONFIGURATOR)
 let finalRingModel = null;
 loader.load('anillofotos.glb', (gltf) => {
     finalRingModel = gltf.scene;
@@ -281,17 +287,20 @@ window.addEventListener('touchmove', (e) => {
 });
 
 function setVisibility(element, opacity, blur, clickable = false) {
+    if(!element) return;
     element.style.opacity = opacity;
     element.style.filter = `blur(${blur}px)`;
     element.style.pointerEvents = clickable ? "all" : "none";
 }
-function resetLayer(element, baseZ) { element.style.transform = `rotateZ(-90deg) translateZ(${baseZ}px)`; element.style.opacity = 1; }
-function liftLayerDone(element) { element.style.transform = `rotateZ(-90deg) translateZ(500px)`; element.style.opacity = 0; }
+function resetLayer(element, baseZ) { if(element) { element.style.transform = `rotateZ(-90deg) translateZ(${baseZ}px)`; element.style.opacity = 1; } }
+function liftLayerDone(element) { if(element) { element.style.transform = `rotateZ(-90deg) translateZ(500px)`; element.style.opacity = 0; } }
 function updateLuxuryLayer(element, progress, baseZ) {
-    const lift = baseZ + (progress * 450); 
-    const opacity = 1 - Math.pow(progress, 2); 
-    element.style.transform = `rotateZ(-90deg) translateZ(${lift}px)`;
-    element.style.opacity = opacity;
+    if(element) {
+        const lift = baseZ + (progress * 450); 
+        const opacity = 1 - Math.pow(progress, 2); 
+        element.style.transform = `rotateZ(-90deg) translateZ(${lift}px)`;
+        element.style.opacity = opacity;
+    }
 }
 
 resetLayer(layer1, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); resetLayer(layer4, 0);
@@ -306,7 +315,7 @@ window.addEventListener('scroll', () => {
         ringContainer.rotation.y = 0.2 + (p * 0.3);
         homeGroup.position.y = 0; aboutGroup.position.y = -60; contactGroup.position.y = -200; 
         finalRingGroup.visible = false; homeGroup.visible = true;
-        configUI.style.opacity = 0; configUI.style.pointerEvents = "none";
+        if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
         setVisibility(aboutSection, 0, 20); setVisibility(customSection, 0, 0); setVisibility(contactSection, 0, 30);
         if(diamondMat) diamondMat.opacity = 1;
         if(diamondBase) diamondBase.visible = true; 
@@ -333,7 +342,8 @@ window.addEventListener('scroll', () => {
         setVisibility(aboutSection, 1 - pOut, pOut * 20);
         if(diamondMat) diamondMat.opacity = 1 - pOut;
         if(diamondBase) diamondBase.visible = true;
-        customSection.style.opacity = 0; configUI.style.opacity = 0;
+        if(customSection) customSection.style.opacity = 0; 
+        if(configUI) configUI.style.opacity = 0;
         resetLayer(layer1, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); resetLayer(layer4, 0);
         setVisibility(contactSection, 0, 30); contactGroup.position.y = -200;
         finalRingGroup.visible = false;
@@ -344,7 +354,7 @@ window.addEventListener('scroll', () => {
         if(diamondBase) diamondBase.visible = false; 
         setVisibility(aboutSection, 0, 20);
         const pIn = (scrollPercent - 0.50) / 0.10;
-        customSection.style.opacity = pIn;
+        if(customSection) customSection.style.opacity = pIn;
         resetLayer(layer1, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); resetLayer(layer4, 0);
         finalRingGroup.visible = false;
         homeGroup.visible = false;
@@ -354,15 +364,15 @@ window.addEventListener('scroll', () => {
         if(diamondMat) diamondMat.opacity = 0;
         if(diamondBase) diamondBase.visible = false; homeGroup.visible = false; 
         
-        customSection.style.opacity = 1; 
-        interactionZone.classList.add('interactive');
+        if(customSection) customSection.style.opacity = 1; 
+        if(interactionZone) interactionZone.classList.add('interactive');
         setVisibility(contactSection, 0, 30);
         contactGroup.position.y = -200;
 
         const pCustom = (scrollPercent - 0.60) / 0.20; 
         if(pCustom <= 1.0) {
             const step = 1 / 3;
-            configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; 
+            if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
 
             if (pCustom <= step) {
                 let p = pCustom / step; 
@@ -389,7 +399,7 @@ window.addEventListener('scroll', () => {
             resetLayer(layer4, 0);
         } else {
             liftLayerDone(layer1); liftLayerDone(layer2); liftLayerDone(layer3); resetLayer(layer4, 0);
-            configUI.style.opacity = 1; configUI.style.pointerEvents = "auto"; 
+            if(configUI) { configUI.style.opacity = 1; configUI.style.pointerEvents = "auto"; }
             
             if(finalRingModel) {
                 finalRingGroup.visible = true;
@@ -402,12 +412,12 @@ window.addEventListener('scroll', () => {
     else {
         homeGroup.position.y = 200; aboutGroup.position.y = 200;
         homeGroup.visible = false; if(diamondBase) diamondBase.visible = false;
-        interactionZone.classList.remove('interactive');
+        if(interactionZone) interactionZone.classList.remove('interactive');
         
-        configUI.style.opacity = 0; configUI.style.pointerEvents = "none";
+        if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
 
         const pForm = (scrollPercent - 0.92) / 0.08; 
-        customSection.style.opacity = 1 - pForm; 
+        if(customSection) customSection.style.opacity = 1 - pForm; 
         if(finalRingModel) {
             finalRingModel.traverse(c => { if(c.isMesh) c.material.opacity = 1 - pForm; });
         }
