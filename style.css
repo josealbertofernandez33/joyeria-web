@@ -1,48 +1,80 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Lato:wght@300;400&display=swap');
 
 body { 
-    margin: 0; height: 850vh; background: #000; overflow-x: hidden; color: white; 
-    -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; overscroll-behavior: none;
+    margin: 0; 
+    height: 850vh; 
+    background: #000; 
+    overflow-x: hidden; 
+    color: white; 
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
+    overscroll-behavior: none;
 }
+
 canvas { position: fixed; top: 0; left: 0; outline: none; z-index: 1; pointer-events: none; }
 
 header {
-    position: fixed; top: 50px; left: 0; width: 100%; display: flex; justify-content: center; gap: 80px; z-index: 100;
+    position: fixed; top: 50px; left: 0; width: 100%; 
+    display: flex; justify-content: center; gap: 80px; z-index: 100;
     font-family: 'Cinzel', serif; font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,0.7);
     text-transform: uppercase; letter-spacing: 3px; pointer-events: none;
 }
+
 .nav-item { pointer-events: auto; cursor: pointer; transition: color 0.3s ease; position: relative; }
 .nav-item::after { content: ''; position: absolute; width: 0; height: 1px; bottom: -5px; left: 50%; background-color: #d4af37; transition: all 0.3s ease; transform: translateX(-50%); }
 .nav-item:hover { color: #ffffff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
 .nav-item:hover::after { width: 100%; }
 
-/* BLOQUES DE TEXTO */
+/* BLOQUES DE TEXTO (ABOUT) */
 #about-section {
-    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 650px; text-align: center; z-index: 5;
-    font-family: 'Lato', sans-serif; font-weight: 300; pointer-events: none; opacity: 0; filter: blur(20px);
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 80%; max-width: 650px; text-align: center; z-index: 5;
+    font-family: 'Lato', sans-serif; font-weight: 300; 
+    pointer-events: none; opacity: 0; filter: blur(20px);
 }
 #about-section h2 { font-family: 'Cinzel', serif; font-size: 2rem; margin-bottom: 30px; letter-spacing: 4px; color: #fff; }
 #about-section p { font-size: 1.05rem; line-height: 1.9; margin-bottom: 20px; color: rgba(255,255,255,0.85); }
+
+/* ESTILO MARCAS DESTACADAS */
 .brand-highlight { color: #fff; font-weight: 400; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 2px; }
+
+/* ESTILO CITA DESTACADA */
 .highlight-quote {
-    font-family: 'Cinzel', serif; font-size: 1.2rem; color: #d4af37; margin: 35px 0; line-height: 1.5; letter-spacing: 2px;
-    border-top: 1px solid rgba(212, 175, 55, 0.3); border-bottom: 1px solid rgba(212, 175, 55, 0.3); padding: 20px 0; text-shadow: 0 0 10px rgba(0,0,0,0.5);
+    font-family: 'Cinzel', serif;
+    font-size: 1.2rem;
+    color: #d4af37; /* Dorado */
+    margin: 35px 0;
+    line-height: 1.5;
+    letter-spacing: 2px;
+    border-top: 1px solid rgba(212, 175, 55, 0.3);
+    border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+    padding: 20px 0;
+    text-shadow: 0 0 10px rgba(0,0,0,0.5);
 }
-#about-section .signature { font-family: 'Cinzel', serif; font-size: 0.8rem; opacity: 0.6; margin-top: 40px; letter-spacing: 4px; display: inline-block; }
+
+#about-section .signature { 
+    font-family: 'Cinzel', serif; font-size: 0.8rem; opacity: 0.6; 
+    margin-top: 40px; letter-spacing: 4px; display: inline-block; 
+}
 
 /* CUSTOM SECTION */
 #custom-section {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 6; 
-    display: flex; justify-content: center; align-items: center; perspective: 1500px; opacity: 0;
-    pointer-events: none; touch-action: pan-y;
+    display: flex; justify-content: center; align-items: center;
+    perspective: 1500px; opacity: 0;
+    pointer-events: none; 
+    touch-action: pan-y;
 }
 #custom-section.active-interaction { pointer-events: auto; }
 #custom-section.grabbing { cursor: grabbing; }
 
 /* UI PREMIUM */
 #config-ui {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;
-    display: flex; flex-direction: column; justify-content: space-between; padding: 100px 0 50px 0; box-sizing: border-box;
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 10;
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: 120px 0 60px 0; box-sizing: border-box;
     opacity: 0; transition: opacity 0.5s ease;
 }
 
@@ -55,22 +87,27 @@ header {
 }
 #selection-display.visible { opacity: 1; }
 
-.ui-top { width: 100%; display: flex; flex-direction: column; align-items: center; pointer-events: auto; }
-.ui-bottom { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 15px; pointer-events: auto; }
+.ui-top { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px; pointer-events: auto; }
+.ui-bottom { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 25px; pointer-events: auto; padding-bottom: 20px; }
 
-.metal-row { display: flex; gap: 40px; }
-.stone-group { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
-.stone-row { display: flex; gap: 25px; justify-content: center; }
-.divider-line { width: 1px; height: 30px; background: rgba(255,255,255,0.1); margin: 5px 0; }
+.metal-row { display: flex; gap: 30px; background: rgba(0,0,0,0.4); padding: 10px 25px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(5px); }
+.stone-group { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
+.stone-row { display: flex; gap: 20px; justify-content: center; }
 
-.category-title {
-    font-family: 'Lato', sans-serif; font-size: 0.6rem; letter-spacing: 3px; color: rgba(255,255,255,0.4); text-transform: uppercase;
+.config-label {
+    font-family: 'Cinzel', serif; font-size: 0.75rem; color: #d4af37; 
+    text-transform: uppercase; letter-spacing: 3px; text-shadow: 0 0 5px rgba(0,0,0,0.8);
 }
 
 /* BOTONES CON TEXTURAS REALES */
 .config-dot {
     width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
-    background-size: cover; background-position: center; background-repeat: no-repeat;
+    
+    /* ESTO HACE QUE LA IMAGEN SE VEA BIEN */
+    background-size: cover; 
+    background-position: center; 
+    background-repeat: no-repeat;
+    
     border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 5px 15px rgba(0,0,0,0.5);
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; touch-action: manipulation;
 }
@@ -82,7 +119,7 @@ header {
 }
 .config-dot:hover { transform: scale(1.1); border-color: rgba(255,255,255,0.5); }
 
-/* ASIGNACIÓN DE TEXTURAS (NECESITAS CREAR ESTAS IMAGENES) */
+/* ASIGNACIÓN DE TEXTURAS (Rutas corregidas según tu captura) */
 .dot-gold { background-image: url('texture-gold.png'); }
 .dot-silver { background-image: url('texture-silver.png'); }
 .dot-diamond { background-image: url('texture-diamond.png'); }
@@ -107,6 +144,7 @@ header {
 .input-row { display: flex; gap: 30px; margin-bottom: 25px; }
 .input-group { flex: 1; position: relative; text-align: left; margin-bottom: 25px; }
 .styled-input, textarea { width: 100%; background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.3); color: white; font-family: 'Lato', sans-serif; padding: 12px 0; font-size: 1rem; transition: border-color 0.4s ease, background 0.4s; outline: none; box-sizing: border-box; border-radius: 0; }
+.styled-input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.3); font-weight: 300; }
 .styled-input:focus, textarea:focus { border-bottom-color: #ffffff; background: linear-gradient(to bottom, transparent 95%, rgba(255,255,255,0.05) 100%); }
 textarea { resize: none; height: 150px; margin-top: 0; line-height: 1.5; }
 .file-upload-label { display: block; padding: 15px; margin-bottom: 10px; border: 1px dashed rgba(255,255,255,0.3); color: rgba(255,255,255,0.6); font-size: 0.8rem; cursor: pointer; transition: all 0.3s; letter-spacing: 2px; text-transform: uppercase; }
