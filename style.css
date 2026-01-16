@@ -100,64 +100,64 @@ header {
 }
 
 /* ================================================================
-   BOTONES CON TEXTURAS REALES (FIX DEFINITIVO)
-   ================================================================
-*/
+   BOTONES CON TEXTURAS (SOLUCIÓN DEFINITIVA)
+   ================================================================ */
 
-/* 1. CONFIGURACIÓN BASE DEL BOTÓN */
+/* 1. CONFIGURACIÓN BASE */
 .config-dot {
-    width: 40px; height: 40px; /* Un poco más grandes para ver mejor la textura */
+    width: 44px; height: 44px; 
     border-radius: 50%; 
     cursor: pointer;
+    position: relative; 
+    touch-action: manipulation;
     
-    /* PROPIEDADES OBLIGATORIAS PARA QUE SE VEA LA FOTO */
-    background-size: cover !important;
-    background-position: center !important;
-    background-repeat: no-repeat !important;
-    
-    /* Borde sutil */
+    /* Borde y Sombra Base */
     border: 1px solid rgba(255,255,255,0.3); 
     box-shadow: 0 5px 15px rgba(0,0,0,0.5);
     
     transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s;
-    position: relative; 
-    touch-action: manipulation;
+    
+    /* Color base oscuro por si falla la imagen totalmente */
+    background-color: #111; 
 }
 
-/* 2. ESTADO ACTIVO (DOBLE ANILLO SELECCIÓN) */
+/* 2. ESTADO ACTIVO (DOBLE ANILLO) */
 .config-dot.active {
-    transform: scale(1.15); 
-    border-color: rgba(255,255,255,1);
-    box-shadow: 0 0 0 3px rgba(0,0,0,0.9), 0 0 0 4px rgba(212, 175, 55, 0.8); /* Anillo dorado exterior */
+    transform: scale(1.2); 
+    border-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.9), 0 0 0 4px rgba(212, 175, 55, 0.9);
+    z-index: 2;
 }
-.config-dot:hover { transform: scale(1.1); border-color: rgba(255,255,255,0.8); }
+.config-dot:hover { transform: scale(1.1); border-color: #fff; }
 
-/* 3. ASIGNACIÓN DE TEXTURAS (NOMBRE EXACTO DEL ARCHIVO) */
-/* El color de fondo se queda 'detrás' por seguridad, la imagen va encima */
+/* 3. ASIGNACIÓN DE TEXTURAS "TODO EN UNO"
+   Usamos la propiedad 'background' para definir:
+   url() + posición centro + tamaño cover + no-repetir + color de respaldo
+   Todo en una sola línea con !important para que nada lo sobrescriba.
+*/
 
 .dot-gold { 
-    background-image: url('texture-gold.png') !important; 
-    background-color: #ffd700; /* Fallback amarillo */
+    background: url('texture-gold.png') center / cover no-repeat #ffd700 !important; 
 }
+
 .dot-silver { 
-    background-image: url('texture-silver.png') !important; 
-    background-color: #c0c0c0; /* Fallback gris */
+    background: url('texture-silver.png') center / cover no-repeat #c0c0c0 !important; 
 }
+
 .dot-diamond { 
-    background-image: url('texture-diamond.png') !important; 
-    background-color: #e0f7fa; /* Fallback blanco */
+    background: url('texture-diamond.png') center / cover no-repeat #e0f7fa !important; 
 }
+
 .dot-ruby { 
-    background-image: url('texture-ruby.png') !important; 
-    background-color: #b71c1c; /* Fallback rojo */
+    background: url('texture-ruby.png') center / cover no-repeat #b71c1c !important; 
 }
+
 .dot-sapphire { 
-    background-image: url('texture-sapphire.png') !important; 
-    background-color: #0d47a1; /* Fallback azul */
+    background: url('texture-sapphire.png') center / cover no-repeat #0d47a1 !important; 
 }
+
 .dot-emerald { 
-    background-image: url('texture-emerald.png') !important; 
-    background-color: #1b5e20; /* Fallback verde */
+    background: url('texture-emerald.png') center / cover no-repeat #1b5e20 !important; 
 }
 
 /* CAPAS FLOTANTES */
@@ -198,6 +198,6 @@ input[type="file"] { display: none; }
     h2 { font-size: 1.5rem !important; } 
     header { gap: 20px; font-size: 0.65rem; top: 20px; } 
     #config-ui { padding: 100px 20px 60px 20px; }
-    .config-dot { width: 44px; height: 44px; } /* Aún más grandes en móvil para que se luzca la textura */
+    .config-dot { width: 44px; height: 44px; } 
     #selection-display { font-size: 1rem; top: 45%; }
 }
