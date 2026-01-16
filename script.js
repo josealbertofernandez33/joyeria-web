@@ -86,14 +86,14 @@ function createDeepGem(colorHex, absorbColor, iorVal) {
         metalness: 0.0, 
         roughness: 0.0, 
         ior: iorVal, 
-        thickness: 3.0, 
+        thickness: 0.41, 
         dispersion: 0.4, 
         envMapIntensity: 3.5, 
         specularIntensity: 1.0,
         clearcoat: 1.0, 
         side: THREE.DoubleSide, 
         attenuationColor: new THREE.Color(absorbColor), 
-        attenuationDistance: 1.5 
+        attenuationDistance: 10.0 
     });
 }
 
@@ -108,7 +108,7 @@ const diamondStoneMat = new THREE.MeshPhysicalMaterial({
     metalness: 0.0, 
     roughness: 0.0, 
     ior: 2.42, 
-    thickness: 2.5, 
+    thickness: 0.8, 
     dispersion: 0.8, 
     envMapIntensity: 4.5, 
     specularIntensity: 1.0, 
@@ -116,7 +116,7 @@ const diamondStoneMat = new THREE.MeshPhysicalMaterial({
     side: THREE.DoubleSide, 
     flatShading: false, 
     attenuationColor: new THREE.Color(0xffffff), 
-    attenuationDistance: 10.0 
+    attenuationDistance: 100.0 
 });
 
 const goldMat = new THREE.MeshPhysicalMaterial({ color: 0xFFC96F, metalness: 1.0, roughness: 0.1, envMapIntensity: 2.5, clearcoat: 0.8, clearcoatRoughness: 0.1 });
