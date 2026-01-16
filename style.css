@@ -99,55 +99,65 @@ header {
     text-transform: uppercase; letter-spacing: 3px; text-shadow: 0 0 5px rgba(0,0,0,0.8);
 }
 
-/* BOTONES BASE */
-.config-dot {
-    width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
-    border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; touch-action: manipulation;
-    
-    /* Configuración base para el fondo */
-    background-color: #222; 
-    background-position: center;
-    background-size: cover;
-    background-repeat: no-repeat;
-}
-
-/* ESTADO ACTIVO (DOBLE ANILLO) */
-.config-dot.active {
-    transform: scale(1.15); border-color: rgba(255,255,255,0.9);
-    box-shadow: 0 0 0 4px rgba(0,0,0,0.8), 0 0 0 5px rgba(212, 175, 55, 0.6); 
-}
-.config-dot:hover { transform: scale(1.1); border-color: rgba(255,255,255,0.5); }
-
-/* ASIGNACIÓN DE TEXTURAS "NUCLEAR" 
-   Usamos !important y background completo para asegurar que nada lo bloquee.
-   He añadido un color de respaldo VISIBLE (ej: Gold se verá amarillo si falla la imagen)
-   para que sepas si es error de carga o error de código.
+/* ================================================================
+   BOTONES CON TEXTURAS REALES (FIX DEFINITIVO)
+   ================================================================
 */
 
+/* 1. CONFIGURACIÓN BASE DEL BOTÓN */
+.config-dot {
+    width: 40px; height: 40px; /* Un poco más grandes para ver mejor la textura */
+    border-radius: 50%; 
+    cursor: pointer;
+    
+    /* PROPIEDADES OBLIGATORIAS PARA QUE SE VEA LA FOTO */
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    
+    /* Borde sutil */
+    border: 1px solid rgba(255,255,255,0.3); 
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s;
+    position: relative; 
+    touch-action: manipulation;
+}
+
+/* 2. ESTADO ACTIVO (DOBLE ANILLO SELECCIÓN) */
+.config-dot.active {
+    transform: scale(1.15); 
+    border-color: rgba(255,255,255,1);
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.9), 0 0 0 4px rgba(212, 175, 55, 0.8); /* Anillo dorado exterior */
+}
+.config-dot:hover { transform: scale(1.1); border-color: rgba(255,255,255,0.8); }
+
+/* 3. ASIGNACIÓN DE TEXTURAS (NOMBRE EXACTO DEL ARCHIVO) */
+/* El color de fondo se queda 'detrás' por seguridad, la imagen va encima */
+
 .dot-gold { 
-    background: url('./texture-gold.png') center/cover no-repeat !important; 
-    background-color: #d4af37 !important; /* Si ves amarillo plano, la imagen falla */
+    background-image: url('texture-gold.png') !important; 
+    background-color: #ffd700; /* Fallback amarillo */
 }
 .dot-silver { 
-    background: url('./texture-silver.png') center/cover no-repeat !important; 
-    background-color: #c0c0c0 !important; /* Si ves gris plano, la imagen falla */
+    background-image: url('texture-silver.png') !important; 
+    background-color: #c0c0c0; /* Fallback gris */
 }
 .dot-diamond { 
-    background: url('./texture-diamond.png') center/cover no-repeat !important; 
-    background-color: #e0f7fa !important; /* Si ves blanco azulado, la imagen falla */
+    background-image: url('texture-diamond.png') !important; 
+    background-color: #e0f7fa; /* Fallback blanco */
 }
 .dot-ruby { 
-    background: url('./texture-ruby.png') center/cover no-repeat !important; 
-    background-color: #b71c1c !important; /* Si ves rojo, la imagen falla */
+    background-image: url('texture-ruby.png') !important; 
+    background-color: #b71c1c; /* Fallback rojo */
 }
 .dot-sapphire { 
-    background: url('./texture-sapphire.png') center/cover no-repeat !important; 
-    background-color: #0d47a1 !important; /* Si ves azul, la imagen falla */
+    background-image: url('texture-sapphire.png') !important; 
+    background-color: #0d47a1; /* Fallback azul */
 }
 .dot-emerald { 
-    background: url('./texture-emerald.png') center/cover no-repeat !important; 
-    background-color: #1b5e20 !important; /* Si ves verde, la imagen falla */
+    background-image: url('texture-emerald.png') !important; 
+    background-color: #1b5e20; /* Fallback verde */
 }
 
 /* CAPAS FLOTANTES */
@@ -188,6 +198,6 @@ input[type="file"] { display: none; }
     h2 { font-size: 1.5rem !important; } 
     header { gap: 20px; font-size: 0.65rem; top: 20px; } 
     #config-ui { padding: 100px 20px 60px 20px; }
-    .config-dot { width: 42px; height: 42px; } /* Más grande en móvil */
+    .config-dot { width: 44px; height: 44px; } /* Aún más grandes en móvil para que se luzca la textura */
     #selection-display { font-size: 1rem; top: 45%; }
 }
