@@ -108,24 +108,9 @@ function createGemMaterial(colorHex, attColorHex, iorVal) {
 const emeraldMat = createGemMaterial(0x00ff00, 0x003300, 1.57); 
 const rubyMat = createGemMaterial(0xff0000, 0x440000, 1.76);    
 const sapphireMat = createGemMaterial(0x0000ff, 0x000044, 1.76); 
-
-// DIAMANTE CONFIGURADOR (Igual que las piedras flotantes)
+// DIAMANTE CRYSTAL
 const diamondStoneMat = new THREE.MeshPhysicalMaterial({ 
-    color: params.cryColor, 
-    transmission: params.cryTrans, 
-    opacity: params.cryOp, 
-    metalness: 0.0, 
-    roughness: 0.0, 
-    ior: params.cryIOR, 
-    thickness: params.cryThick, 
-    dispersion: params.cryDisp, 
-    envMapIntensity: params.cryEnv, 
-    specularIntensity: params.crySpec, 
-    clearcoat: params.cryClear, 
-    side: THREE.DoubleSide, 
-    flatShading: params.cryFlat, 
-    attenuationColor: new THREE.Color(params.cryAttColor), 
-    attenuationDistance: params.cryAttDist 
+    color: params.cryColor, transmission: params.cryTrans, opacity: params.cryOp, metalness: 0.0, roughness: 0.0, ior: params.cryIOR, thickness: params.cryThick, dispersion: params.cryDisp, envMapIntensity: params.cryEnv, specularIntensity: params.crySpec, clearcoat: params.cryClear, side: THREE.DoubleSide, flatShading: params.cryFlat, attenuationColor: new THREE.Color(params.cryAttColor), attenuationDistance: params.cryAttDist 
 });
 
 const goldMat = new THREE.MeshPhysicalMaterial({ color: 0xFFC96F, metalness: 1.0, roughness: 0.1, envMapIntensity: 2.5, clearcoat: 0.8, clearcoatRoughness: 0.1 });
@@ -242,7 +227,6 @@ loader.load('diamante.glb', (gltf) => {
     aboutGroup.add(diamond); diamondBase = diamond;
 });
 
-// --- INTERACTIVIDAD ---
 let isDragging = false;
 let previousMousePosition = { x: 0, y: 0 };
 const interactionZone = document.getElementById('custom-section');
@@ -308,7 +292,7 @@ window.addEventListener('scroll', () => {
     
     if (scrollPercent > 0.60 && scrollPercent < 0.92) { 
         if(customSection) customSection.classList.add('active-interaction');
-        if(layer4) layer4.style.opacity = 0; // OCULTAR RECTANGULO
+        if(layer4) layer4.style.opacity = 0; 
     } else { 
         if(customSection) customSection.classList.remove('active-interaction'); 
         if(layer4) layer4.style.opacity = 1;
@@ -344,32 +328,14 @@ window.addEventListener('scroll', () => {
         setVisibility(contactSection, 0, 30); contactGroup.position.y = -200;
         if(contactSection) contactSection.classList.remove('active'); 
         
-        // --- SECUENCIA DE ENTRADA AJUSTADA (3 PASOS + ANILLO) ---
         const pCustom = (scrollPercent - 0.60) / 0.20; 
         if(pCustom <= 1.0) {
             const step = 1 / 4; 
             if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
-            
-            if (pCustom <= step) { 
-                let p = pCustom / step; updateLuxuryLayer(layer1, p, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); finalRingGroup.visible = false; 
-            } 
-            else if (pCustom <= step * 2) { 
-                liftLayerDone(layer1); let p = (pCustom - step) / step; updateLuxuryLayer(layer2, p, 60); resetLayer(layer3, 30); finalRingGroup.visible = false; 
-            } 
-            else if (pCustom <= step * 3) {
-                // L3 se va LEJOS
-                liftLayerDone(layer1); liftLayerDone(layer2); let p = (pCustom - step*2) / step; updateLuxuryLayer(layer3, p, 30); finalRingGroup.visible = false;
-            } 
-            else {
-                // ANILLO APARECE
-                liftLayerDone(layer1); liftLayerDone(layer2); liftLayerDone(layer3); 
-                let p = (pCustom - step*3) / step; 
-                if(finalRingModel) { 
-                    finalRingGroup.visible = true; 
-                    finalRingModel.traverse(c => { if(c.isMesh) c.material.opacity = p; }); 
-                    let scale = 0.8 + (p * 0.2); finalRingModel.scale.set(scale, scale, scale); 
-                }
-            }
+            if (pCustom <= step) { let p = pCustom / step; updateLuxuryLayer(layer1, p, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); finalRingGroup.visible = false; } 
+            else if (pCustom <= step * 2) { liftLayerDone(layer1); let p = (pCustom - step) / step; updateLuxuryLayer(layer2, p, 60); resetLayer(layer3, 30); finalRingGroup.visible = false; } 
+            else if (pCustom <= step * 3) { liftLayerDone(layer1); liftLayerDone(layer2); let p = (pCustom - step*2) / step; updateLuxuryLayer(layer3, p, 30); finalRingGroup.visible = false; }
+            else { liftLayerDone(layer1); liftLayerDone(layer2); liftLayerDone(layer3); let p = (pCustom - step*3) / step; if(finalRingModel) { finalRingGroup.visible = true; finalRingModel.traverse(c => { if(c.isMesh) c.material.opacity = p; }); let scale = 0.8 + (p * 0.2); finalRingModel.scale.set(scale, scale, scale); } }
             if(layer4) layer4.style.opacity = 0;
         } else {
             liftLayerDone(layer1); liftLayerDone(layer2); liftLayerDone(layer3); if(layer4) layer4.style.opacity = 0;

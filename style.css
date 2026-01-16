@@ -39,7 +39,7 @@ header {
 /* ESTILO MARCAS DESTACADAS */
 .brand-highlight { color: #fff; font-weight: 400; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 2px; }
 
-/* ESTILO CITA DESTACADA (NUEVO) */
+/* ESTILO CITA DESTACADA */
 .highlight-quote {
     font-family: 'Cinzel', serif;
     font-size: 1.2rem;
