@@ -78,45 +78,19 @@ const crystalMat = new THREE.MeshPhysicalMaterial({ color: params.cryColor, tran
 const diamondMat = new THREE.MeshPhysicalMaterial({ color: params.d_Tint, transmission: params.d_Trans, opacity: 1.0, metalness: 0.0, roughness: 0.0, ior: params.d_IOR, thickness: params.d_Thick, dispersion: params.d_Disp, envMapIntensity: params.d_Env, specularIntensity: params.d_Spec, side: THREE.DoubleSide, flatShading: false, attenuationColor: new THREE.Color(params.d_AbsColor), attenuationDistance: params.d_AbsDist, transparent: true });
 const silverMat = new THREE.MeshPhysicalMaterial({ color: params.metalColor, metalness: params.metalMetal, roughness: params.metalRough, envMapIntensity: 1.0 });
 
-function createDeepGem(colorHex, absorbColor, iorVal) {
+function createGemMaterial(colorHex, attColorHex, iorVal) {
     return new THREE.MeshPhysicalMaterial({ 
-        color: colorHex, 
-        transmission: 1.0, 
-        opacity: 1.0, 
-        metalness: 0.0, 
-        roughness: 0.0, 
-        ior: iorVal, 
-        thickness: 0.41, 
-        dispersion: 0.4, 
-        envMapIntensity: 3.5, 
-        specularIntensity: 1.0,
-        clearcoat: 1.0, 
-        side: THREE.DoubleSide, 
-        attenuationColor: new THREE.Color(absorbColor), 
-        attenuationDistance: 10.0 
+        color: colorHex, transmission: 0.98, opacity: 1.0, metalness: 0.0, roughness: 0.0, 
+        ior: iorVal, thickness: 2.5, dispersion: 0.6, envMapIntensity: 2.0, specularIntensity: 1.0,
+        clearcoat: 1.0, side: THREE.DoubleSide, attenuationColor: new THREE.Color(attColorHex), attenuationDistance: 5.0 
     });
 }
 
-const emeraldMat = createDeepGem(0x00ff66, 0x002200, 1.6); 
-const rubyMat = createDeepGem(0xff0022, 0x440000, 1.76);    
-const sapphireMat = createDeepGem(0x1133ff, 0x000044, 1.76); 
-
+const emeraldMat = createGemMaterial(0x00ff00, 0x003300, 1.57); 
+const rubyMat = createGemMaterial(0xff0000, 0x440000, 1.76);    
+const sapphireMat = createGemMaterial(0x0000ff, 0x000044, 1.76); 
 const diamondStoneMat = new THREE.MeshPhysicalMaterial({ 
-    color: 0xffffff, 
-    transmission: 1.0, 
-    opacity: 1.0, 
-    metalness: 0.0, 
-    roughness: 0.0, 
-    ior: 2.42, 
-    thickness: 0.8, 
-    dispersion: 0.8, 
-    envMapIntensity: 4.5, 
-    specularIntensity: 1.0, 
-    clearcoat: 1.0, 
-    side: THREE.DoubleSide, 
-    flatShading: false, 
-    attenuationColor: new THREE.Color(0xffffff), 
-    attenuationDistance: 100.0 
+    color: params.cryColor, transmission: params.cryTrans, opacity: params.cryOp, metalness: 0.0, roughness: 0.0, ior: params.cryIOR, thickness: params.cryThick, dispersion: params.cryDisp, envMapIntensity: params.cryEnv, specularIntensity: params.crySpec, clearcoat: params.cryClear, side: THREE.DoubleSide, flatShading: params.cryFlat, attenuationColor: new THREE.Color(params.cryAttColor), attenuationDistance: params.cryAttDist 
 });
 
 const goldMat = new THREE.MeshPhysicalMaterial({ color: 0xFFC96F, metalness: 1.0, roughness: 0.1, envMapIntensity: 2.5, clearcoat: 0.8, clearcoatRoughness: 0.1 });
