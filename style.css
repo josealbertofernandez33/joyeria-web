@@ -99,40 +99,60 @@ header {
     text-transform: uppercase; letter-spacing: 3px; text-shadow: 0 0 5px rgba(0,0,0,0.8);
 }
 
-/* BOTONES CON TEXTURAS REALES */
+/* BOTONES BASE */
 .config-dot {
     width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
-    
-    /* ESTO ASEGURA QUE LA IMAGEN SE VEA COMPLETA */
-    background-size: cover; 
-    background-position: center; 
-    background-repeat: no-repeat;
-    
-    background-color: #222; /* Color de fondo de seguridad por si tarda en cargar */
-    
-    border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 5px 15px rgba(0,0,0,0.5);
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; touch-action: manipulation;
+    
+    /* Configuración base para el fondo */
+    background-color: #222; 
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
 }
 
 /* ESTADO ACTIVO (DOBLE ANILLO) */
 .config-dot.active {
     transform: scale(1.15); border-color: rgba(255,255,255,0.9);
-    box-shadow: 0 0 0 4px rgba(0,0,0,0.8), 0 0 0 5px rgba(212, 175, 55, 0.6); /* Anillo dorado fino */
+    box-shadow: 0 0 0 4px rgba(0,0,0,0.8), 0 0 0 5px rgba(212, 175, 55, 0.6); 
 }
 .config-dot:hover { transform: scale(1.1); border-color: rgba(255,255,255,0.5); }
 
-/* ASIGNACIÓN DE TEXTURAS (RUTAS EXACTAS A TU CARPETA) */
-.dot-gold { background-image: url('texture-gold.png'); }
-.dot-silver { background-image: url('texture-silver.png'); }
-.dot-diamond { background-image: url('texture-diamond.png'); }
-.dot-ruby { background-image: url('texture-ruby.png'); }
-.dot-sapphire { background-image: url('texture-sapphire.png'); }
-.dot-emerald { background-image: url('texture-emerald.png'); }
+/* ASIGNACIÓN DE TEXTURAS "NUCLEAR" 
+   Usamos !important y background completo para asegurar que nada lo bloquee.
+   He añadido un color de respaldo VISIBLE (ej: Gold se verá amarillo si falla la imagen)
+   para que sepas si es error de carga o error de código.
+*/
+
+.dot-gold { 
+    background: url('./texture-gold.png') center/cover no-repeat !important; 
+    background-color: #d4af37 !important; /* Si ves amarillo plano, la imagen falla */
+}
+.dot-silver { 
+    background: url('./texture-silver.png') center/cover no-repeat !important; 
+    background-color: #c0c0c0 !important; /* Si ves gris plano, la imagen falla */
+}
+.dot-diamond { 
+    background: url('./texture-diamond.png') center/cover no-repeat !important; 
+    background-color: #e0f7fa !important; /* Si ves blanco azulado, la imagen falla */
+}
+.dot-ruby { 
+    background: url('./texture-ruby.png') center/cover no-repeat !important; 
+    background-color: #b71c1c !important; /* Si ves rojo, la imagen falla */
+}
+.dot-sapphire { 
+    background: url('./texture-sapphire.png') center/cover no-repeat !important; 
+    background-color: #0d47a1 !important; /* Si ves azul, la imagen falla */
+}
+.dot-emerald { 
+    background: url('./texture-emerald.png') center/cover no-repeat !important; 
+    background-color: #1b5e20 !important; /* Si ves verde, la imagen falla */
+}
 
 /* CAPAS FLOTANTES */
 .stack-wrapper { position: relative; width: 350px; height: 450px; transform-style: preserve-3d; transform: rotateX(55deg) rotateZ(35deg); pointer-events: none; }
 .layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 2px; background-size: contain; background-repeat: no-repeat; background-position: center; background-color: transparent; box-shadow: -15px 15px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255, 255, 255, 0.1); will-change: transform, opacity; }
-/* OCULTAR CAPA 4 (LINEAS MOLESTAS) */
 #l4 { border: none !important; box-shadow: none !important; background: none !important; }
 #l1 { background-image: url('1.png'); z-index: 4; } 
 #l2 { background-image: url('2.png'); z-index: 3; }
