@@ -50,12 +50,12 @@ const params = {
     bgColor: 0x000000, floorColor: 0x998133, maskOpacity: 1.0,
     camFOV: 45, camPos: { x: 0, y: 0, z: 90 }, camRot: { x: 0, y: 0, z: -0.2 },
     
-    // AQUÍ ESTÁ EL CAMBIO PARA QUE SE VEA COMO LA IMAGEN IZQUIERDA
-    lightInt: 600,      // BAJADO DE 900
+    // LUCES CONTRASTADAS
+    lightInt: 600,      
     lightColor: 0xffffff, 
     lightSpeed: 0.5, 
     
-    envInt: 0.4,        // BAJADO DE 1.0 (Esto da el contraste y profundidad)
+    envInt: 0.4,        
     envRot: 0.2,   
     
     cryFlat: false, cryTrans: 1.0, cryOp: 1.0, cryIOR: 2.463, cryThick: 0.41, 
@@ -108,7 +108,25 @@ function createGemMaterial(colorHex, attColorHex, iorVal) {
 const emeraldMat = createGemMaterial(0x00ff00, 0x003300, 1.57); 
 const rubyMat = createGemMaterial(0xff0000, 0x440000, 1.76);    
 const sapphireMat = createGemMaterial(0x0000ff, 0x000044, 1.76); 
-const diamondStoneMat = createGemMaterial(0xffffff, 0xffffff, 2.42); 
+
+// DIAMANTE CONFIGURADOR (Igual que las piedras flotantes)
+const diamondStoneMat = new THREE.MeshPhysicalMaterial({ 
+    color: params.cryColor, 
+    transmission: params.cryTrans, 
+    opacity: params.cryOp, 
+    metalness: 0.0, 
+    roughness: 0.0, 
+    ior: params.cryIOR, 
+    thickness: params.cryThick, 
+    dispersion: params.cryDisp, 
+    envMapIntensity: params.cryEnv, 
+    specularIntensity: params.crySpec, 
+    clearcoat: params.cryClear, 
+    side: THREE.DoubleSide, 
+    flatShading: params.cryFlat, 
+    attenuationColor: new THREE.Color(params.cryAttColor), 
+    attenuationDistance: params.cryAttDist 
+});
 
 const goldMat = new THREE.MeshPhysicalMaterial({ color: 0xFFC96F, metalness: 1.0, roughness: 0.1, envMapIntensity: 2.5, clearcoat: 0.8, clearcoatRoughness: 0.1 });
 const stoneOptions = { 'diamond': diamondStoneMat, 'ruby': rubyMat, 'sapphire': sapphireMat, 'emerald': emeraldMat };
