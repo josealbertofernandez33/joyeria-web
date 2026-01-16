@@ -45,17 +45,17 @@ function renderFileList() {
     }
 }
 
-// --- PARÁMETROS ORIGINALES (NO TOCAR) ---
+// --- PARÁMETROS CORREGIDOS (LUCES OSCURAS) ---
 const params = {
     bgColor: 0x000000, floorColor: 0x998133, maskOpacity: 1.0,
     camFOV: 45, camPos: { x: 0, y: 0, z: 90 }, camRot: { x: 0, y: 0, z: -0.2 },
     
-    // VALORES ORIGINALES
-    lightInt: 900, 
+    // AQUÍ ESTÁ EL CAMBIO PARA QUE SE VEA COMO LA IMAGEN IZQUIERDA
+    lightInt: 600,      // BAJADO DE 900
     lightColor: 0xffffff, 
     lightSpeed: 0.5, 
     
-    envInt: 1.0,   // Original
+    envInt: 0.4,        // BAJADO DE 1.0 (Esto da el contraste y profundidad)
     envRot: 0.2,   
     
     cryFlat: false, cryTrans: 1.0, cryOp: 1.0, cryIOR: 2.463, cryThick: 0.41, 
@@ -197,11 +197,11 @@ loader.load('piedras.glb', (gltf) => {
     stonesClone.position.set(0, 0, -15); stonesClone.scale.set(0.8, 0.8, 0.8); stonesClone.rotation.set(0.5, 0.5, 0); contactGroup.add(stonesClone);
 });
 
-// --- ESPEJO INTELIGENTE (REFLECTOR SOLO EN PC) ---
+// --- LÓGICA DEL SUELO (MODIFICADA: SIN ESPEJO EN MÓVIL) ---
 const isMobile = window.innerWidth < 768;
 
 if (!isMobile) {
-    // EN PC: Espejo Real (Tu configuración original)
+    // SOLO EN PC: SUELO "ESPEJO REAL"
     const groundMirror = new Reflector(new THREE.PlaneGeometry(800, 800), { clipBias: 0.003, textureWidth: window.innerWidth*window.devicePixelRatio, textureHeight: window.innerHeight*window.devicePixelRatio, color: params.floorColor });
     groundMirror.rotation.x = -Math.PI/2; groundMirror.position.y = -7; 
     homeGroup.add(groundMirror);
@@ -212,7 +212,7 @@ if (!isMobile) {
     const maskPlane = new THREE.Mesh(new THREE.PlaneGeometry(800, 800), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, opacity: params.maskOpacity }));
     maskPlane.rotation.x = -Math.PI/2; maskPlane.position.y = -6.99; homeGroup.add(maskPlane);
 }
-// EN MÓVIL: NADA (Esto quita el halo dorado y mejora rendimiento)
+// EN MÓVIL: NO SE AÑADE NADA (Quita halo dorado)
 
 let diamondBase = null;
 loader.load('diamante.glb', (gltf) => {
@@ -224,6 +224,7 @@ loader.load('diamante.glb', (gltf) => {
     aboutGroup.add(diamond); diamondBase = diamond;
 });
 
+// --- INTERACTIVIDAD ---
 let isDragging = false;
 let previousMousePosition = { x: 0, y: 0 };
 const interactionZone = document.getElementById('custom-section');
@@ -243,7 +244,7 @@ window.addEventListener('mousemove', (e) => {
     }
 });
 
-// INTERACCION TACTIL (MOVIL)
+// TACTIL MOVIL (ZONAS DE SEGURIDAD)
 interactionZone.addEventListener('touchstart', (e) => { 
     if (e.target.closest('.config-dot')) return;
     
@@ -325,27 +326,24 @@ window.addEventListener('scroll', () => {
         setVisibility(contactSection, 0, 30); contactGroup.position.y = -200;
         if(contactSection) contactSection.classList.remove('active'); 
         
-        // --- SECUENCIA DE ENTRADA AJUSTADA PARA EVITAR SOLAPAMIENTO ---
+        // --- SECUENCIA DE ENTRADA AJUSTADA (3 PASOS + ANILLO) ---
         const pCustom = (scrollPercent - 0.60) / 0.20; 
         if(pCustom <= 1.0) {
-            // Dividimos el scroll en 3 pasos: L1, L2, L3. Y luego anillo.
             const step = 1 / 4; 
             if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
             
             if (pCustom <= step) { 
-                // L1 se va
                 let p = pCustom / step; updateLuxuryLayer(layer1, p, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); finalRingGroup.visible = false; 
             } 
             else if (pCustom <= step * 2) { 
-                // L2 se va
                 liftLayerDone(layer1); let p = (pCustom - step) / step; updateLuxuryLayer(layer2, p, 60); resetLayer(layer3, 30); finalRingGroup.visible = false; 
             } 
             else if (pCustom <= step * 3) {
-                // L3 se va (SIN ANILLO AUN)
+                // L3 se va LEJOS
                 liftLayerDone(layer1); liftLayerDone(layer2); let p = (pCustom - step*2) / step; updateLuxuryLayer(layer3, p, 30); finalRingGroup.visible = false;
             } 
             else {
-                // AHORA entra el anillo (L3 ya se fue)
+                // ANILLO APARECE
                 liftLayerDone(layer1); liftLayerDone(layer2); liftLayerDone(layer3); 
                 let p = (pCustom - step*3) / step; 
                 if(finalRingModel) { 
