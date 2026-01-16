@@ -59,32 +59,36 @@
 
         <div id="config-ui">
             
+            <div id="selection-display">CONFIGURE YOUR PIECE</div>
+
             <div class="ui-top">
-                <div class="config-label">Metal Selection</div>
                 <div class="metal-row">
-                    <div class="config-dot dot-gold" onclick="updateRingConfig('metal', 'gold')" title="18k Gold"></div>
-                    <div class="config-dot dot-silver" onclick="updateRingConfig('metal', 'silver')" title="Sterling Silver"></div>
+                    <div class="config-dot dot-gold" onclick="updateRingConfig('metal', 'gold', this, '18K YELLOW GOLD')"></div>
+                    <div class="config-dot dot-silver" onclick="updateRingConfig('metal', 'silver', this, 'STERLING SILVER')"></div>
                 </div>
             </div>
 
             <div class="ui-bottom">
-                <div class="stone-group">
-                    <div class="config-label">Center Stone</div>
-                    <div class="stone-row">
-                        <div class="config-dot dot-diamond" onclick="updateRingConfig('main', 'diamond')"></div>
-                        <div class="config-dot dot-ruby" onclick="updateRingConfig('main', 'ruby')"></div>
-                        <div class="config-dot dot-sapphire" onclick="updateRingConfig('main', 'sapphire')"></div>
-                        <div class="config-dot dot-emerald" onclick="updateRingConfig('main', 'emerald')"></div>
+                
+                <div class="stone-category">
+                    <div class="category-title">CENTER STONE</div>
+                    <div class="stone-row center-stones">
+                        <div class="config-dot dot-diamond" onclick="updateRingConfig('main', 'diamond', this, 'FLAWLESS DIAMOND')"></div>
+                        <div class="config-dot dot-ruby" onclick="updateRingConfig('main', 'ruby', this, 'PIGEON BLOOD RUBY')"></div>
+                        <div class="config-dot dot-sapphire" onclick="updateRingConfig('main', 'sapphire', this, 'ROYAL BLUE SAPPHIRE')"></div>
+                        <div class="config-dot dot-emerald" onclick="updateRingConfig('main', 'emerald', this, 'COLOMBIAN EMERALD')"></div>
                     </div>
                 </div>
                 
-                <div class="stone-group">
-                    <div class="config-label">Side Stones</div>
-                    <div class="stone-row">
-                        <div class="config-dot dot-diamond" onclick="updateRingConfig('side', 'diamond')"></div>
-                        <div class="config-dot dot-ruby" onclick="updateRingConfig('side', 'ruby')"></div>
-                        <div class="config-dot dot-sapphire" onclick="updateRingConfig('side', 'sapphire')"></div>
-                        <div class="config-dot dot-emerald" onclick="updateRingConfig('side', 'emerald')"></div>
+                <div class="divider-line"></div>
+
+                <div class="stone-category">
+                    <div class="category-title">SIDE ACCENTS</div>
+                    <div class="stone-row side-stones">
+                        <div class="config-dot dot-diamond" onclick="updateRingConfig('side', 'diamond', this, 'DIAMOND ACCENTS')"></div>
+                        <div class="config-dot dot-ruby" onclick="updateRingConfig('side', 'ruby', this, 'RUBY ACCENTS')"></div>
+                        <div class="config-dot dot-sapphire" onclick="updateRingConfig('side', 'sapphire', this, 'SAPPHIRE ACCENTS')"></div>
+                        <div class="config-dot dot-emerald" onclick="updateRingConfig('side', 'emerald', this, 'EMERALD ACCENTS')"></div>
                     </div>
                 </div>
             </div>

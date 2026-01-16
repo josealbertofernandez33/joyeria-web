@@ -3,13 +3,11 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { Reflector } from 'three/addons/objects/Reflector.js';
 
-// --- NAVEGACIÓN ---
 window.scrollToPercent = function(percentage) {
     const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
     window.scrollTo({ top: totalHeight * percentage, behavior: 'smooth' });
 }
 
-// --- GESTIÓN DE ARCHIVOS FORMULARIO ---
 const fileInput = document.getElementById('attachment');
 const fileListDisplay = document.getElementById('file-list');
 const dt = new DataTransfer();
@@ -33,24 +31,17 @@ function renderFileList() {
     for (let i = 0; i < dt.files.length; i++) {
         const file = dt.files[i];
         const item = document.createElement('div'); item.className = 'file-item';
-        if (file.type.startsWith('image/')) {
-            const img = document.createElement('img'); img.src = URL.createObjectURL(file); img.className = 'file-preview-img';
-            img.onload = () => URL.revokeObjectURL(img.src); item.appendChild(img);
-        } else {
-            const icon = document.createElement('div'); icon.className = 'file-icon'; icon.innerText = "PDF"; item.appendChild(icon);
-        }
         const name = document.createElement('span'); name.className = 'file-name'; name.textContent = file.name; item.appendChild(name);
-        const size = document.createElement('span'); size.className = 'file-size'; size.textContent = (file.size/1024/1024).toFixed(2)+" MB"; item.appendChild(size);
         fileListDisplay.appendChild(item);
     }
 }
 
-// --- PARÁMETROS CORREGIDOS (LUCES OSCURAS) ---
+// --- PARÁMETROS ---
 const params = {
     bgColor: 0x000000, floorColor: 0x998133, maskOpacity: 1.0,
     camFOV: 45, camPos: { x: 0, y: 0, z: 90 }, camRot: { x: 0, y: 0, z: -0.2 },
     
-    // LUCES CONTRASTADAS
+    // Luces contrastadas (OK)
     lightInt: 600,      
     lightColor: 0xffffff, 
     lightSpeed: 0.5, 
@@ -87,7 +78,6 @@ camera.rotation.set(params.camRot.x, params.camRot.y, params.camRot.z);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-// CALIDAD ORIGINAL RESTAURADA (2x)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); 
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0; 
@@ -108,7 +98,6 @@ function createGemMaterial(colorHex, attColorHex, iorVal) {
 const emeraldMat = createGemMaterial(0x00ff00, 0x003300, 1.57); 
 const rubyMat = createGemMaterial(0xff0000, 0x440000, 1.76);    
 const sapphireMat = createGemMaterial(0x0000ff, 0x000044, 1.76); 
-// DIAMANTE CRYSTAL
 const diamondStoneMat = new THREE.MeshPhysicalMaterial({ 
     color: params.cryColor, transmission: params.cryTrans, opacity: params.cryOp, metalness: 0.0, roughness: 0.0, ior: params.cryIOR, thickness: params.cryThick, dispersion: params.cryDisp, envMapIntensity: params.cryEnv, specularIntensity: params.crySpec, clearcoat: params.cryClear, side: THREE.DoubleSide, flatShading: params.cryFlat, attenuationColor: new THREE.Color(params.cryAttColor), attenuationDistance: params.cryAttDist 
 });
@@ -174,12 +163,18 @@ loader.load('anillofotos.glb', (gltf) => {
     finalRingGroup.add(finalRingModel);
 });
 
-window.updateRingConfig = function(type, value) {
+// --- LÓGICA UI Y CONFIGURACIÓN ---
+const displayLabel = document.getElementById('selection-display');
+let displayTimeout;
+
+window.updateRingConfig = function(type, value, element, displayName) {
     if(!finalRingModel) return;
     let newMat;
     if(type === 'main' || type === 'side') newMat = stoneOptions[value];
     if(type === 'metal') newMat = metalOptions[value];
     if(!newMat) return;
+
+    // ACTUALIZAR ANILLO
     finalRingModel.traverse(c => {
         if(c.isMesh) {
             let shouldChange = false;
@@ -189,6 +184,26 @@ window.updateRingConfig = function(type, value) {
             if(shouldChange) { const currentOp = c.material.opacity; c.material = newMat.clone(); c.material.transparent = true; c.material.opacity = currentOp; }
         }
     });
+
+    // ACTUALIZAR UI (ANILLO SELECCIÓN)
+    // Quitar active de los hermanos
+    if(element) {
+        const siblings = element.parentNode.children;
+        for(let i=0; i<siblings.length; i++) siblings[i].classList.remove('active');
+        element.classList.add('active');
+    }
+
+    // MOSTRAR TEXTO BONITO
+    if(displayLabel && displayName) {
+        displayLabel.textContent = displayName;
+        displayLabel.classList.add('visible');
+        
+        // Ocultar despues de 3 segundos
+        clearTimeout(displayTimeout);
+        displayTimeout = setTimeout(() => {
+            displayLabel.classList.remove('visible');
+        }, 3000);
+    }
 };
 
 loader.load('piedras.glb', (gltf) => {
@@ -200,11 +215,10 @@ loader.load('piedras.glb', (gltf) => {
     stonesClone.position.set(0, 0, -15); stonesClone.scale.set(0.8, 0.8, 0.8); stonesClone.rotation.set(0.5, 0.5, 0); contactGroup.add(stonesClone);
 });
 
-// --- LÓGICA DEL SUELO (MODIFICADA: SIN ESPEJO EN MÓVIL) ---
+// --- ESPEJO OPTIMIZADO (MOVIL OFF) ---
 const isMobile = window.innerWidth < 768;
 
 if (!isMobile) {
-    // SOLO EN PC: SUELO "ESPEJO REAL"
     const groundMirror = new Reflector(new THREE.PlaneGeometry(800, 800), { clipBias: 0.003, textureWidth: window.innerWidth*window.devicePixelRatio, textureHeight: window.innerHeight*window.devicePixelRatio, color: params.floorColor });
     groundMirror.rotation.x = -Math.PI/2; groundMirror.position.y = -7; 
     homeGroup.add(groundMirror);
@@ -215,7 +229,6 @@ if (!isMobile) {
     const maskPlane = new THREE.Mesh(new THREE.PlaneGeometry(800, 800), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, opacity: params.maskOpacity }));
     maskPlane.rotation.x = -Math.PI/2; maskPlane.position.y = -6.99; homeGroup.add(maskPlane);
 }
-// EN MÓVIL: NO SE AÑADE NADA (Quita halo dorado)
 
 let diamondBase = null;
 loader.load('diamante.glb', (gltf) => {
@@ -246,20 +259,13 @@ window.addEventListener('mousemove', (e) => {
     }
 });
 
-// TACTIL MOVIL (ZONAS DE SEGURIDAD)
 interactionZone.addEventListener('touchstart', (e) => { 
     if (e.target.closest('.config-dot')) return;
-    
     const touchX = e.touches[0].clientX;
     const width = window.innerWidth;
     const margin = width * 0.15; 
-    
     if (touchX < margin || touchX > width - margin) { isDragging = false; return; }
-    
-    if(finalRingGroup.visible) { 
-        isDragging = true; 
-        previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }; 
-    }
+    if(finalRingGroup.visible) { isDragging = true; previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }
 }, { passive: false });
 
 window.addEventListener('touchend', () => isDragging = false);
