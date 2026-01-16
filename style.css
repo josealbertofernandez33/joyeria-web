@@ -64,7 +64,7 @@ header {
 }
 
 /* ================================================================
-   BOTONES CON TEXTURAS (CORRECCIÓN DEFINITIVA)
+   BOTONES CON TEXTURAS (RUTAS ABSOLUTAS RELATIVAS ./)
    ================================================================ */
 
 .config-dot {
@@ -72,11 +72,10 @@ header {
     border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 5px 15px rgba(0,0,0,0.5);
     transition: transform 0.2s, box-shadow 0.2s;
     
-    /* Configuración de la imagen */
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    background-color: #222; /* Color de fondo por seguridad */
+    background-color: #222; 
 }
 
 .config-dot.active {
@@ -85,21 +84,21 @@ header {
 }
 .config-dot:hover { transform: scale(1.1); border-color: #fff; }
 
-/* ASIGNACIÓN DE TEXTURAS (Propiedad Específica) */
-.dot-gold { background-image: url('texture-gold.png'); }
-.dot-silver { background-image: url('texture-silver.png'); }
-.dot-diamond { background-image: url('texture-diamond.png'); }
-.dot-ruby { background-image: url('texture-ruby.png'); }
-.dot-sapphire { background-image: url('texture-sapphire.png'); }
-.dot-emerald { background-image: url('texture-emerald.png'); }
+/* AÑADIDO ./ PARA FORZAR CARGA LOCAL */
+.dot-gold { background-image: url('./texture-gold.png'); }
+.dot-silver { background-image: url('./texture-silver.png'); }
+.dot-diamond { background-image: url('./texture-diamond.png'); }
+.dot-ruby { background-image: url('./texture-ruby.png'); }
+.dot-sapphire { background-image: url('./texture-sapphire.png'); }
+.dot-emerald { background-image: url('./texture-emerald.png'); }
 
-/* CAPAS FLOTANTES */
+/* CAPAS FLOTANTES (También añadimos ./) */
 .stack-wrapper { position: relative; width: 350px; height: 450px; transform-style: preserve-3d; transform: rotateX(55deg) rotateZ(35deg); pointer-events: none; }
 .layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 2px; background-size: contain; background-repeat: no-repeat; background-position: center; background-color: transparent; box-shadow: -15px 15px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255, 255, 255, 0.1); will-change: transform, opacity; }
 #l4 { border: none !important; box-shadow: none !important; background: none !important; }
-#l1 { background-image: url('1.png'); z-index: 4; } 
-#l2 { background-image: url('2.png'); z-index: 3; }
-#l3 { background-image: url('3.png'); z-index: 2; }
+#l1 { background-image: url('./1.png'); z-index: 4; } 
+#l2 { background-image: url('./2.png'); z-index: 3; }
+#l3 { background-image: url('./3.png'); z-index: 2; }
 
 /* FORMULARIO */
 #contact-section { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 20; display: flex; justify-content: center; align-items: center; pointer-events: none; opacity: 0; transition: opacity 1.5s ease; overflow: hidden; visibility: hidden; }
