@@ -16,7 +16,6 @@ header {
 .nav-item:hover { color: #ffffff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
 .nav-item:hover::after { width: 100%; }
 
-/* TEXTOS ABOUT */
 #about-section {
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 650px; text-align: center; z-index: 5;
     font-family: 'Lato', sans-serif; font-weight: 300; pointer-events: none; opacity: 0; filter: blur(20px);
@@ -30,7 +29,6 @@ header {
 }
 #about-section .signature { font-family: 'Cinzel', serif; font-size: 0.8rem; opacity: 0.6; margin-top: 40px; letter-spacing: 4px; display: inline-block; }
 
-/* CUSTOM SECTION */
 #custom-section {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 6; 
     display: flex; justify-content: center; align-items: center; perspective: 1500px; opacity: 0;
@@ -39,7 +37,6 @@ header {
 #custom-section.active-interaction { pointer-events: auto; }
 #custom-section.grabbing { cursor: grabbing; }
 
-/* UI CONFIGURADOR */
 #config-ui {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;
     display: flex; flex-direction: column; justify-content: space-between; padding: 120px 0 60px 0; box-sizing: border-box;
@@ -63,15 +60,10 @@ header {
     text-transform: uppercase; letter-spacing: 3px; text-shadow: 0 0 5px rgba(0,0,0,0.8);
 }
 
-/* ================================================================
-   BOTONES CON TEXTURAS (RUTAS ABSOLUTAS RELATIVAS ./)
-   ================================================================ */
-
 .config-dot {
     width: 44px; height: 44px; border-radius: 50%; cursor: pointer; position: relative; touch-action: manipulation;
     border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 5px 15px rgba(0,0,0,0.5);
     transition: transform 0.2s, box-shadow 0.2s;
-    
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -84,7 +76,6 @@ header {
 }
 .config-dot:hover { transform: scale(1.1); border-color: #fff; }
 
-/* AÑADIDO ./ PARA FORZAR CARGA LOCAL */
 .dot-gold { background-image: url('./texture-gold.png'); }
 .dot-silver { background-image: url('./texture-silver.png'); }
 .dot-diamond { background-image: url('./texture-diamond.png'); }
@@ -92,7 +83,6 @@ header {
 .dot-sapphire { background-image: url('./texture-sapphire.png'); }
 .dot-emerald { background-image: url('./texture-emerald.png'); }
 
-/* CAPAS FLOTANTES (También añadimos ./) */
 .stack-wrapper { position: relative; width: 350px; height: 450px; transform-style: preserve-3d; transform: rotateX(55deg) rotateZ(35deg); pointer-events: none; }
 .layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 2px; background-size: contain; background-repeat: no-repeat; background-position: center; background-color: transparent; box-shadow: -15px 15px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255, 255, 255, 0.1); will-change: transform, opacity; }
 #l4 { border: none !important; box-shadow: none !important; background: none !important; }
@@ -100,7 +90,6 @@ header {
 #l2 { background-image: url('./2.png'); z-index: 3; }
 #l3 { background-image: url('./3.png'); z-index: 2; }
 
-/* FORMULARIO */
 #contact-section { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 20; display: flex; justify-content: center; align-items: center; pointer-events: none; opacity: 0; transition: opacity 1.5s ease; overflow: hidden; visibility: hidden; }
 #contact-section.active { visibility: visible; }
 .glass-card { width: 90%; max-width: 600px; background: rgba(15, 15, 15, 0.85); backdrop-filter: blur(20px); padding: 50px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.1); border-top: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 40px 80px rgba(0, 0, 0, 0.9); text-align: center; transform: translateY(20px); transition: transform 0.8s ease; pointer-events: auto; }

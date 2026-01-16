@@ -36,7 +36,6 @@ function renderFileList() {
     }
 }
 
-// --- PARÁMETROS ---
 const params = {
     bgColor: 0x000000, floorColor: 0x998133, maskOpacity: 1.0,
     camFOV: 45, camPos: { x: 0, y: 0, z: 90 }, camRot: { x: 0, y: 0, z: -0.2 },
@@ -79,19 +78,45 @@ const crystalMat = new THREE.MeshPhysicalMaterial({ color: params.cryColor, tran
 const diamondMat = new THREE.MeshPhysicalMaterial({ color: params.d_Tint, transmission: params.d_Trans, opacity: 1.0, metalness: 0.0, roughness: 0.0, ior: params.d_IOR, thickness: params.d_Thick, dispersion: params.d_Disp, envMapIntensity: params.d_Env, specularIntensity: params.d_Spec, side: THREE.DoubleSide, flatShading: false, attenuationColor: new THREE.Color(params.d_AbsColor), attenuationDistance: params.d_AbsDist, transparent: true });
 const silverMat = new THREE.MeshPhysicalMaterial({ color: params.metalColor, metalness: params.metalMetal, roughness: params.metalRough, envMapIntensity: 1.0 });
 
-function createGemMaterial(colorHex, attColorHex, iorVal) {
+function createDeepGem(colorHex, absorbColor, iorVal) {
     return new THREE.MeshPhysicalMaterial({ 
-        color: colorHex, transmission: 0.98, opacity: 1.0, metalness: 0.0, roughness: 0.0, 
-        ior: iorVal, thickness: 2.5, dispersion: 0.6, envMapIntensity: 2.0, specularIntensity: 1.0,
-        clearcoat: 1.0, side: THREE.DoubleSide, attenuationColor: new THREE.Color(attColorHex), attenuationDistance: 5.0 
+        color: colorHex, 
+        transmission: 1.0, 
+        opacity: 1.0, 
+        metalness: 0.0, 
+        roughness: 0.0, 
+        ior: iorVal, 
+        thickness: 3.0, 
+        dispersion: 0.4, 
+        envMapIntensity: 3.5, 
+        specularIntensity: 1.0,
+        clearcoat: 1.0, 
+        side: THREE.DoubleSide, 
+        attenuationColor: new THREE.Color(absorbColor), 
+        attenuationDistance: 1.5 
     });
 }
 
-const emeraldMat = createGemMaterial(0x00ff00, 0x003300, 1.57); 
-const rubyMat = createGemMaterial(0xff0000, 0x440000, 1.76);    
-const sapphireMat = createGemMaterial(0x0000ff, 0x000044, 1.76); 
+const emeraldMat = createDeepGem(0x00ff66, 0x002200, 1.6); 
+const rubyMat = createDeepGem(0xff0022, 0x440000, 1.76);    
+const sapphireMat = createDeepGem(0x1133ff, 0x000044, 1.76); 
+
 const diamondStoneMat = new THREE.MeshPhysicalMaterial({ 
-    color: params.cryColor, transmission: params.cryTrans, opacity: params.cryOp, metalness: 0.0, roughness: 0.0, ior: params.cryIOR, thickness: params.cryThick, dispersion: params.cryDisp, envMapIntensity: params.cryEnv, specularIntensity: params.crySpec, clearcoat: params.cryClear, side: THREE.DoubleSide, flatShading: params.cryFlat, attenuationColor: new THREE.Color(params.cryAttColor), attenuationDistance: params.cryAttDist 
+    color: 0xffffff, 
+    transmission: 1.0, 
+    opacity: 1.0, 
+    metalness: 0.0, 
+    roughness: 0.0, 
+    ior: 2.42, 
+    thickness: 2.5, 
+    dispersion: 0.8, 
+    envMapIntensity: 4.5, 
+    specularIntensity: 1.0, 
+    clearcoat: 1.0, 
+    side: THREE.DoubleSide, 
+    flatShading: false, 
+    attenuationColor: new THREE.Color(0xffffff), 
+    attenuationDistance: 10.0 
 });
 
 const goldMat = new THREE.MeshPhysicalMaterial({ color: 0xFFC96F, metalness: 1.0, roughness: 0.1, envMapIntensity: 2.5, clearcoat: 0.8, clearcoatRoughness: 0.1 });
@@ -103,7 +128,6 @@ light1.position.set(20, 20, 20); scene.add(light1);
 const light2 = new THREE.PointLight(params.lightColor, params.lightInt);
 light2.position.set(-20, -10, 20); scene.add(light2);
 
-// RUTA ./studio_v2.exr
 new EXRLoader().load('./studio_v2.exr', (texture) => {
     texture.mapping = THREE.EquirectangularReflectionMapping;
     texture.offset.x = params.envRot;
@@ -127,7 +151,6 @@ const loader = new GLTFLoader();
 const individualStones = []; 
 const contactStones = [];    
 
-// RUTA ./Alianza.glb
 loader.load('./Alianza.glb', (gltf) => {
     const ring = gltf.scene;
     const box = new THREE.Box3().setFromObject(ring);
@@ -138,7 +161,6 @@ loader.load('./Alianza.glb', (gltf) => {
 });
 
 let finalRingModel = null;
-// RUTA ./anillofotos.glb
 loader.load('./anillofotos.glb', (gltf) => {
     finalRingModel = gltf.scene;
     const box = new THREE.Box3().setFromObject(finalRingModel);
@@ -158,7 +180,6 @@ loader.load('./anillofotos.glb', (gltf) => {
     finalRingGroup.add(finalRingModel);
 });
 
-// --- LÓGICA UI Y CONFIGURACIÓN ---
 const displayLabel = document.getElementById('selection-display');
 let displayTimeout;
 
@@ -195,7 +216,6 @@ window.updateRingConfig = function(type, value, element, displayName) {
     }
 };
 
-// RUTA ./piedras.glb
 loader.load('./piedras.glb', (gltf) => {
     const stones = gltf.scene;
     stones.traverse(c => { if(c.isMesh) { c.material = crystalMat; c.userData = { rotSpeed: 0.003 + Math.random()*0.005, axis: new THREE.Vector3(Math.random(),1,Math.random()).normalize() }; individualStones.push(c); }});
@@ -220,7 +240,6 @@ if (!isMobile) {
 }
 
 let diamondBase = null;
-// RUTA ./diamante.glb
 loader.load('./diamante.glb', (gltf) => {
     const diamond = gltf.scene;
     const box = new THREE.Box3().setFromObject(diamond);
