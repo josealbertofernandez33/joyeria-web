@@ -36,21 +36,22 @@ function renderFileList() {
     }
 }
 
-// --- PARÁMETROS ---
+// --- PARÁMETROS GENERALES ---
 const params = {
     bgColor: 0x000000, floorColor: 0x998133, maskOpacity: 1.0,
     camFOV: 45, camPos: { x: 0, y: 0, z: 90 }, camRot: { x: 0, y: 0, z: -0.2 },
     lightInt: 600, lightColor: 0xffffff, lightSpeed: 0.5, 
+    
+    // Entorno oscuro para contraste
     envInt: 0.4, envRot: 0.2,   
-    cryFlat: false, cryTrans: 1.0, cryOp: 1.0, cryIOR: 2.463, cryThick: 0.41, 
-    cryDisp: 0.8, crySpec: 4.105, cryClear: 0.0, cryEnv: 1.5, cryAttDist: 6.74, 
-    cryAttColor: 0xededed, cryColor: 0xffffff, metalColor: 0xffffff, metalRough: 0.086, metalMetal: 1.0,
+    
+    // Configuración base de metales
+    metalColor: 0xffffff, metalRough: 0.05, metalMetal: 1.0,
+    
     floatYBase: 1.5, floatSpeed: 0.8, floatAmp: 0.15,
     diaScale: 0.7, diaPosX: 0.0, diaPosY: 0.0, diaPosZ: 4.8,       
     diaRotX: 0.0, diaRotY: 1.6, diaRotZ: 0.911061, diaAnimSpeed: 0.208, 
-    diaFloatSpeed: 0.438, diaFloatAmp: 0.3, d_Thick: 0.0, d_AbsDist: 5.88, 
-    d_Env: 1.5, d_Spec: 4.1, d_Tint: 0xffffff, d_AbsColor: 0xededed, 
-    d_Trans: 1.0, d_IOR: 2.626, d_Disp: 0.8
+    diaFloatSpeed: 0.438, diaFloatAmp: 0.3
 };
 
 const aboutSection = document.getElementById('about-section');
@@ -75,28 +76,113 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0; 
 document.body.appendChild(renderer.domElement);
 
-const crystalMat = new THREE.MeshPhysicalMaterial({ color: params.cryColor, transmission: params.cryTrans, opacity: params.cryOp, metalness: 0.0, roughness: 0.0, ior: params.cryIOR, thickness: params.cryThick, dispersion: params.cryDisp, envMapIntensity: params.cryEnv, specularIntensity: params.crySpec, clearcoat: params.cryClear, side: THREE.DoubleSide, flatShading: params.cryFlat, attenuationColor: new THREE.Color(params.cryAttColor), attenuationDistance: params.cryAttDist });
-const diamondMat = new THREE.MeshPhysicalMaterial({ color: params.d_Tint, transmission: params.d_Trans, opacity: 1.0, metalness: 0.0, roughness: 0.0, ior: params.d_IOR, thickness: params.d_Thick, dispersion: params.d_Disp, envMapIntensity: params.d_Env, specularIntensity: params.d_Spec, side: THREE.DoubleSide, flatShading: false, attenuationColor: new THREE.Color(params.d_AbsColor), attenuationDistance: params.d_AbsDist, transparent: true });
-const silverMat = new THREE.MeshPhysicalMaterial({ color: params.metalColor, metalness: params.metalMetal, roughness: params.metalRough, envMapIntensity: 1.0 });
+// =========================================================================
+// 💎 MATERIALES DE ALTA JOYERÍA (MEJORADOS)
+// =========================================================================
 
-function createGemMaterial(colorHex, attColorHex, iorVal) {
-    return new THREE.MeshPhysicalMaterial({ 
-        color: colorHex, transmission: 0.98, opacity: 1.0, metalness: 0.0, roughness: 0.0, 
-        ior: iorVal, thickness: 2.5, dispersion: 0.6, envMapIntensity: 2.0, specularIntensity: 1.0,
-        clearcoat: 1.0, side: THREE.DoubleSide, attenuationColor: new THREE.Color(attColorHex), attenuationDistance: 5.0 
-    });
-}
-
-const emeraldMat = createGemMaterial(0x00ff00, 0x003300, 1.57); 
-const rubyMat = createGemMaterial(0xff0000, 0x440000, 1.76);    
-const sapphireMat = createGemMaterial(0x0000ff, 0x000044, 1.76); 
-const diamondStoneMat = new THREE.MeshPhysicalMaterial({ 
-    color: params.cryColor, transmission: params.cryTrans, opacity: params.cryOp, metalness: 0.0, roughness: 0.0, ior: params.cryIOR, thickness: params.cryThick, dispersion: params.cryDisp, envMapIntensity: params.cryEnv, specularIntensity: params.crySpec, clearcoat: params.cryClear, side: THREE.DoubleSide, flatShading: params.cryFlat, attenuationColor: new THREE.Color(params.cryAttColor), attenuationDistance: params.cryAttDist 
+// DIAMANTE: Alta dispersión (fuego), IOR alto y máxima transparencia
+const diamondReal = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff,
+    transmission: 1.0,  // Cristal puro
+    opacity: 1.0,
+    metalness: 0.0,
+    roughness: 0.0,
+    ior: 2.42,          // Índice real del diamante
+    thickness: 1.5,     // Grosor para refracción
+    dispersion: 0.8,    // EFECTO ARCOÍRIS (Fuego)
+    envMapIntensity: 3.0, // Brillo exagerado para destacar en la oscuridad
+    specularIntensity: 1.0,
+    clearcoat: 1.0,
+    attenuationColor: new THREE.Color(0xffffff),
+    attenuationDistance: 10.0,
+    side: THREE.DoubleSide
 });
 
-const goldMat = new THREE.MeshPhysicalMaterial({ color: 0xFFC96F, metalness: 1.0, roughness: 0.1, envMapIntensity: 2.5, clearcoat: 0.8, clearcoatRoughness: 0.1 });
-const stoneOptions = { 'diamond': diamondStoneMat, 'ruby': rubyMat, 'sapphire': sapphireMat, 'emerald': emeraldMat };
-const metalOptions = { 'silver': silverMat, 'gold': goldMat };
+// RUBÍ: Rojo profundo que absorbe luz (attenuation)
+const rubyReal = new THREE.MeshPhysicalMaterial({
+    color: 0xff0033,    // Rojo base
+    transmission: 0.95,
+    opacity: 1.0,
+    metalness: 0.0,
+    roughness: 0.0,
+    ior: 1.77,          // Índice del Corindón
+    thickness: 2.0,
+    dispersion: 0.2,    // Poco fuego
+    envMapIntensity: 2.5,
+    specularIntensity: 1.0,
+    clearcoat: 1.0,
+    // TRUCO DE REALISMO: Absorbe el verde/azul, deja pasar rojo profundo
+    attenuationColor: new THREE.Color(0x990000), 
+    attenuationDistance: 1.5, 
+    side: THREE.DoubleSide
+});
+
+// ZAFIRO: Azul real profundo
+const sapphireReal = new THREE.MeshPhysicalMaterial({
+    color: 0x0022ff,
+    transmission: 0.95,
+    opacity: 1.0,
+    metalness: 0.0,
+    roughness: 0.0,
+    ior: 1.77,
+    thickness: 2.0,
+    dispersion: 0.2,
+    envMapIntensity: 2.5,
+    specularIntensity: 1.0,
+    clearcoat: 1.0,
+    attenuationColor: new THREE.Color(0x0011aa),
+    attenuationDistance: 1.5,
+    side: THREE.DoubleSide
+});
+
+// ESMERALDA: Verde con un poco menos de transmisión (más densa)
+const emeraldReal = new THREE.MeshPhysicalMaterial({
+    color: 0x00ff66,
+    transmission: 0.90, // Un poco más opaca
+    opacity: 1.0,
+    metalness: 0.0,
+    roughness: 0.1,     // Un pelín de imperfección típica de esmeraldas
+    ior: 1.57,
+    thickness: 2.0,
+    dispersion: 0.1,
+    envMapIntensity: 2.5,
+    specularIntensity: 1.0,
+    clearcoat: 1.0,
+    attenuationColor: new THREE.Color(0x004411),
+    attenuationDistance: 2.0,
+    side: THREE.DoubleSide
+});
+
+// METALES
+const goldMat = new THREE.MeshPhysicalMaterial({ 
+    color: 0xFFD700, // Oro más intenso
+    metalness: 1.0, 
+    roughness: 0.1, 
+    envMapIntensity: 1.5, // Brillo metálico controlado
+    clearcoat: 0.5,
+    clearcoatRoughness: 0.1
+});
+
+const silverMat = new THREE.MeshPhysicalMaterial({ 
+    color: 0xffffff, 
+    metalness: 1.0, 
+    roughness: 0.15, // Un poco más satinado para realismo
+    envMapIntensity: 1.5 
+});
+
+// DICCIONARIOS DE SELECCIÓN
+const stoneOptions = { 
+    'diamond': diamondReal, 
+    'ruby': rubyReal, 
+    'sapphire': sapphireReal, 
+    'emerald': emeraldReal 
+};
+const metalOptions = { 
+    'silver': silverMat, 
+    'gold': goldMat 
+};
+
+// =========================================================================
 
 const light1 = new THREE.PointLight(params.lightColor, params.lightInt);
 light1.position.set(20, 20, 20); scene.add(light1);
@@ -133,7 +219,13 @@ loader.load('./Alianza.glb', (gltf) => {
     const box = new THREE.Box3().setFromObject(ring);
     const center = box.getCenter(new THREE.Vector3());
     ring.position.sub(center);
-    ring.traverse(c => { if(c.isMesh) { c.geometry.deleteAttribute('color'); c.material = c.material.name.includes('Material.001') ? crystalMat : silverMat; }});
+    // Aplicar materiales mejorados al anillo inicial también
+    ring.traverse(c => { 
+        if(c.isMesh) { 
+            c.geometry.deleteAttribute('color'); 
+            c.material = c.material.name.includes('Material.001') ? diamondReal : silverMat; 
+        }
+    });
     ringContainer.add(ring); ring.rotation.set(1.17, 0, -0.03); 
 });
 
@@ -147,9 +239,20 @@ loader.load('./anillofotos.glb', (gltf) => {
     finalRingModel.traverse(c => { 
         if(c.isMesh) { 
             c.material.transparent = true; c.material.opacity = 0; 
-            if(c.material.name.includes('Material.003')) { c.userData.isMainStone = true; c.material = emeraldMat.clone(); } 
-            else if(c.material.name.includes('Material.004')) { c.userData.isSideStone = true; c.material = diamondStoneMat.clone(); } 
-            else if(c.material.name.includes('Material2')) { c.userData.isMetal = true; c.material = silverMat.clone(); }
+            
+            // ASIGNACIÓN INICIAL MEJORADA
+            if(c.material.name.includes('Material.003')) { 
+                c.userData.isMainStone = true; 
+                c.material = emeraldReal.clone(); // Esmeralda por defecto
+            } 
+            else if(c.material.name.includes('Material.004')) { 
+                c.userData.isSideStone = true; 
+                c.material = diamondReal.clone(); // Diamante lateral por defecto
+            } 
+            else if(c.material.name.includes('Material2')) { 
+                c.userData.isMetal = true; 
+                c.material = silverMat.clone(); 
+            }
             c.material.transparent = true; 
         }
     });
@@ -165,17 +268,27 @@ let displayTimeout;
 window.updateRingConfig = function(type, value, element, displayName) {
     if(!finalRingModel) return;
     let newMat;
+    
+    // Selección del material desde las opciones mejoradas
     if(type === 'main' || type === 'side') newMat = stoneOptions[value];
     if(type === 'metal') newMat = metalOptions[value];
+    
     if(!newMat) return;
 
     finalRingModel.traverse(c => {
         if(c.isMesh) {
             let shouldChange = false;
+            // Distinguimos entre piedra principal y lateral
             if(type === 'main' && c.userData.isMainStone) shouldChange = true;
             if(type === 'side' && c.userData.isSideStone) shouldChange = true;
             if(type === 'metal' && c.userData.isMetal) shouldChange = true;
-            if(shouldChange) { const currentOp = c.material.opacity; c.material = newMat.clone(); c.material.transparent = true; c.material.opacity = currentOp; }
+            
+            if(shouldChange) { 
+                const currentOp = c.material.opacity; 
+                c.material = newMat.clone(); 
+                c.material.transparent = true; 
+                c.material.opacity = currentOp; 
+            }
         }
     });
 
@@ -198,10 +311,12 @@ window.updateRingConfig = function(type, value, element, displayName) {
 // RUTA ./piedras.glb
 loader.load('./piedras.glb', (gltf) => {
     const stones = gltf.scene;
-    stones.traverse(c => { if(c.isMesh) { c.material = crystalMat; c.userData = { rotSpeed: 0.003 + Math.random()*0.005, axis: new THREE.Vector3(Math.random(),1,Math.random()).normalize() }; individualStones.push(c); }});
+    // Usamos el material de diamante real para las piedras flotantes también
+    stones.traverse(c => { if(c.isMesh) { c.material = diamondReal.clone(); c.userData = { rotSpeed: 0.003 + Math.random()*0.005, axis: new THREE.Vector3(Math.random(),1,Math.random()).normalize() }; individualStones.push(c); }});
     stonesContainer.add(stones); stones.rotation.set(0.7, -0.2, 0); stones.scale.set(0.5, 0.5, 0.5);
+    
     const stonesClone = stones.clone();
-    stonesClone.traverse(c => { if(c.isMesh) { c.material = crystalMat; c.userData = { rotSpeed: 0.001 + Math.random()*0.004, axis: new THREE.Vector3(Math.random(),1,Math.random()).normalize() }; contactStones.push(c); }});
+    stonesClone.traverse(c => { if(c.isMesh) { c.material = diamondReal.clone(); c.userData = { rotSpeed: 0.001 + Math.random()*0.004, axis: new THREE.Vector3(Math.random(),1,Math.random()).normalize() }; contactStones.push(c); }});
     stonesClone.position.set(0, 0, -15); stonesClone.scale.set(0.8, 0.8, 0.8); stonesClone.rotation.set(0.5, 0.5, 0); contactGroup.add(stonesClone);
 });
 
@@ -226,7 +341,8 @@ loader.load('./diamante.glb', (gltf) => {
     const box = new THREE.Box3().setFromObject(diamond);
     const center = box.getCenter(new THREE.Vector3());
     diamond.position.sub(center); 
-    diamond.traverse(c => { if(c.isMesh) c.material = diamondMat; });
+    // Usamos el material de diamante mejorado aquí también
+    diamond.traverse(c => { if(c.isMesh) c.material = diamondReal.clone(); });
     aboutGroup.add(diamond); diamondBase = diamond;
 });
 
@@ -300,26 +416,30 @@ window.addEventListener('scroll', () => {
         finalRingGroup.visible = false; homeGroup.visible = true; if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
         setVisibility(aboutSection, 0, 20); setVisibility(customSection, 0, 0); setVisibility(contactSection, 0, 30);
         if(contactSection) contactSection.classList.remove('active'); 
-        if(diamondMat) diamondMat.opacity = 1; if(diamondBase) diamondBase.visible = true; 
+        // Usamos diamondReal también aquí
+        if(diamondBase) { diamondBase.traverse(c => { if(c.isMesh) c.material.opacity = 1; }); diamondBase.visible = true; }
     } else if (scrollPercent > 0.10 && scrollPercent <= 0.25) {
         const p = (scrollPercent - 0.10) / 0.15; homeGroup.position.y = p * 80; aboutGroup.position.y = -60 + (p * 60); 
-        setVisibility(aboutSection, 0, 20); setVisibility(customSection, 0, 0); if(diamondMat) diamondMat.opacity = 1; if(diamondBase) diamondBase.visible = true;
+        setVisibility(aboutSection, 0, 20); setVisibility(customSection, 0, 0); 
+        if(diamondBase) { diamondBase.traverse(c => { if(c.isMesh) c.material.opacity = 1; }); diamondBase.visible = true; }
     } else if (scrollPercent > 0.25 && scrollPercent <= 0.40) {
         homeGroup.position.y = 80; aboutGroup.position.y = 0; contactGroup.position.y = -200;
         const pText = (scrollPercent - 0.25) / 0.05; let o = pText; if(o>1) o=1; let b = 20 - (pText * 20); if(b<0) b=0;
-        setVisibility(aboutSection, o, b); setVisibility(customSection, 0, 0); if(diamondMat) diamondMat.opacity = 1; if(diamondBase) diamondBase.visible = true;
+        setVisibility(aboutSection, o, b); setVisibility(customSection, 0, 0); 
+        if(diamondBase) { diamondBase.traverse(c => { if(c.isMesh) c.material.opacity = 1; }); diamondBase.visible = true; }
     } else if (scrollPercent > 0.40 && scrollPercent <= 0.50) {
         const pOut = (scrollPercent - 0.40) / 0.10; aboutGroup.position.y = 0; 
-        setVisibility(aboutSection, 1 - pOut, pOut * 20); if(diamondMat) diamondMat.opacity = 1 - pOut; if(diamondBase) diamondBase.visible = true;
+        setVisibility(aboutSection, 1 - pOut, pOut * 20); 
+        if(diamondBase) { diamondBase.traverse(c => { if(c.isMesh) c.material.opacity = 1 - pOut; }); diamondBase.visible = true; }
         if(customSection) customSection.style.opacity = 0; if(configUI) configUI.style.opacity = 0;
         resetLayer(layer1, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); resetLayer(layer4, 0);
         setVisibility(contactSection, 0, 30); contactGroup.position.y = -200; finalRingGroup.visible = false;
     } else if (scrollPercent > 0.50 && scrollPercent <= 0.60) {
-        aboutGroup.position.y = 0; if(diamondMat) diamondMat.opacity = 0; if(diamondBase) diamondBase.visible = false; 
+        aboutGroup.position.y = 0; if(diamondBase) diamondBase.visible = false; 
         setVisibility(aboutSection, 0, 20); const pIn = (scrollPercent - 0.50) / 0.10; if(customSection) customSection.style.opacity = pIn;
         resetLayer(layer1, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); resetLayer(layer4, 0); finalRingGroup.visible = false; homeGroup.visible = false;
     } else if (scrollPercent > 0.60 && scrollPercent <= 0.92) {
-        if(diamondMat) diamondMat.opacity = 0; if(diamondBase) diamondBase.visible = false; homeGroup.visible = false; 
+        if(diamondBase) diamondBase.visible = false; homeGroup.visible = false; 
         if(customSection) customSection.style.opacity = 1; if(interactionZone) interactionZone.classList.add('interactive');
         setVisibility(contactSection, 0, 30); contactGroup.position.y = -200;
         if(contactSection) contactSection.classList.remove('active'); 
