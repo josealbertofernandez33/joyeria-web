@@ -45,16 +45,17 @@ function renderFileList() {
     }
 }
 
-// --- PARÁMETROS ---
+// --- PARÁMETROS ORIGINALES (NO TOCAR) ---
 const params = {
     bgColor: 0x000000, floorColor: 0x998133, maskOpacity: 1.0,
     camFOV: 45, camPos: { x: 0, y: 0, z: 90 }, camRot: { x: 0, y: 0, z: -0.2 },
     
-    lightInt: 600, 
+    // VALORES ORIGINALES
+    lightInt: 900, 
     lightColor: 0xffffff, 
     lightSpeed: 0.5, 
     
-    envInt: 0.4,   
+    envInt: 1.0,   // Original
     envRot: 0.2,   
     
     cryFlat: false, cryTrans: 1.0, cryOp: 1.0, cryIOR: 2.463, cryThick: 0.41, 
@@ -86,12 +87,8 @@ camera.rotation.set(params.camRot.x, params.camRot.y, params.camRot.z);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-
-// --- CALIDAD ORIGINAL RESTAURADA ---
-// Usamos la densidad de píxeles nativa del dispositivo (hasta 2x)
-// Esto asegura nitidez máxima en móviles Retina/alta definición.
+// CALIDAD ORIGINAL RESTAURADA (2x)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); 
-
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0; 
 document.body.appendChild(renderer.domElement);
@@ -125,8 +122,7 @@ light2.position.set(-20, -10, 20); scene.add(light2);
 new EXRLoader().load('studio_v2.exr', (texture) => {
     texture.mapping = THREE.EquirectangularReflectionMapping;
     texture.offset.x = params.envRot;
-    scene.environment = texture; 
-    scene.environmentIntensity = params.envInt;
+    scene.environment = texture; scene.environmentIntensity = params.envInt;
 });
 
 const homeGroup = new THREE.Group(); scene.add(homeGroup);
@@ -201,23 +197,22 @@ loader.load('piedras.glb', (gltf) => {
     stonesClone.position.set(0, 0, -15); stonesClone.scale.set(0.8, 0.8, 0.8); stonesClone.rotation.set(0.5, 0.5, 0); contactGroup.add(stonesClone);
 });
 
-// --- LÓGICA DEL SUELO (MODIFICADA) ---
+// --- ESPEJO INTELIGENTE (REFLECTOR SOLO EN PC) ---
 const isMobile = window.innerWidth < 768;
 
 if (!isMobile) {
-    // SOLO EN PC: SUELO "ESPEJO REAL"
+    // EN PC: Espejo Real (Tu configuración original)
     const groundMirror = new Reflector(new THREE.PlaneGeometry(800, 800), { clipBias: 0.003, textureWidth: window.innerWidth*window.devicePixelRatio, textureHeight: window.innerHeight*window.devicePixelRatio, color: params.floorColor });
     groundMirror.rotation.x = -Math.PI/2; groundMirror.position.y = -7; 
     homeGroup.add(groundMirror);
 
-    // Máscara del espejo (solo necesaria si hay espejo)
     const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 1024; const ctx = canvas.getContext('2d');
     const grad = ctx.createRadialGradient(512, 512, 0, 512, 512, 512); grad.addColorStop(0, 'rgba(0,0,0,0)'); grad.addColorStop(0.12, 'rgba(0,0,0,1)'); 
     ctx.fillStyle = grad; ctx.fillRect(0, 0, 1024, 1024); 
     const maskPlane = new THREE.Mesh(new THREE.PlaneGeometry(800, 800), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, opacity: params.maskOpacity }));
     maskPlane.rotation.x = -Math.PI/2; maskPlane.position.y = -6.99; homeGroup.add(maskPlane);
 }
-// EN MÓVIL: NO SE AÑADE NADA. Esto elimina el "halo dorado".
+// EN MÓVIL: NADA (Esto quita el halo dorado y mejora rendimiento)
 
 let diamondBase = null;
 loader.load('diamante.glb', (gltf) => {
@@ -248,13 +243,20 @@ window.addEventListener('mousemove', (e) => {
     }
 });
 
+// INTERACCION TACTIL (MOVIL)
 interactionZone.addEventListener('touchstart', (e) => { 
     if (e.target.closest('.config-dot')) return;
+    
     const touchX = e.touches[0].clientX;
     const width = window.innerWidth;
     const margin = width * 0.15; 
+    
     if (touchX < margin || touchX > width - margin) { isDragging = false; return; }
-    if(finalRingGroup.visible) { isDragging = true; previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }
+    
+    if(finalRingGroup.visible) { 
+        isDragging = true; 
+        previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }; 
+    }
 }, { passive: false });
 
 window.addEventListener('touchend', () => isDragging = false);
@@ -274,7 +276,7 @@ function setVisibility(element, opacity, blur, clickable = false) {
     if(!element) return;
     element.style.opacity = opacity; element.style.filter = `blur(${blur}px)`; element.style.pointerEvents = clickable ? "all" : "none";
 }
-function resetLayer(element, baseZ) { if(element) { element.style.transform = `rotateZ(-90deg) translateZ(${baseZ}px)`; element.style.opacity = 1; } }
+function resetLayer(element, baseZ) { if(element) { element.style.transform = `rotateZ(-90deg) translateZ(${baseZ}px)`; element.style.opacity = 1; element.style.display = 'block'; } }
 function liftLayerDone(element) { if(element) { element.style.transform = `rotateZ(-90deg) translateZ(500px)`; element.style.opacity = 0; } }
 function updateLuxuryLayer(element, progress, baseZ) {
     if(element) { const lift = baseZ + (progress * 450); const opacity = 1 - Math.pow(progress, 2); element.style.transform = `rotateZ(-90deg) translateZ(${lift}px)`; element.style.opacity = opacity; }
@@ -284,8 +286,14 @@ resetLayer(layer1, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); resetLay
 
 window.addEventListener('scroll', () => {
     const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
-    if (scrollPercent > 0.60 && scrollPercent < 0.92) { if(customSection) customSection.classList.add('active-interaction'); } 
-    else { if(customSection) customSection.classList.remove('active-interaction'); }
+    
+    if (scrollPercent > 0.60 && scrollPercent < 0.92) { 
+        if(customSection) customSection.classList.add('active-interaction');
+        if(layer4) layer4.style.opacity = 0; // OCULTAR RECTANGULO
+    } else { 
+        if(customSection) customSection.classList.remove('active-interaction'); 
+        if(layer4) layer4.style.opacity = 1;
+    }
 
     if (scrollPercent <= 0.10) {
         const p = scrollPercent / 0.10; camera.position.z = params.camPos.z - (p * 10); ringContainer.rotation.y = 0.2 + (p * 0.3);
@@ -316,15 +324,39 @@ window.addEventListener('scroll', () => {
         if(customSection) customSection.style.opacity = 1; if(interactionZone) interactionZone.classList.add('interactive');
         setVisibility(contactSection, 0, 30); contactGroup.position.y = -200;
         if(contactSection) contactSection.classList.remove('active'); 
+        
+        // --- SECUENCIA DE ENTRADA AJUSTADA PARA EVITAR SOLAPAMIENTO ---
         const pCustom = (scrollPercent - 0.60) / 0.20; 
         if(pCustom <= 1.0) {
-            const step = 1 / 3; if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
-            if (pCustom <= step) { let p = pCustom / step; updateLuxuryLayer(layer1, p, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); finalRingGroup.visible = false; } 
-            else if (pCustom <= step * 2) { liftLayerDone(layer1); let p = (pCustom - step) / step; updateLuxuryLayer(layer2, p, 60); resetLayer(layer3, 30); finalRingGroup.visible = false; } 
-            else { liftLayerDone(layer1); liftLayerDone(layer2); let p = (pCustom - (step * 2)) / step; if(p > 1) p = 1; updateLuxuryLayer(layer3, p, 30); if(finalRingModel) { finalRingGroup.visible = true; finalRingModel.traverse(c => { if(c.isMesh) c.material.opacity = p; }); let scale = 0.8 + (p * 0.2); finalRingModel.scale.set(scale, scale, scale); } }
-            resetLayer(layer4, 0);
+            // Dividimos el scroll en 3 pasos: L1, L2, L3. Y luego anillo.
+            const step = 1 / 4; 
+            if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
+            
+            if (pCustom <= step) { 
+                // L1 se va
+                let p = pCustom / step; updateLuxuryLayer(layer1, p, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); finalRingGroup.visible = false; 
+            } 
+            else if (pCustom <= step * 2) { 
+                // L2 se va
+                liftLayerDone(layer1); let p = (pCustom - step) / step; updateLuxuryLayer(layer2, p, 60); resetLayer(layer3, 30); finalRingGroup.visible = false; 
+            } 
+            else if (pCustom <= step * 3) {
+                // L3 se va (SIN ANILLO AUN)
+                liftLayerDone(layer1); liftLayerDone(layer2); let p = (pCustom - step*2) / step; updateLuxuryLayer(layer3, p, 30); finalRingGroup.visible = false;
+            } 
+            else {
+                // AHORA entra el anillo (L3 ya se fue)
+                liftLayerDone(layer1); liftLayerDone(layer2); liftLayerDone(layer3); 
+                let p = (pCustom - step*3) / step; 
+                if(finalRingModel) { 
+                    finalRingGroup.visible = true; 
+                    finalRingModel.traverse(c => { if(c.isMesh) c.material.opacity = p; }); 
+                    let scale = 0.8 + (p * 0.2); finalRingModel.scale.set(scale, scale, scale); 
+                }
+            }
+            if(layer4) layer4.style.opacity = 0;
         } else {
-            liftLayerDone(layer1); liftLayerDone(layer2); liftLayerDone(layer3); resetLayer(layer4, 0);
+            liftLayerDone(layer1); liftLayerDone(layer2); liftLayerDone(layer3); if(layer4) layer4.style.opacity = 0;
             if(configUI) { configUI.style.opacity = 1; configUI.style.pointerEvents = "auto"; }
             if(finalRingModel) { finalRingGroup.visible = true; finalRingModel.traverse(c => { if(c.isMesh) c.material.opacity = 1; }); finalRingModel.scale.set(1, 1, 1); }
         }
@@ -356,6 +388,5 @@ window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    // MANTENER CALIDAD ALTA SIEMPRE AL REDIMENSIONAR
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });

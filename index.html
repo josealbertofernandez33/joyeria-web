@@ -2,9 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Maison - Bespoke Experience</title>
     <link rel="stylesheet" href="style.css">
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.164.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.164.0/examples/jsm/"
+            }
+        }
+    </script>
 </head>
 
 <body>
@@ -32,31 +41,33 @@
         </div>
 
         <div id="config-ui">
-            <div class="config-column left">
-                <div class="config-label">Main Stone</div>
-                <div class="config-group">
-                    <div class="config-dot dot-diamond" data-name="Diamond" onclick="updateRingConfig('main', 'diamond')"></div>
-                    <div class="config-dot dot-ruby" data-name="Ruby" onclick="updateRingConfig('main', 'ruby')"></div>
-                    <div class="config-dot dot-sapphire" data-name="Sapphire" onclick="updateRingConfig('main', 'sapphire')"></div>
-                    <div class="config-dot dot-emerald" data-name="Emerald" onclick="updateRingConfig('main', 'emerald')"></div>
+            
+            <div class="ui-top">
+                <div class="config-label">Metal Selection</div>
+                <div class="metal-row">
+                    <div class="config-dot dot-gold" onclick="updateRingConfig('metal', 'gold')" title="18k Gold"></div>
+                    <div class="config-dot dot-silver" onclick="updateRingConfig('metal', 'silver')" title="Sterling Silver"></div>
                 </div>
             </div>
 
-            <div class="config-column right">
-                <div>
-                    <div class="config-label">Side Stones</div>
-                    <div class="config-group">
-                        <div class="config-dot dot-diamond" data-name="Diamond" onclick="updateRingConfig('side', 'diamond')"></div>
-                        <div class="config-dot dot-ruby" data-name="Ruby" onclick="updateRingConfig('side', 'ruby')"></div>
-                        <div class="config-dot dot-sapphire" data-name="Sapphire" onclick="updateRingConfig('side', 'sapphire')"></div>
-                        <div class="config-dot dot-emerald" data-name="Emerald" onclick="updateRingConfig('side', 'emerald')"></div>
+            <div class="ui-bottom">
+                <div class="stone-group">
+                    <div class="config-label">Center Stone</div>
+                    <div class="stone-row">
+                        <div class="config-dot dot-diamond" onclick="updateRingConfig('main', 'diamond')"></div>
+                        <div class="config-dot dot-ruby" onclick="updateRingConfig('main', 'ruby')"></div>
+                        <div class="config-dot dot-sapphire" onclick="updateRingConfig('main', 'sapphire')"></div>
+                        <div class="config-dot dot-emerald" onclick="updateRingConfig('main', 'emerald')"></div>
                     </div>
                 </div>
-                <div style="margin-top: 30px;">
-                    <div class="config-label">Metal</div>
-                    <div class="config-group">
-                        <div class="config-dot dot-silver" data-name="Silver" onclick="updateRingConfig('metal', 'silver')"></div>
-                        <div class="config-dot dot-gold" data-name="Gold" onclick="updateRingConfig('metal', 'gold')"></div>
+                
+                <div class="stone-group">
+                    <div class="config-label">Side Stones</div>
+                    <div class="stone-row">
+                        <div class="config-dot dot-diamond" onclick="updateRingConfig('side', 'diamond')"></div>
+                        <div class="config-dot dot-ruby" onclick="updateRingConfig('side', 'ruby')"></div>
+                        <div class="config-dot dot-sapphire" onclick="updateRingConfig('side', 'sapphire')"></div>
+                        <div class="config-dot dot-emerald" onclick="updateRingConfig('side', 'emerald')"></div>
                     </div>
                 </div>
             </div>
@@ -86,15 +97,6 @@
             </form>
         </div>
     </section>
-
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.164.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.164.0/examples/jsm/"
-            }
-        }
-    </script>
 
     <script type="module" src="script.js"></script>
 </body>
