@@ -400,8 +400,7 @@ form.addEventListener('submit', async function(e) {
     const formData = new FormData(form);
 
     formData.delete('attachment');
-    formData.delete('attachment[]');
-
+    
     for (let i = 0; i < dt.files.length; i++) {
         formData.append(`attachment-${i+1}`, dt.files[i]);
     }
