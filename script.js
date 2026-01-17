@@ -3,10 +3,39 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { Reflector } from 'three/addons/objects/Reflector.js';
 
-window.scrollToPercent = function(percentage) {
+// --- LOGICA DE NAVEGACIÓN Y MENÚ ---
+const header = document.getElementById('main-header');
+const menuToggle = document.getElementById('menu-toggle');
+
+window.toggleMenu = function() {
+    header.classList.toggle('menu-open');
+    if(header.classList.contains('menu-open')) {
+        menuToggle.textContent = 'CLOSE';
+    } else {
+        menuToggle.textContent = 'MENU +';
+    }
+}
+
+window.navigate = function(percentage) {
+    // Si estamos en modo menú desplegado, cerrar primero
+    if(header.classList.contains('menu-open')) {
+        toggleMenu();
+    }
     const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
     window.scrollTo({ top: totalHeight * percentage, behavior: 'smooth' });
 }
+
+window.addEventListener('scroll', () => {
+    if (window.scrollY > 50) {
+        header.classList.add('scrolled');
+    } else {
+        header.classList.remove('scrolled');
+        // Si subimos arriba del todo, nos aseguramos de cerrar el menú si estaba abierto
+        if(header.classList.contains('menu-open')) toggleMenu();
+    }
+    
+    // ... resto lógica scroll abajo ...
+});
 
 const fileInput = document.getElementById('attachment');
 const fileListDisplay = document.getElementById('file-list');
@@ -18,7 +47,7 @@ if(fileInput) {
         for(let i=0; i<dt.items.length; i++) totalSize += dt.items[i].getAsFile().size;
         for (let i = 0; i < this.files.length; i++) {
             let file = this.files[i];
-            if (file.size + totalSize > 25 * 1024 * 1024) { alert(`File too big.`); continue; }
+            if (file.size + totalSize > 25 * 1024 * 1024) { alert(`Total size limit (25MB) exceeded.`); continue; }
             dt.items.add(file); totalSize += file.size;
         }
         this.files = dt.files; renderFileList();
@@ -47,6 +76,7 @@ function renderFileList() {
     }
 }
 
+// --- CONFIGURACIÓN THREE.JS ---
 const params = {
     bgColor: 0x000000, floorColor: 0x998133, maskOpacity: 1.0,
     camFOV: 45, camPos: { x: 0, y: 0, z: 90 }, camRot: { x: 0, y: 0, z: -0.2 },

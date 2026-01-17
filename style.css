@@ -6,16 +6,62 @@ body {
 }
 canvas { position: fixed; top: 0; left: 0; outline: none; z-index: 1; pointer-events: none; }
 
+/* --- HEADER DINÁMICO --- */
 header {
-    position: fixed; top: 50px; left: 0; width: 100%; display: flex; justify-content: center; gap: 80px; z-index: 100;
+    position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
+    transition: all 0.4s ease; padding-top: 50px;
+    display: flex; flex-direction: column; align-items: center;
+}
+
+/* Estado Scrolled (Menú Colapsado) */
+header.scrolled {
+    padding-top: 20px;
+    background: transparent;
+}
+
+#menu-toggle {
+    font-family: 'Cinzel', serif; font-size: 0.85rem; font-weight: 600; color: #d4af37;
+    text-transform: uppercase; letter-spacing: 3px; cursor: pointer;
+    border: 1px solid rgba(212, 175, 55, 0.5); padding: 10px 20px; border-radius: 30px;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+    display: none; /* Oculto por defecto */
+    transition: all 0.3s ease; pointer-events: auto;
+}
+#menu-toggle:hover { background: rgba(212, 175, 55, 0.1); border-color: #fff; color: #fff; }
+
+#nav-container {
+    display: flex; justify-content: center; gap: 80px;
     font-family: 'Cinzel', serif; font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,0.7);
     text-transform: uppercase; letter-spacing: 3px; pointer-events: none;
+    transition: all 0.4s ease;
 }
+
+/* Cuando se hace scroll, ocultamos la barra normal y mostramos el botón */
+header.scrolled #nav-container {
+    opacity: 0; pointer-events: none; transform: translateY(-20px); position: absolute;
+}
+header.scrolled #menu-toggle {
+    display: block;
+}
+
+/* Cuando se abre el menú en modo scroll (Overlay) */
+header.menu-open #nav-container {
+    opacity: 1; pointer-events: auto; transform: translateY(0); position: relative;
+    flex-direction: column; background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(15px);
+    width: 100vw; height: 100vh; position: fixed; top: 0; left: 0;
+    justify-content: center; align-items: center; gap: 40px;
+}
+header.menu-open #menu-toggle {
+    z-index: 101; border-color: #fff; color: #fff;
+    position: fixed; top: 30px;
+}
+
 .nav-item { pointer-events: auto; cursor: pointer; transition: color 0.3s ease; position: relative; }
 .nav-item::after { content: ''; position: absolute; width: 0; height: 1px; bottom: -5px; left: 50%; background-color: #d4af37; transition: all 0.3s ease; transform: translateX(-50%); }
 .nav-item:hover { color: #ffffff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
 .nav-item:hover::after { width: 100%; }
 
+/* --- SECCIONES --- */
 #about-section {
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 650px; text-align: center; z-index: 5;
     font-family: 'Lato', sans-serif; font-weight: 300; pointer-events: none; opacity: 0; filter: blur(20px);
@@ -134,6 +180,7 @@ input[type="file"] { display: none; }
 .success-content h3 { font-size: 1.5rem; letter-spacing: 3px; margin-bottom: 20px; line-height: 1.4; }
 .success-content p { font-family: 'Lato', sans-serif; font-size: 0.9rem; color: rgba(255,255,255,0.7); letter-spacing: 1px; }
 
+/* MEDIA QUERIES MÓVIL Y APAISADO */
 @media (max-width: 768px) { 
     .glass-card { width: 85%; padding: 30px; } 
     h2 { font-size: 1.5rem !important; } 
@@ -141,4 +188,14 @@ input[type="file"] { display: none; }
     #config-ui { padding: 100px 20px 60px 20px; }
     .config-dot { width: 44px; height: 44px; } 
     #selection-display { font-size: 1rem; top: 45%; }
+}
+
+/* FIX PARA MÓVIL APAISADO (LANDSCAPE) */
+@media (max-height: 500px) and (orientation: landscape) {
+    #config-ui { padding: 40px 20px 20px 20px; }
+    .config-dot { width: 35px; height: 35px; }
+    .ui-bottom { gap: 10px; }
+    .category-title { font-size: 0.6rem; }
+    #selection-display { font-size: 0.9rem; top: 35%; }
+    .metal-row { padding: 5px 15px; }
 }

@@ -19,11 +19,14 @@
 
 <body>
 
-    <header>
-        <div class="nav-item" onclick="scrollToPercent(0)">HOME</div>
-        <div class="nav-item" onclick="scrollToPercent(0.32)">ABOUT</div>
-        <div class="nav-item" onclick="scrollToPercent(0.75)">CUSTOM</div>
-        <div class="nav-item" onclick="scrollToPercent(1.0)">ORDER</div>
+    <header id="main-header">
+        <div id="menu-toggle" onclick="toggleMenu()">MENU +</div>
+        <nav id="nav-container">
+            <div class="nav-item" onclick="navigate(0)">HOME</div>
+            <div class="nav-item" onclick="navigate(0.32)">ABOUT</div>
+            <div class="nav-item" onclick="navigate(0.75)">CUSTOM</div>
+            <div class="nav-item" onclick="navigate(1.0)">ORDER</div>
+        </nav>
     </header>
 
     <section id="about-section">
