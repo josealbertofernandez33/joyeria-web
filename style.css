@@ -6,17 +6,15 @@ body {
 }
 canvas { position: fixed; top: 0; left: 0; outline: none; z-index: 1; pointer-events: none; }
 
+/* HEADER DINÁMICO */
 header {
-    position: fixed; top: 50px; left: 0; width: 100%; display: flex; justify-content: center; gap: 80px; z-index: 100;
-    font-family: 'Cinzel', serif; font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,0.7);
-    text-transform: uppercase; letter-spacing: 3px; pointer-events: none;
-    transition: all 0.4s ease;
+    position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
+    transition: all 0.4s ease; padding-top: 50px;
+    display: flex; flex-direction: column; align-items: center;
 }
 
-/* Estado Scrolled (Menú Colapsado) */
 header.scrolled {
     padding-top: 20px;
-    top: 0;
     background: transparent;
 }
 
@@ -25,7 +23,7 @@ header.scrolled {
     text-transform: uppercase; letter-spacing: 3px; cursor: pointer;
     border: 1px solid rgba(212, 175, 55, 0.5); padding: 10px 20px; border-radius: 30px;
     background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
-    display: none; /* Oculto por defecto */
+    display: none; 
     transition: all 0.3s ease; pointer-events: auto;
 }
 #menu-toggle:hover { background: rgba(212, 175, 55, 0.1); border-color: #fff; color: #fff; }
@@ -37,15 +35,13 @@ header.scrolled {
     transition: all 0.4s ease;
 }
 
-/* Cuando se hace scroll, ocultamos la barra normal y mostramos el botón */
+/* Comportamiento Scroll */
 header.scrolled #nav-container {
     opacity: 0; pointer-events: none; transform: translateY(-20px); position: absolute;
 }
-header.scrolled #menu-toggle {
-    display: block;
-}
+header.scrolled #menu-toggle { display: block; }
 
-/* Cuando se abre el menú en modo scroll (Overlay) */
+/* Menú Abierto (Overlay) */
 header.menu-open #nav-container {
     opacity: 1; pointer-events: auto; transform: translateY(0); position: relative;
     flex-direction: column; background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(15px);
@@ -62,6 +58,7 @@ header.menu-open #menu-toggle {
 .nav-item:hover { color: #ffffff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
 .nav-item:hover::after { width: 100%; }
 
+/* SECCIONES */
 #about-section {
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 650px; text-align: center; z-index: 5;
     font-family: 'Lato', sans-serif; font-weight: 300; pointer-events: none; opacity: 0; filter: blur(20px);
@@ -101,25 +98,15 @@ header.menu-open #menu-toggle {
 .metal-row { display: flex; gap: 30px; background: rgba(0,0,0,0.4); padding: 10px 25px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(5px); }
 .stone-group { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
 .stone-row { display: flex; gap: 20px; justify-content: center; }
-.config-label {
-    font-family: 'Cinzel', serif; font-size: 0.75rem; color: #d4af37; 
-    text-transform: uppercase; letter-spacing: 3px; text-shadow: 0 0 5px rgba(0,0,0,0.8);
-}
+.config-label { font-family: 'Cinzel', serif; font-size: 0.75rem; color: #d4af37; text-transform: uppercase; letter-spacing: 3px; text-shadow: 0 0 5px rgba(0,0,0,0.8); }
 
 .config-dot {
     width: 44px; height: 44px; border-radius: 50%; cursor: pointer; position: relative; touch-action: manipulation;
     border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 5px 15px rgba(0,0,0,0.5);
     transition: transform 0.2s, box-shadow 0.2s;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-color: #222; 
+    background-size: cover; background-position: center; background-repeat: no-repeat; background-color: #222; 
 }
-
-.config-dot.active {
-    transform: scale(1.2); border-color: #ffffff;
-    box-shadow: 0 0 0 3px rgba(0,0,0,0.9), 0 0 0 4px rgba(212, 175, 55, 0.9); z-index: 2;
-}
+.config-dot.active { transform: scale(1.2); border-color: #ffffff; box-shadow: 0 0 0 3px rgba(0,0,0,0.9), 0 0 0 4px rgba(212, 175, 55, 0.9); z-index: 2; }
 .config-dot:hover { transform: scale(1.1); border-color: #fff; }
 
 .dot-gold { background-image: url('./texture-gold.png'); }
@@ -180,11 +167,62 @@ input[type="file"] { display: none; }
 .success-content h3 { font-size: 1.5rem; letter-spacing: 3px; margin-bottom: 20px; line-height: 1.4; }
 .success-content p { font-family: 'Lato', sans-serif; font-size: 0.9rem; color: rgba(255,255,255,0.7); letter-spacing: 1px; }
 
+/* --- CORRECCIONES MÓVIL Y LANDSCAPE --- */
+
+/* 1. Corrección Menú Móvil Vertical */
 @media (max-width: 768px) { 
     .glass-card { width: 85%; padding: 30px; } 
     h2 { font-size: 1.5rem !important; } 
-    header { gap: 20px; font-size: 0.65rem; top: 20px; } 
+    header { top: 20px; }
     #config-ui { padding: 100px 20px 60px 20px; }
+    
+    /* Reducir espacio en menú para que entren todos */
+    #nav-container { gap: 20px; width: 100%; padding: 0 10px; box-sizing: border-box; }
+    .nav-item { font-size: 0.65rem; letter-spacing: 1px; }
+    
     .config-dot { width: 44px; height: 44px; } 
     #selection-display { font-size: 1rem; top: 45%; }
+}
+
+/* 2. Corrección Móvil Apaisado (Landscape) - Interfaz a los lados */
+@media (max-height: 500px) and (orientation: landscape) {
+    #config-ui {
+        flex-direction: row; /* Distribuir izq/der */
+        align-items: center; /* Centrar verticalmente */
+        padding: 0 20px; /* Margen lateral */
+    }
+    
+    /* Metales a la IZQUIERDA */
+    .ui-top {
+        width: auto; height: 100%;
+        justify-content: center; /* Centrar verticalmente */
+        align-items: flex-start;
+        margin-right: auto;
+    }
+    .metal-row {
+        flex-direction: column; /* Apilar verticalmente */
+        padding: 15px 10px;
+        gap: 15px;
+    }
+
+    /* Piedras a la DERECHA */
+    .ui-bottom {
+        width: auto; height: 100%;
+        justify-content: center; /* Centrar verticalmente */
+        align-items: flex-end;
+        margin-left: auto;
+        padding-bottom: 0;
+        gap: 20px;
+    }
+    
+    /* Categorías de piedras alineadas a la derecha */
+    .stone-category { align-items: flex-end; }
+    .category-title { text-align: right; font-size: 0.65rem; }
+    
+    .stone-row { gap: 10px; }
+    .divider-line { display: none; } /* Ocultar línea divisoria */
+    
+    .config-dot { width: 35px; height: 35px; } /* Botones más pequeños */
+    
+    #selection-display { font-size: 0.9rem; top: 15%; } /* Mover texto arriba */
 }
