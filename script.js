@@ -8,6 +8,7 @@ window.scrollToPercent = function(percentage) {
     window.scrollTo({ top: totalHeight * percentage, behavior: 'smooth' });
 }
 
+// --- GESTIÓN DE ARCHIVOS ---
 const fileInput = document.getElementById('attachment');
 const fileListDisplay = document.getElementById('file-list');
 const dt = new DataTransfer();
@@ -16,12 +17,19 @@ if(fileInput) {
     fileInput.addEventListener('change', function() {
         let totalSize = 0;
         for(let i=0; i<dt.items.length; i++) totalSize += dt.items[i].getAsFile().size;
+        
         for (let i = 0; i < this.files.length; i++) {
             let file = this.files[i];
-            if (file.size + totalSize > 25 * 1024 * 1024) { alert(`File too big.`); continue; }
-            dt.items.add(file); totalSize += file.size;
+            if (file.size + totalSize > 25 * 1024 * 1024) { 
+                alert(`Total size limit (25MB) exceeded.`); 
+                continue; 
+            }
+            dt.items.add(file); 
+            totalSize += file.size;
         }
-        this.files = dt.files; renderFileList();
+        
+        this.files = dt.files; 
+        renderFileList();
     });
 }
 
@@ -36,6 +44,7 @@ function renderFileList() {
     }
 }
 
+// --- CONFIGURACIÓN THREE.JS ---
 const params = {
     bgColor: 0x000000, floorColor: 0x998133, maskOpacity: 1.0,
     camFOV: 45, camPos: { x: 0, y: 0, z: 90 }, camRot: { x: 0, y: 0, z: -0.2 },
@@ -102,6 +111,7 @@ light1.position.set(20, 20, 20); scene.add(light1);
 const light2 = new THREE.PointLight(params.lightColor, params.lightInt);
 light2.position.set(-20, -10, 20); scene.add(light2);
 
+// RUTA ./studio_v2.exr
 new EXRLoader().load('./studio_v2.exr', (texture) => {
     texture.mapping = THREE.EquirectangularReflectionMapping;
     texture.offset.x = params.envRot;
@@ -125,6 +135,7 @@ const loader = new GLTFLoader();
 const individualStones = []; 
 const contactStones = [];    
 
+// RUTA ./Alianza.glb
 loader.load('./Alianza.glb', (gltf) => {
     const ring = gltf.scene;
     const box = new THREE.Box3().setFromObject(ring);
@@ -135,6 +146,7 @@ loader.load('./Alianza.glb', (gltf) => {
 });
 
 let finalRingModel = null;
+// RUTA ./anillofotos.glb
 loader.load('./anillofotos.glb', (gltf) => {
     finalRingModel = gltf.scene;
     const box = new THREE.Box3().setFromObject(finalRingModel);
@@ -154,6 +166,7 @@ loader.load('./anillofotos.glb', (gltf) => {
     finalRingGroup.add(finalRingModel);
 });
 
+// --- LÓGICA UI Y CONFIGURACIÓN ---
 const displayLabel = document.getElementById('selection-display');
 let displayTimeout;
 
@@ -190,6 +203,7 @@ window.updateRingConfig = function(type, value, element, displayName) {
     }
 };
 
+// RUTA ./piedras.glb
 loader.load('./piedras.glb', (gltf) => {
     const stones = gltf.scene;
     stones.traverse(c => { if(c.isMesh) { c.material = crystalMat; c.userData = { rotSpeed: 0.003 + Math.random()*0.005, axis: new THREE.Vector3(Math.random(),1,Math.random()).normalize() }; individualStones.push(c); }});
@@ -214,6 +228,7 @@ if (!isMobile) {
 }
 
 let diamondBase = null;
+// RUTA ./diamante.glb
 loader.load('./diamante.glb', (gltf) => {
     const diamond = gltf.scene;
     const box = new THREE.Box3().setFromObject(diamond);
@@ -385,8 +400,10 @@ form.addEventListener('submit', async function(e) {
     const formData = new FormData(form);
 
     formData.delete('attachment');
+    formData.delete('attachment[]');
+
     for (let i = 0; i < dt.files.length; i++) {
-        formData.append('attachment', dt.files[i]);
+        formData.append(`attachment-${i+1}`, dt.files[i]);
     }
 
     try {
