@@ -98,15 +98,23 @@
     <section id="contact-section">
         <div class="glass-card">
             <h2>DESCRIBE YOUR JEWEL</h2>
-            <form action="https://formspree.io/f/mgooovdp" method="POST" enctype="multipart/form-data">
+            
+            <form id="contact-form" action="https://formsubmit.co/josealbertofernandez33@gmail.com" method="POST" enctype="multipart/form-data">
+                
+                <input type="hidden" name="_captcha" value="false">
+                <input type="hidden" name="_template" value="table">
+                
                 <div class="input-group">
                     <textarea name="description" placeholder="Describe your vision, materials, stones, sizes, and details..." required></textarea>
                 </div>
+
                 <label class="file-upload-label" for="attachment">
                     + ATTACH REFERENCES (IMG / PDF)
                 </label>
                 <input type="file" id="attachment" name="attachment" accept="image/*,.pdf" multiple>
+                
                 <div id="file-list"></div>
+                
                 <div class="input-row">
                     <input class="styled-input" type="email" name="email" placeholder="Email Address" required>
                     <input class="styled-input" type="tel" name="phone" placeholder="Phone Number">
@@ -114,7 +122,9 @@
                 <div class="input-group">
                     <input class="styled-input" type="text" name="country" placeholder="Country of Residence">
                 </div>
+                
                 <button type="submit" class="submit-btn">SEND REQUEST</button>
+                <p id="form-status" style="margin-top: 15px; font-size: 0.9rem; display: none;"></p>
             </form>
         </div>
     </section>

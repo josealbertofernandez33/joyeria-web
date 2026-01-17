@@ -361,3 +361,55 @@ window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });
+
+const form = document.getElementById('contact-form');
+const statusMsg = document.getElementById('form-status');
+const submitBtn = form.querySelector('.submit-btn');
+
+form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = "SENDING...";
+    submitBtn.style.opacity = "0.5";
+    submitBtn.disabled = true;
+    statusMsg.style.display = "none";
+
+    const formData = new FormData(form);
+
+    try {
+        const response = await fetch(form.action, {
+            method: form.method,
+            body: formData,
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            statusMsg.textContent = "REQUEST RECEIVED. WE WILL CONTACT YOU SHORTLY.";
+            statusMsg.style.color = "#d4af37";
+            statusMsg.style.display = "block";
+            form.reset();
+            if(dt && dt.items) dt.items.clear();
+            renderFileList();
+        } else {
+            const data = await response.json();
+            if (Object.hasOwn(data, 'errors')) {
+                statusMsg.textContent = data["errors"].map(error => error["message"]).join(", ");
+            } else {
+                statusMsg.textContent = "Oops! There was a problem submitting your form.";
+            }
+            statusMsg.style.color = "#ff4444";
+            statusMsg.style.display = "block";
+        }
+    } catch (error) {
+        statusMsg.textContent = "Oops! There was a problem submitting your form.";
+        statusMsg.style.color = "#ff4444";
+        statusMsg.style.display = "block";
+    } finally {
+        submitBtn.textContent = originalText;
+        submitBtn.style.opacity = "1";
+        submitBtn.disabled = false;
+    }
+});
