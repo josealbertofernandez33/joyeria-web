@@ -37,7 +37,6 @@ window.addEventListener('scroll', () => {
     }
     
     const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
-    
     if (scrollPercent > 0.60 && scrollPercent < 0.92) { 
         if(customSection) customSection.classList.add('active-interaction');
         if(layer4) layer4.style.opacity = 0; 
