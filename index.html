@@ -103,6 +103,7 @@
                 
                 <input type="hidden" name="_captcha" value="false">
                 <input type="hidden" name="_template" value="table">
+                <input type="hidden" name="_subject" value="New Maison Bespoke Order">
                 
                 <div class="input-group">
                     <textarea name="description" placeholder="Describe your vision, materials, stones, sizes, and details..." required></textarea>
@@ -111,7 +112,8 @@
                 <label class="file-upload-label" for="attachment">
                     + ATTACH REFERENCES (IMG / PDF)
                 </label>
-                <input type="file" id="attachment" name="attachment" accept="image/*,.pdf" multiple>
+                
+                <input type="file" id="attachment" name="attachment[]" accept="image/*,.pdf" multiple>
                 
                 <div id="file-list"></div>
                 
