@@ -114,6 +114,25 @@ input[type="file"] { display: none; }
 .submit-btn:hover { background: #d4af37; color: #000; box-shadow: 0 0 30px rgba(212, 175, 55, 0.3); }
 .lil-gui { display: none !important; }
 
+/* MODAL DE ÉXITO */
+#success-modal {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85); z-index: 100;
+    display: flex; justify-content: center; align-items: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.5s;
+    backdrop-filter: blur(10px);
+}
+#success-modal.visible { opacity: 1; pointer-events: auto; }
+.success-content {
+    font-family: 'Cinzel', serif; color: #d4af37; text-align: center;
+    border: 1px solid #d4af37; padding: 40px; border-radius: 4px;
+    background: rgba(20, 20, 20, 0.9);
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
+    width: 80%; max-width: 500px;
+}
+.success-content h3 { font-size: 1.5rem; letter-spacing: 3px; margin-bottom: 20px; line-height: 1.4; }
+.success-content p { font-family: 'Lato', sans-serif; font-size: 0.9rem; color: rgba(255,255,255,0.7); letter-spacing: 1px; }
+
 @media (max-width: 768px) { 
     .glass-card { width: 85%; padding: 30px; } 
     h2 { font-size: 1.5rem !important; } 
