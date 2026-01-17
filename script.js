@@ -3,7 +3,6 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { Reflector } from 'three/addons/objects/Reflector.js';
 
-// --- LOGICA DE NAVEGACIÓN Y MENÚ ---
 const header = document.getElementById('main-header');
 const menuToggle = document.getElementById('menu-toggle');
 
@@ -17,10 +16,14 @@ window.toggleMenu = function() {
 }
 
 window.navigate = function(percentage) {
-    // Si estamos en modo menú desplegado, cerrar primero
     if(header.classList.contains('menu-open')) {
         toggleMenu();
     }
+    const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+    window.scrollTo({ top: totalHeight * percentage, behavior: 'smooth' });
+}
+
+window.scrollToPercent = function(percentage) {
     const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
     window.scrollTo({ top: totalHeight * percentage, behavior: 'smooth' });
 }
@@ -30,11 +33,73 @@ window.addEventListener('scroll', () => {
         header.classList.add('scrolled');
     } else {
         header.classList.remove('scrolled');
-        // Si subimos arriba del todo, nos aseguramos de cerrar el menú si estaba abierto
         if(header.classList.contains('menu-open')) toggleMenu();
     }
     
-    // ... resto lógica scroll abajo ...
+    // Logica existente de scroll
+    const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+    if (scrollPercent > 0.60 && scrollPercent < 0.92) { 
+        if(customSection) customSection.classList.add('active-interaction');
+        if(layer4) layer4.style.opacity = 0; 
+    } else { 
+        if(customSection) customSection.classList.remove('active-interaction'); 
+        if(layer4) layer4.style.opacity = 1;
+    }
+
+    if (scrollPercent <= 0.10) {
+        const p = scrollPercent / 0.10; camera.position.z = params.camPos.z - (p * 10); ringContainer.rotation.y = 0.2 + (p * 0.3);
+        homeGroup.position.y = 0; aboutGroup.position.y = -60; contactGroup.position.y = -200; 
+        finalRingGroup.visible = false; homeGroup.visible = true; if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
+        setVisibility(aboutSection, 0, 20); setVisibility(customSection, 0, 0); setVisibility(contactSection, 0, 30);
+        if(contactSection) contactSection.classList.remove('active'); 
+        if(diamondMat) diamondMat.opacity = 1; if(diamondBase) diamondBase.visible = true; 
+    } else if (scrollPercent > 0.10 && scrollPercent <= 0.25) {
+        const p = (scrollPercent - 0.10) / 0.15; homeGroup.position.y = p * 80; aboutGroup.position.y = -60 + (p * 60); 
+        setVisibility(aboutSection, 0, 20); setVisibility(customSection, 0, 0); if(diamondMat) diamondMat.opacity = 1; if(diamondBase) diamondBase.visible = true;
+    } else if (scrollPercent > 0.25 && scrollPercent <= 0.40) {
+        homeGroup.position.y = 80; aboutGroup.position.y = 0; contactGroup.position.y = -200;
+        const pText = (scrollPercent - 0.25) / 0.05; let o = pText; if(o>1) o=1; let b = 20 - (pText * 20); if(b<0) b=0;
+        setVisibility(aboutSection, o, b); setVisibility(customSection, 0, 0); if(diamondMat) diamondMat.opacity = 1; if(diamondBase) diamondBase.visible = true;
+    } else if (scrollPercent > 0.40 && scrollPercent <= 0.50) {
+        const pOut = (scrollPercent - 0.40) / 0.10; aboutGroup.position.y = 0; 
+        setVisibility(aboutSection, 1 - pOut, pOut * 20); if(diamondMat) diamondMat.opacity = 1 - pOut; if(diamondBase) diamondBase.visible = true;
+        if(customSection) customSection.style.opacity = 0; if(configUI) configUI.style.opacity = 0;
+        resetLayer(layer1, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); resetLayer(layer4, 0);
+        setVisibility(contactSection, 0, 30); contactGroup.position.y = -200; finalRingGroup.visible = false;
+    } else if (scrollPercent > 0.50 && scrollPercent <= 0.60) {
+        aboutGroup.position.y = 0; if(diamondMat) diamondMat.opacity = 0; if(diamondBase) diamondBase.visible = false; 
+        setVisibility(aboutSection, 0, 20); const pIn = (scrollPercent - 0.50) / 0.10; if(customSection) customSection.style.opacity = pIn;
+        resetLayer(layer1, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); resetLayer(layer4, 0); finalRingGroup.visible = false; homeGroup.visible = false;
+    } else if (scrollPercent > 0.60 && scrollPercent <= 0.92) {
+        if(diamondMat) diamondMat.opacity = 0; if(diamondBase) diamondBase.visible = false; homeGroup.visible = false; 
+        if(customSection) customSection.style.opacity = 1; if(interactionZone) interactionZone.classList.add('interactive');
+        setVisibility(contactSection, 0, 30); contactGroup.position.y = -200;
+        if(contactSection) contactSection.classList.remove('active'); 
+        
+        const pCustom = (scrollPercent - 0.60) / 0.20; 
+        if(pCustom <= 1.0) {
+            const step = 1 / 4; 
+            if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
+            if (pCustom <= step) { let p = pCustom / step; updateLuxuryLayer(layer1, p, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); finalRingGroup.visible = false; } 
+            else if (pCustom <= step * 2) { liftLayerDone(layer1); let p = (pCustom - step) / step; updateLuxuryLayer(layer2, p, 60); resetLayer(layer3, 30); finalRingGroup.visible = false; } 
+            else if (pCustom <= step * 3) { liftLayerDone(layer1); liftLayerDone(layer2); let p = (pCustom - step*2) / step; updateLuxuryLayer(layer3, p, 30); finalRingGroup.visible = false; }
+            else { liftLayerDone(layer1); liftLayerDone(layer2); liftLayerDone(layer3); let p = (pCustom - step*3) / step; if(finalRingModel) { finalRingGroup.visible = true; finalRingModel.traverse(c => { if(c.isMesh) c.material.opacity = p; }); let scale = 0.8 + (p * 0.2); finalRingModel.scale.set(scale, scale, scale); } }
+            if(layer4) layer4.style.opacity = 0;
+        } else {
+            liftLayerDone(layer1); liftLayerDone(layer2); liftLayerDone(layer3); if(layer4) layer4.style.opacity = 0;
+            if(configUI) { configUI.style.opacity = 1; configUI.style.pointerEvents = "auto"; }
+            if(finalRingModel) { finalRingGroup.visible = true; finalRingModel.traverse(c => { if(c.isMesh) c.material.opacity = 1; }); finalRingModel.scale.set(1, 1, 1); }
+        }
+    } else {
+        homeGroup.position.y = 200; aboutGroup.position.y = 200; homeGroup.visible = false; if(diamondBase) diamondBase.visible = false;
+        if(interactionZone) interactionZone.classList.remove('interactive');
+        if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
+        const pForm = (scrollPercent - 0.92) / 0.08; 
+        if(customSection) customSection.style.opacity = 1 - pForm; 
+        if(finalRingModel) { finalRingModel.traverse(c => { if(c.isMesh) c.material.opacity = 1 - pForm; }); }
+        const blurVal = 30 - (pForm * 30); setVisibility(contactSection, pForm, blurVal, true); contactGroup.position.y = -200 + (pForm * 200); 
+        if(pForm > 0.5 && contactSection) contactSection.classList.add('active'); 
+    }
 });
 
 const fileInput = document.getElementById('attachment');
@@ -76,7 +141,6 @@ function renderFileList() {
     }
 }
 
-// --- CONFIGURACIÓN THREE.JS ---
 const params = {
     bgColor: 0x000000, floorColor: 0x998133, maskOpacity: 1.0,
     camFOV: 45, camPos: { x: 0, y: 0, z: 90 }, camRot: { x: 0, y: 0, z: -0.2 },
@@ -316,73 +380,6 @@ function updateLuxuryLayer(element, progress, baseZ) {
 }
 
 resetLayer(layer1, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); resetLayer(layer4, 0);
-
-window.addEventListener('scroll', () => {
-    const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
-    
-    if (scrollPercent > 0.60 && scrollPercent < 0.92) { 
-        if(customSection) customSection.classList.add('active-interaction');
-        if(layer4) layer4.style.opacity = 0; 
-    } else { 
-        if(customSection) customSection.classList.remove('active-interaction'); 
-        if(layer4) layer4.style.opacity = 1;
-    }
-
-    if (scrollPercent <= 0.10) {
-        const p = scrollPercent / 0.10; camera.position.z = params.camPos.z - (p * 10); ringContainer.rotation.y = 0.2 + (p * 0.3);
-        homeGroup.position.y = 0; aboutGroup.position.y = -60; contactGroup.position.y = -200; 
-        finalRingGroup.visible = false; homeGroup.visible = true; if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
-        setVisibility(aboutSection, 0, 20); setVisibility(customSection, 0, 0); setVisibility(contactSection, 0, 30);
-        if(contactSection) contactSection.classList.remove('active'); 
-        if(diamondMat) diamondMat.opacity = 1; if(diamondBase) diamondBase.visible = true; 
-    } else if (scrollPercent > 0.10 && scrollPercent <= 0.25) {
-        const p = (scrollPercent - 0.10) / 0.15; homeGroup.position.y = p * 80; aboutGroup.position.y = -60 + (p * 60); 
-        setVisibility(aboutSection, 0, 20); setVisibility(customSection, 0, 0); if(diamondMat) diamondMat.opacity = 1; if(diamondBase) diamondBase.visible = true;
-    } else if (scrollPercent > 0.25 && scrollPercent <= 0.40) {
-        homeGroup.position.y = 80; aboutGroup.position.y = 0; contactGroup.position.y = -200;
-        const pText = (scrollPercent - 0.25) / 0.05; let o = pText; if(o>1) o=1; let b = 20 - (pText * 20); if(b<0) b=0;
-        setVisibility(aboutSection, o, b); setVisibility(customSection, 0, 0); if(diamondMat) diamondMat.opacity = 1; if(diamondBase) diamondBase.visible = true;
-    } else if (scrollPercent > 0.40 && scrollPercent <= 0.50) {
-        const pOut = (scrollPercent - 0.40) / 0.10; aboutGroup.position.y = 0; 
-        setVisibility(aboutSection, 1 - pOut, pOut * 20); if(diamondMat) diamondMat.opacity = 1 - pOut; if(diamondBase) diamondBase.visible = true;
-        if(customSection) customSection.style.opacity = 0; if(configUI) configUI.style.opacity = 0;
-        resetLayer(layer1, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); resetLayer(layer4, 0);
-        setVisibility(contactSection, 0, 30); contactGroup.position.y = -200; finalRingGroup.visible = false;
-    } else if (scrollPercent > 0.50 && scrollPercent <= 0.60) {
-        aboutGroup.position.y = 0; if(diamondMat) diamondMat.opacity = 0; if(diamondBase) diamondBase.visible = false; 
-        setVisibility(aboutSection, 0, 20); const pIn = (scrollPercent - 0.50) / 0.10; if(customSection) customSection.style.opacity = pIn;
-        resetLayer(layer1, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); resetLayer(layer4, 0); finalRingGroup.visible = false; homeGroup.visible = false;
-    } else if (scrollPercent > 0.60 && scrollPercent <= 0.92) {
-        if(diamondMat) diamondMat.opacity = 0; if(diamondBase) diamondBase.visible = false; homeGroup.visible = false; 
-        if(customSection) customSection.style.opacity = 1; if(interactionZone) interactionZone.classList.add('interactive');
-        setVisibility(contactSection, 0, 30); contactGroup.position.y = -200;
-        if(contactSection) contactSection.classList.remove('active'); 
-        
-        const pCustom = (scrollPercent - 0.60) / 0.20; 
-        if(pCustom <= 1.0) {
-            const step = 1 / 4; 
-            if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
-            if (pCustom <= step) { let p = pCustom / step; updateLuxuryLayer(layer1, p, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); finalRingGroup.visible = false; } 
-            else if (pCustom <= step * 2) { liftLayerDone(layer1); let p = (pCustom - step) / step; updateLuxuryLayer(layer2, p, 60); resetLayer(layer3, 30); finalRingGroup.visible = false; } 
-            else if (pCustom <= step * 3) { liftLayerDone(layer1); liftLayerDone(layer2); let p = (pCustom - step*2) / step; updateLuxuryLayer(layer3, p, 30); finalRingGroup.visible = false; }
-            else { liftLayerDone(layer1); liftLayerDone(layer2); liftLayerDone(layer3); let p = (pCustom - step*3) / step; if(finalRingModel) { finalRingGroup.visible = true; finalRingModel.traverse(c => { if(c.isMesh) c.material.opacity = p; }); let scale = 0.8 + (p * 0.2); finalRingModel.scale.set(scale, scale, scale); } }
-            if(layer4) layer4.style.opacity = 0;
-        } else {
-            liftLayerDone(layer1); liftLayerDone(layer2); liftLayerDone(layer3); if(layer4) layer4.style.opacity = 0;
-            if(configUI) { configUI.style.opacity = 1; configUI.style.pointerEvents = "auto"; }
-            if(finalRingModel) { finalRingGroup.visible = true; finalRingModel.traverse(c => { if(c.isMesh) c.material.opacity = 1; }); finalRingModel.scale.set(1, 1, 1); }
-        }
-    } else {
-        homeGroup.position.y = 200; aboutGroup.position.y = 200; homeGroup.visible = false; if(diamondBase) diamondBase.visible = false;
-        if(interactionZone) interactionZone.classList.remove('interactive');
-        if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
-        const pForm = (scrollPercent - 0.92) / 0.08; 
-        if(customSection) customSection.style.opacity = 1 - pForm; 
-        if(finalRingModel) { finalRingModel.traverse(c => { if(c.isMesh) c.material.opacity = 1 - pForm; }); }
-        const blurVal = 30 - (pForm * 30); setVisibility(contactSection, pForm, blurVal, true); contactGroup.position.y = -200 + (pForm * 200); 
-        if(pForm > 0.5 && contactSection) contactSection.classList.add('active'); 
-    }
-});
 
 function animate() {
     requestAnimationFrame(animate);
