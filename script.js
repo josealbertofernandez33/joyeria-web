@@ -36,7 +36,6 @@ window.addEventListener('scroll', () => {
         if(header.classList.contains('menu-open')) toggleMenu();
     }
     
-    // Logica existente de scroll
     const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
     if (scrollPercent > 0.60 && scrollPercent < 0.92) { 
         if(customSection) customSection.classList.add('active-interaction');
@@ -259,66 +258,9 @@ loader.load('./anillofotos.glb', (gltf) => {
     finalRingGroup.add(finalRingModel);
 });
 
-const displayLabel = document.getElementById('selection-display');
-let displayTimeout;
-
-window.updateRingConfig = function(type, value, element, displayName) {
-    if(!finalRingModel) return;
-    let newMat;
-    if(type === 'main' || type === 'side') newMat = stoneOptions[value];
-    if(type === 'metal') newMat = metalOptions[value];
-    if(!newMat) return;
-
-    finalRingModel.traverse(c => {
-        if(c.isMesh) {
-            let shouldChange = false;
-            if(type === 'main' && c.userData.isMainStone) shouldChange = true;
-            if(type === 'side' && c.userData.isSideStone) shouldChange = true;
-            if(type === 'metal' && c.userData.isMetal) shouldChange = true;
-            if(shouldChange) { const currentOp = c.material.opacity; c.material = newMat.clone(); c.material.transparent = true; c.material.opacity = currentOp; }
-        }
-    });
-
-    if(element) {
-        const siblings = element.parentNode.children;
-        for(let i=0; i<siblings.length; i++) siblings[i].classList.remove('active');
-        element.classList.add('active');
-    }
-
-    if(displayLabel && displayName) {
-        displayLabel.textContent = displayName;
-        displayLabel.classList.add('visible');
-        clearTimeout(displayTimeout);
-        displayTimeout = setTimeout(() => {
-            displayLabel.classList.remove('visible');
-        }, 3000);
-    }
-};
-
-loader.load('./piedras.glb', (gltf) => {
-    const stones = gltf.scene;
-    stones.traverse(c => { if(c.isMesh) { c.material = crystalMat; c.userData = { rotSpeed: 0.003 + Math.random()*0.005, axis: new THREE.Vector3(Math.random(),1,Math.random()).normalize() }; individualStones.push(c); }});
-    stonesContainer.add(stones); stones.rotation.set(0.7, -0.2, 0); stones.scale.set(0.5, 0.5, 0.5);
-    const stonesClone = stones.clone();
-    stonesClone.traverse(c => { if(c.isMesh) { c.material = crystalMat; c.userData = { rotSpeed: 0.001 + Math.random()*0.004, axis: new THREE.Vector3(Math.random(),1,Math.random()).normalize() }; contactStones.push(c); }});
-    stonesClone.position.set(0, 0, -15); stonesClone.scale.set(0.8, 0.8, 0.8); stonesClone.rotation.set(0.5, 0.5, 0); contactGroup.add(stonesClone);
-});
-
-const isMobile = window.innerWidth < 768;
-
-if (!isMobile) {
-    const groundMirror = new Reflector(new THREE.PlaneGeometry(800, 800), { clipBias: 0.003, textureWidth: window.innerWidth*window.devicePixelRatio, textureHeight: window.innerHeight*window.devicePixelRatio, color: params.floorColor });
-    groundMirror.rotation.x = -Math.PI/2; groundMirror.position.y = -7; 
-    homeGroup.add(groundMirror);
-
-    const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 1024; const ctx = canvas.getContext('2d');
-    const grad = ctx.createRadialGradient(512, 512, 0, 512, 512, 512); grad.addColorStop(0, 'rgba(0,0,0,0)'); grad.addColorStop(0.12, 'rgba(0,0,0,1)'); 
-    ctx.fillStyle = grad; ctx.fillRect(0, 0, 1024, 1024); 
-    const maskPlane = new THREE.Mesh(new THREE.PlaneGeometry(800, 800), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, opacity: params.maskOpacity }));
-    maskPlane.rotation.x = -Math.PI/2; maskPlane.position.y = -6.99; homeGroup.add(maskPlane);
-}
-
+// DECLARACIÓN CORREGIDA DE DIAMONDBASE
 let diamondBase = null;
+
 loader.load('./diamante.glb', (gltf) => {
     const diamond = gltf.scene;
     const box = new THREE.Box3().setFromObject(diamond);
@@ -328,64 +270,19 @@ loader.load('./diamante.glb', (gltf) => {
     aboutGroup.add(diamond); diamondBase = diamond;
 });
 
-let isDragging = false;
-let previousMousePosition = { x: 0, y: 0 };
-const interactionZone = document.getElementById('custom-section');
-
-window.addEventListener('mousedown', (e) => { 
-    if (e.target.closest('.config-dot')) return;
-    if(finalRingGroup.visible) { isDragging = true; interactionZone.classList.add('grabbing'); previousMousePosition = { x: e.clientX, y: e.clientY }; }
-});
-window.addEventListener('mouseup', () => { isDragging = false; interactionZone.classList.remove('grabbing'); });
-window.addEventListener('mousemove', (e) => {
-    if (isDragging && finalRingGroup.visible && finalRingModel) {
-        const deltaX = e.clientX - previousMousePosition.x;
-        const deltaY = e.clientY - previousMousePosition.y;
-        finalRingModel.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), deltaX * 0.005);
-        finalRingModel.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), deltaY * 0.005);
-        previousMousePosition = { x: e.clientX, y: e.clientY };
-    }
-});
-
-interactionZone.addEventListener('touchstart', (e) => { 
-    if (e.target.closest('.config-dot')) return;
-    const touchX = e.touches[0].clientX;
-    const width = window.innerWidth;
-    const margin = width * 0.15; 
-    if (touchX < margin || touchX > width - margin) { isDragging = false; return; }
-    if(finalRingGroup.visible) { isDragging = true; previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }
-}, { passive: false });
-
-window.addEventListener('touchend', () => isDragging = false);
-
-interactionZone.addEventListener('touchmove', (e) => {
-    if (isDragging && finalRingGroup.visible && finalRingModel) {
-        e.preventDefault(); 
-        const deltaX = e.touches[0].clientX - previousMousePosition.x;
-        const deltaY = e.touches[0].clientY - previousMousePosition.y;
-        finalRingModel.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), deltaX * 0.005);
-        finalRingModel.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), deltaY * 0.005);
-        previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    }
-}, { passive: false });
-
-function setVisibility(element, opacity, blur, clickable = false) {
-    if(!element) return;
-    element.style.opacity = opacity; element.style.filter = `blur(${blur}px)`; element.style.pointerEvents = clickable ? "all" : "none";
-}
-function resetLayer(element, baseZ) { if(element) { element.style.transform = `rotateZ(-90deg) translateZ(${baseZ}px)`; element.style.opacity = 1; element.style.display = 'block'; } }
-function liftLayerDone(element) { if(element) { element.style.transform = `rotateZ(-90deg) translateZ(500px)`; element.style.opacity = 0; } }
-function updateLuxuryLayer(element, progress, baseZ) {
-    if(element) { const lift = baseZ + (progress * 450); const opacity = 1 - Math.pow(progress, 2); element.style.transform = `rotateZ(-90deg) translateZ(${lift}px)`; element.style.opacity = opacity; }
-}
-
-resetLayer(layer1, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); resetLayer(layer4, 0);
-
 function animate() {
     requestAnimationFrame(animate);
     const time = performance.now() * 0.001;
     ringContainer.position.y = params.floatYBase + Math.sin(time * params.floatSpeed) * params.floatAmp;
-    if (diamondBase) { diamondBase.rotation.x = params.diaRotX + (Math.sin(time * 0.2) * 0.05); diamondBase.rotation.y = params.diaRotY + (time * params.diaAnimSpeed); diamondBase.rotation.z = params.diaRotZ; diamondBase.position.y = params.diaPosY + Math.sin(time * params.diaFloatSpeed) * params.diaFloatAmp; }
+    
+    // COMPROBACIÓN DE SEGURIDAD PARA EVITAR PANTALLA NEGRA
+    if (diamondBase) { 
+        diamondBase.rotation.x = params.diaRotX + (Math.sin(time * 0.2) * 0.05); 
+        diamondBase.rotation.y = params.diaRotY + (time * params.diaAnimSpeed); 
+        diamondBase.rotation.z = params.diaRotZ; 
+        diamondBase.position.y = params.diaPosY + Math.sin(time * params.diaFloatSpeed) * params.diaFloatAmp; 
+    }
+    
     individualStones.forEach(s => s.rotateOnAxis(s.userData.axis, s.userData.rotSpeed));
     contactStones.forEach(s => s.rotateOnAxis(s.userData.axis, s.userData.rotSpeed));
     light1.position.x = Math.sin(time * 0.5) * 30; light1.position.z = Math.cos(time * 0.5) * 30;
