@@ -3,7 +3,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { Reflector } from 'three/addons/objects/Reflector.js';
 
-// --- GESTIÓN DE CARGA ---
+// --- GESTIÓN DE CARGA Y TRANSICIÓN SUAVE ---
 const loadingScreen = document.getElementById('loading-screen');
 const loadingBar = document.getElementById('loader-bar');
 const loadingManager = new THREE.LoadingManager();
@@ -15,8 +15,14 @@ loadingManager.onProgress = function(url, itemsLoaded, itemsTotal) {
 
 loadingManager.onLoad = function() {
     if(loadingScreen) {
+        // 1. Desvanecer loader
         loadingScreen.style.opacity = '0';
-        setTimeout(() => { loadingScreen.style.display = 'none'; }, 800);
+        
+        // 2. Activar aparición de la web (clase CSS)
+        document.body.classList.add('loaded');
+        
+        // 3. Eliminar loader del DOM tras la animación
+        setTimeout(() => { loadingScreen.style.display = 'none'; }, 1500);
     }
 };
 
@@ -223,10 +229,10 @@ light1.position.set(20, 20, 20); scene.add(light1);
 const light2 = new THREE.PointLight(params.lightColor, params.lightInt);
 light2.position.set(-20, -10, 20); scene.add(light2);
 
-// USAREMOS EL LOADING MANAGER PARA LOS LOADERS
+// IMPORTANTE: USAMOS EL LOADING MANAGER EN LOS LOADERS
 const loader = new GLTFLoader(loadingManager);
 
-// EXR LOADER TAMBIÉN CON LOADING MANAGER
+// Cargar EXR con el LoadingManager también
 new EXRLoader(loadingManager).load('./studio_v2.exr', (texture) => {
     texture.mapping = THREE.EquirectangularReflectionMapping;
     texture.offset.x = params.envRot;
@@ -401,7 +407,14 @@ function animate() {
     requestAnimationFrame(animate);
     const time = performance.now() * 0.001;
     ringContainer.position.y = params.floatYBase + Math.sin(time * params.floatSpeed) * params.floatAmp;
-    if (diamondBase) { diamondBase.rotation.x = params.diaRotX + (Math.sin(time * 0.2) * 0.05); diamondBase.rotation.y = params.diaRotY + (time * params.diaAnimSpeed); diamondBase.rotation.z = params.diaRotZ; diamondBase.position.y = params.diaPosY + Math.sin(time * params.diaFloatSpeed) * params.diaFloatAmp; }
+    
+    if (diamondBase) { 
+        diamondBase.rotation.x = params.diaRotX + (Math.sin(time * 0.2) * 0.05); 
+        diamondBase.rotation.y = params.diaRotY + (time * params.diaAnimSpeed); 
+        diamondBase.rotation.z = params.diaRotZ; 
+        diamondBase.position.y = params.diaPosY + Math.sin(time * params.diaFloatSpeed) * params.diaFloatAmp; 
+    }
+    
     individualStones.forEach(s => s.rotateOnAxis(s.userData.axis, s.userData.rotSpeed));
     contactStones.forEach(s => s.rotateOnAxis(s.userData.axis, s.userData.rotSpeed));
     light1.position.x = Math.sin(time * 0.5) * 30; light1.position.z = Math.cos(time * 0.5) * 30;

@@ -11,7 +11,7 @@ canvas { position: fixed; top: 0; left: 0; outline: none; z-index: 1; pointer-ev
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: #000; z-index: 9999;
     display: flex; justify-content: center; align-items: center;
-    transition: opacity 0.8s ease-out;
+    transition: opacity 1.5s ease-out; /* Transición más lenta y suave */
 }
 .loader-content { text-align: center; width: 280px; }
 .loader-title {
@@ -27,6 +27,17 @@ canvas { position: fixed; top: 0; left: 0; outline: none; z-index: 1; pointer-ev
 #loader-text {
     font-family: 'Lato', sans-serif; font-size: 0.7rem; color: rgba(255,255,255,0.4); 
     letter-spacing: 2px; margin-top: 10px;
+}
+
+/* EFECTO DE APARICIÓN SUAVE DE LA WEB */
+/* Ocultamos elementos principales al inicio */
+body > header, body > section {
+    opacity: 0;
+    transition: opacity 2s ease; /* Aparición muy lenta y elegante */
+}
+/* Cuando se añade la clase 'loaded', se muestran */
+body.loaded > header, body.loaded > section {
+    opacity: 1;
 }
 
 /* HEADER DINÁMICO */
@@ -79,6 +90,7 @@ header.menu-open #menu-toggle {
 .nav-item:hover { color: #ffffff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
 .nav-item:hover::after { width: 100%; }
 
+/* SECCIONES */
 #about-section {
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 650px; text-align: center; z-index: 5;
     font-family: 'Lato', sans-serif; font-weight: 300; pointer-events: none; opacity: 0; filter: blur(20px);
@@ -118,25 +130,15 @@ header.menu-open #menu-toggle {
 .metal-row { display: flex; gap: 30px; background: rgba(0,0,0,0.4); padding: 10px 25px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(5px); }
 .stone-group { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
 .stone-row { display: flex; gap: 20px; justify-content: center; }
-.config-label {
-    font-family: 'Cinzel', serif; font-size: 0.75rem; color: #d4af37; 
-    text-transform: uppercase; letter-spacing: 3px; text-shadow: 0 0 5px rgba(0,0,0,0.8);
-}
+.config-label { font-family: 'Cinzel', serif; font-size: 0.75rem; color: #d4af37; text-transform: uppercase; letter-spacing: 3px; text-shadow: 0 0 5px rgba(0,0,0,0.8); }
 
 .config-dot {
     width: 44px; height: 44px; border-radius: 50%; cursor: pointer; position: relative; touch-action: manipulation;
     border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 5px 15px rgba(0,0,0,0.5);
     transition: transform 0.2s, box-shadow 0.2s;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-color: #222; 
+    background-size: cover; background-position: center; background-repeat: no-repeat; background-color: #222; 
 }
-
-.config-dot.active {
-    transform: scale(1.2); border-color: #ffffff;
-    box-shadow: 0 0 0 3px rgba(0,0,0,0.9), 0 0 0 4px rgba(212, 175, 55, 0.9); z-index: 2;
-}
+.config-dot.active { transform: scale(1.2); border-color: #ffffff; box-shadow: 0 0 0 3px rgba(0,0,0,0.9), 0 0 0 4px rgba(212, 175, 55, 0.9); z-index: 2; }
 .config-dot:hover { transform: scale(1.1); border-color: #fff; }
 
 .dot-gold { background-image: url('./texture-gold.png'); }
@@ -197,11 +199,25 @@ input[type="file"] { display: none; }
 .success-content h3 { font-size: 1.5rem; letter-spacing: 3px; margin-bottom: 20px; line-height: 1.4; }
 .success-content p { font-family: 'Lato', sans-serif; font-size: 0.9rem; color: rgba(255,255,255,0.7); letter-spacing: 1px; }
 
+/* FIX MENÚ MÓVIL: Reducimos espacio y fuente para que entren en una línea */
 @media (max-width: 768px) { 
     .glass-card { width: 85%; padding: 30px; } 
     h2 { font-size: 1.5rem !important; } 
-    header { gap: 20px; font-size: 0.65rem; top: 20px; } 
+    header { top: 20px; }
     #config-ui { padding: 100px 20px 60px 20px; }
+    
+    /* MENÚ COMPACTO */
+    #nav-container { 
+        gap: 12px; /* Menos espacio entre palabras */
+        width: 100%; 
+        padding: 0 5px; 
+        box-sizing: border-box; 
+    }
+    .nav-item { 
+        font-size: 0.6rem; /* Letra un pelín más pequeña */
+        letter-spacing: 1px; 
+    }
+    
     .config-dot { width: 44px; height: 44px; } 
     #selection-display { font-size: 1rem; top: 45%; }
 }
