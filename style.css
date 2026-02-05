@@ -6,6 +6,30 @@ body {
 }
 canvas { position: fixed; top: 0; left: 0; outline: none; z-index: 1; pointer-events: none; }
 
+/* --- PANTALLA DE CARGA --- */
+#loading-screen {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: #000; z-index: 9999;
+    display: flex; justify-content: center; align-items: center;
+    transition: opacity 0.8s ease-out;
+}
+.loader-content { text-align: center; width: 280px; }
+.loader-title {
+    font-family: 'Cinzel', serif; font-size: 1.5rem; letter-spacing: 5px; color: #d4af37; margin-bottom: 20px;
+}
+.loader-bar-container {
+    width: 100%; height: 2px; background: rgba(255,255,255,0.1); position: relative; overflow: hidden;
+}
+#loader-bar {
+    width: 0%; height: 100%; background: #d4af37; transition: width 0.2s ease;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+#loader-text {
+    font-family: 'Lato', sans-serif; font-size: 0.7rem; color: rgba(255,255,255,0.4); 
+    letter-spacing: 2px; margin-top: 10px;
+}
+
+/* HEADER DINÁMICO */
 header {
     position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
     transition: all 0.4s ease; padding-top: 50px;
@@ -56,27 +80,17 @@ header.menu-open #menu-toggle {
 .nav-item:hover::after { width: 100%; }
 
 #about-section {
-    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-    width: 90%; max-width: 1000px; /* Aumentado para PC */
-    text-align: center; z-index: 5;
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 650px; text-align: center; z-index: 5;
     font-family: 'Lato', sans-serif; font-weight: 300; pointer-events: none; opacity: 0; filter: blur(20px);
 }
-#about-section h2 { 
-    font-family: 'Cinzel', serif; 
-    font-size: 3rem; /* Aumentado para PC */
-    margin-bottom: 40px; letter-spacing: 6px; color: #fff; 
-}
-#about-section p { 
-    font-size: 1.4rem; /* Aumentado para PC */
-    line-height: 1.8; margin-bottom: 30px; color: rgba(255,255,255,0.9); 
-}
+#about-section h2 { font-family: 'Cinzel', serif; font-size: 2rem; margin-bottom: 30px; letter-spacing: 4px; color: #fff; }
+#about-section p { font-size: 1.05rem; line-height: 1.9; margin-bottom: 20px; color: rgba(255,255,255,0.85); }
 .brand-highlight { color: #fff; font-weight: 400; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 2px; }
 .highlight-quote {
-    font-family: 'Cinzel', serif; font-size: 1.6rem; /* Aumentado para PC */
-    color: #d4af37; margin: 45px 0; line-height: 1.5; letter-spacing: 3px;
-    border-top: 1px solid rgba(212, 175, 55, 0.3); border-bottom: 1px solid rgba(212, 175, 55, 0.3); padding: 30px 0; text-shadow: 0 0 10px rgba(0,0,0,0.5);
+    font-family: 'Cinzel', serif; font-size: 1.2rem; color: #d4af37; margin: 35px 0; line-height: 1.5; letter-spacing: 2px;
+    border-top: 1px solid rgba(212, 175, 55, 0.3); border-bottom: 1px solid rgba(212, 175, 55, 0.3); padding: 20px 0; text-shadow: 0 0 10px rgba(0,0,0,0.5);
 }
-#about-section .signature { font-family: 'Cinzel', serif; font-size: 1rem; opacity: 0.6; margin-top: 50px; letter-spacing: 5px; display: inline-block; }
+#about-section .signature { font-family: 'Cinzel', serif; font-size: 0.8rem; opacity: 0.6; margin-top: 40px; letter-spacing: 4px; display: inline-block; }
 
 #custom-section {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 6; 
@@ -104,15 +118,25 @@ header.menu-open #menu-toggle {
 .metal-row { display: flex; gap: 30px; background: rgba(0,0,0,0.4); padding: 10px 25px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(5px); }
 .stone-group { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
 .stone-row { display: flex; gap: 20px; justify-content: center; }
-.config-label { font-family: 'Cinzel', serif; font-size: 0.75rem; color: #d4af37; text-transform: uppercase; letter-spacing: 3px; text-shadow: 0 0 5px rgba(0,0,0,0.8); }
+.config-label {
+    font-family: 'Cinzel', serif; font-size: 0.75rem; color: #d4af37; 
+    text-transform: uppercase; letter-spacing: 3px; text-shadow: 0 0 5px rgba(0,0,0,0.8);
+}
 
 .config-dot {
     width: 44px; height: 44px; border-radius: 50%; cursor: pointer; position: relative; touch-action: manipulation;
     border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 5px 15px rgba(0,0,0,0.5);
     transition: transform 0.2s, box-shadow 0.2s;
-    background-size: cover; background-position: center; background-repeat: no-repeat; background-color: #222; 
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: #222; 
 }
-.config-dot.active { transform: scale(1.2); border-color: #ffffff; box-shadow: 0 0 0 3px rgba(0,0,0,0.9), 0 0 0 4px rgba(212, 175, 55, 0.9); z-index: 2; }
+
+.config-dot.active {
+    transform: scale(1.2); border-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.9), 0 0 0 4px rgba(212, 175, 55, 0.9); z-index: 2;
+}
 .config-dot:hover { transform: scale(1.1); border-color: #fff; }
 
 .dot-gold { background-image: url('./texture-gold.png'); }
@@ -175,61 +199,9 @@ input[type="file"] { display: none; }
 
 @media (max-width: 768px) { 
     .glass-card { width: 85%; padding: 30px; } 
-    header { top: 20px; }
+    h2 { font-size: 1.5rem !important; } 
+    header { gap: 20px; font-size: 0.65rem; top: 20px; } 
     #config-ui { padding: 100px 20px 60px 20px; }
-    
-    #nav-container { gap: 20px; width: 100%; padding: 0 10px; box-sizing: border-box; }
-    .nav-item { font-size: 0.65rem; letter-spacing: 1px; }
-    
     .config-dot { width: 44px; height: 44px; } 
     #selection-display { font-size: 1rem; top: 45%; }
-
-    /* RESET PARA MÓVIL: Evita que el texto sea gigante */
-    #about-section { max-width: 600px; width: 80%; }
-    #about-section h2 { font-size: 1.8rem !important; margin-bottom: 30px; }
-    #about-section p { font-size: 1.05rem; line-height: 1.9; }
-    .highlight-quote { font-size: 1.2rem; }
-    #about-section .signature { font-size: 0.8rem; margin-top: 40px; }
-}
-
-@media (max-height: 500px) and (orientation: landscape) {
-    #config-ui {
-        flex-direction: row; 
-        align-items: center; 
-        padding: 0 20px; 
-    }
-    .ui-top {
-        width: auto; height: 100%;
-        justify-content: center; 
-        align-items: flex-start;
-        margin-right: auto;
-    }
-    .metal-row {
-        flex-direction: column; 
-        padding: 15px 10px;
-        gap: 15px;
-    }
-    .ui-bottom {
-        width: auto; height: 100%;
-        justify-content: center; 
-        align-items: flex-end;
-        margin-left: auto;
-        padding-bottom: 0;
-        gap: 20px;
-    }
-    .stone-category { align-items: flex-end; }
-    .category-title { text-align: right; font-size: 0.65rem; }
-    .stone-row { gap: 10px; }
-    .divider-line { display: none; }
-    .config-dot { width: 35px; height: 35px; } 
-    #selection-display { font-size: 0.9rem; top: 15%; } 
-
-    #about-section { width: 90%; max-width: 700px; top: 60%; }
-    #about-section h2 { font-size: 1.4rem !important; margin-bottom: 10px; }
-    #about-section p { font-size: 0.9rem; line-height: 1.4; margin-bottom: 10px; }
-    .highlight-quote { font-size: 1rem; margin: 15px 0; padding: 10px 0; }
-    #about-section .signature { margin-top: 15px; font-size: 0.7rem; }
-    
-    header.scrolled { padding-top: 10px; }
-    #menu-toggle { padding: 5px 15px; font-size: 0.7rem; }
 }
