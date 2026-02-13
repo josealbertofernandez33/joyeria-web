@@ -221,3 +221,17 @@ input[type="file"] { display: none; }
     .config-dot { width: 44px; height: 44px; } 
     #selection-display { font-size: 1rem; top: 45%; }
 }
+
+/* --- SEO GHOST (INVISIBLE PARA HUMANOS, VISIBLE PARA GOOGLE) --- */
+/* Técnica de accesibilidad para ocultar texto sin que Google penalice */
+.seo-ghost {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    border: 0;
+    white-space: nowrap; 
+}
