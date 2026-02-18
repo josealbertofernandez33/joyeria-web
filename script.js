@@ -3,6 +3,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { Reflector } from 'three/addons/objects/Reflector.js';
 
+// --- GESTIÓN DE CARGA Y TRANSICIÓN SUAVE ---
 const loadingScreen = document.getElementById('loading-screen');
 const loadingBar = document.getElementById('loader-bar');
 const loadingManager = new THREE.LoadingManager();
@@ -22,6 +23,7 @@ loadingManager.onLoad = function() {
 
 const header = document.getElementById('main-header');
 const menuToggle = document.getElementById('menu-toggle');
+const scrollIndicator = document.getElementById('scroll-indicator'); // Referencia al indicador
 
 window.toggleMenu = function() {
     header.classList.toggle('menu-open');
@@ -46,15 +48,19 @@ window.scrollToPercent = function(percentage) {
 }
 
 window.addEventListener('scroll', () => {
+    // INDICADOR SCROLL: Se oculta al bajar un poco (50px)
     if (window.scrollY > 50) {
         header.classList.add('scrolled');
+        if(scrollIndicator) scrollIndicator.style.display = 'none';
     } else {
         header.classList.remove('scrolled');
+        if(scrollIndicator) scrollIndicator.style.display = 'flex';
         if(header.classList.contains('menu-open')) toggleMenu();
     }
     
     const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
     
+    // Control CSS
     if (scrollPercent > 0.60 && scrollPercent < 0.92) { 
         if(customSection) customSection.classList.add('active-interaction');
         if(layer4) layer4.style.opacity = 0; 
@@ -63,20 +69,18 @@ window.addEventListener('scroll', () => {
         if(layer4) layer4.style.opacity = 1;
     }
 
+    // --- TIMELINE DE SCROLL ---
     if (scrollPercent <= 0.10) {
         const p = scrollPercent / 0.10; 
         camera.position.z = params.camPos.z - (p * 10); 
-        // Comentada la rotacion automatica para permitir la manual
-        // ringContainer.rotation.y = 0.2 + (p * 0.3); 
-
+        
         homeGroup.position.y = 0; aboutGroup.position.y = -60; contactGroup.position.y = -200; 
         finalRingGroup.visible = false; homeGroup.visible = true; 
         if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
         setVisibility(aboutSection, 0, 20); setVisibility(customSection, 0, 0); setVisibility(contactSection, 0, 30);
         if(contactSection) contactSection.classList.remove('active'); 
         if(diamondMat) diamondMat.opacity = 1; if(diamondBase) diamondBase.visible = true; 
-        if(interactionZone) interactionZone.style.pointerEvents = "auto";
-
+        
     } else if (scrollPercent > 0.10 && scrollPercent <= 0.25) {
         const p = (scrollPercent - 0.10) / 0.15; homeGroup.position.y = p * 80; aboutGroup.position.y = -60 + (p * 60); 
         setVisibility(aboutSection, 0, 20); setVisibility(customSection, 0, 0); if(diamondMat) diamondMat.opacity = 1; if(diamondBase) diamondBase.visible = true;
@@ -96,7 +100,7 @@ window.addEventListener('scroll', () => {
         resetLayer(layer1, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); resetLayer(layer4, 0); finalRingGroup.visible = false; homeGroup.visible = false;
     } else if (scrollPercent > 0.60 && scrollPercent <= 0.92) {
         if(diamondMat) diamondMat.opacity = 0; if(diamondBase) diamondBase.visible = false; homeGroup.visible = false; 
-        if(customSection) customSection.style.opacity = 1; if(interactionZone) interactionZone.classList.add('interactive');
+        if(customSection) customSection.style.opacity = 1; 
         setVisibility(contactSection, 0, 30); contactGroup.position.y = -200;
         if(contactSection) contactSection.classList.remove('active'); 
         
@@ -116,7 +120,6 @@ window.addEventListener('scroll', () => {
         }
     } else {
         homeGroup.position.y = 200; aboutGroup.position.y = 200; homeGroup.visible = false; if(diamondBase) diamondBase.visible = false;
-        if(interactionZone) interactionZone.classList.remove('interactive');
         if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
         const pForm = (scrollPercent - 0.92) / 0.08; 
         if(customSection) customSection.style.opacity = 1 - pForm; 
@@ -231,10 +234,8 @@ light1.position.set(20, 20, 20); scene.add(light1);
 const light2 = new THREE.PointLight(params.lightColor, params.lightInt);
 light2.position.set(-20, -10, 20); scene.add(light2);
 
-// IMPORTANTE: USAMOS EL LOADING MANAGER EN LOS LOADERS
 const loader = new GLTFLoader(loadingManager);
 
-// Cargar EXR con el LoadingManager también
 new EXRLoader(loadingManager).load('./studio_v2.exr', (texture) => {
     texture.mapping = THREE.EquirectangularReflectionMapping;
     texture.offset.x = params.envRot;
@@ -352,85 +353,24 @@ if (!isMobile) {
     maskPlane.rotation.x = -Math.PI/2; maskPlane.position.y = -6.99; homeGroup.add(maskPlane);
 }
 
-// --- GESTIÓN DE INTERACCIÓN UNIFICADA (HOME + CUSTOM) ---
-let isDragging = false;
-let previousMousePosition = { x: 0, y: 0 };
-let currentTarget = null; // Para saber qué anillo estamos moviendo
-const interactionZone = document.getElementById('custom-section');
+// --- GESTIÓN DE INTERACCIÓN: PARALLAX SUAVE (MIRADA) ---
+// Eliminado el "Drag" para evitar giros completos. Ahora es "LookAt".
 
-// --- EVENTOS RATÓN ---
-window.addEventListener('mousedown', (e) => { 
-    if (e.target.closest('.config-dot')) return;
+let mouseX = 0;
+let mouseY = 0;
+const windowHalfX = window.innerWidth / 2;
+const windowHalfY = window.innerHeight / 2;
 
-    // Detectar si estamos en Home (arriba) o en Custom (abajo)
-    if (homeGroup.visible) {
-        currentTarget = ringContainer; // Movemos el anillo de portada
-        isDragging = true;
-    } else if (finalRingGroup.visible) {
-        currentTarget = finalRingModel; // Movemos el anillo custom
-        isDragging = true;
-    }
-    
-    if (isDragging) {
-        previousMousePosition = { x: e.clientX, y: e.clientY };
-    }
+document.addEventListener('mousemove', (event) => {
+    mouseX = (event.clientX - windowHalfX) / windowHalfX; // -1 a 1
+    mouseY = (event.clientY - windowHalfY) / windowHalfY; // -1 a 1
 });
 
-window.addEventListener('mouseup', () => { isDragging = false; currentTarget = null; });
-
-window.addEventListener('mousemove', (e) => {
-    if (isDragging && currentTarget) {
-        const deltaX = e.clientX - previousMousePosition.x;
-        const deltaY = e.clientY - previousMousePosition.y;
-        
-        // Rotamos el objeto que hayamos capturado (sea el de Home o el Custom)
-        currentTarget.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), deltaX * 0.005);
-        currentTarget.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), deltaY * 0.005);
-        
-        previousMousePosition = { x: e.clientX, y: e.clientY };
-    }
-});
-
-// --- EVENTOS TÁCTILES ---
-window.addEventListener('touchstart', (e) => { 
-    if (e.target.closest('.config-dot')) return;
-    
-    // Zonas seguras para móviles (bordes)
-    const touchX = e.touches[0].clientX;
-    const width = window.innerWidth;
-    const margin = width * 0.15; 
-    
-    // Solo limitamos zona en el Custom (abajo), en Home permitimos rotar más libre
-    if (finalRingGroup.visible && (touchX < margin || touchX > width - margin)) { isDragging = false; return; }
-
-    if (homeGroup.visible) {
-        currentTarget = ringContainer;
-        isDragging = true;
-    } else if (finalRingGroup.visible) {
-        currentTarget = finalRingModel;
-        isDragging = true;
-    }
-
-    if(isDragging) {
-         previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    }
-}, { passive: false });
-
-window.addEventListener('touchend', () => { isDragging = false; currentTarget = null; });
-
-window.addEventListener('touchmove', (e) => {
-    if (isDragging && currentTarget) {
-        // e.preventDefault(); // Comentado para permitir scroll si el usuario arrastra muy vertical, o descomentar para bloquear scroll
-        const deltaX = e.touches[0].clientX - previousMousePosition.x;
-        const deltaY = e.touches[0].clientY - previousMousePosition.y;
-        
-        currentTarget.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), deltaX * 0.005);
-        currentTarget.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), deltaY * 0.005);
-        
-        previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    }
-}, { passive: false });
-
+// Evento Touch para móvil (No bloqueamos el scroll, solo leemos posición)
+document.addEventListener('touchmove', (event) => {
+    mouseX = (event.touches[0].clientX - windowHalfX) / windowHalfX;
+    mouseY = (event.touches[0].clientY - windowHalfY) / windowHalfY;
+}, { passive: true });
 
 function setVisibility(element, opacity, blur, clickable = false) {
     if(!element) return;
@@ -447,6 +387,35 @@ resetLayer(layer1, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); resetLay
 function animate() {
     requestAnimationFrame(animate);
     const time = performance.now() * 0.001;
+    
+    // --- ANIMACIÓN PARALLAX SUAVE ---
+    // Usamos interpolación (Lerp) para que el movimiento sea fluido y delicado
+    
+    // 1. ANILLO PORTADA (Home) - Movimiento muy sutil
+    if(homeGroup.visible) {
+        // Objetivo de rotación basado en el ratón (Multiplicador bajo = poco giro)
+        const targetX = mouseY * 0.1; 
+        const targetY = mouseX * 0.15; 
+        
+        // Aplicar con suavidad (factor 0.05)
+        ringContainer.rotation.x += 0.05 * (targetX - ringContainer.rotation.x);
+        // Base 0.2 + interacción
+        ringContainer.rotation.y += 0.05 * (targetY + 0.2 - ringContainer.rotation.y);
+    }
+    
+    // 2. ANILLO CUSTOM (Final) - Movimiento medio, pero limitado
+    if(finalRingGroup.visible && finalRingModel) {
+        // Multiplicador más alto que el Home, pero sin dar la vuelta completa
+        const targetX = mouseY * 0.5; 
+        const targetY = mouseX * 0.6; 
+        
+        // Aplicar suavidad
+        // Base X = 0.96, Base Y = 0.61 (aprox, ajustado al gusto)
+        finalRingModel.rotation.x += 0.05 * (targetX + 0.96 - finalRingModel.rotation.x);
+        finalRingModel.rotation.y += 0.05 * (targetY - finalRingModel.rotation.y);
+    }
+
+    // Animación de flotación automática (siempre activa)
     ringContainer.position.y = params.floatYBase + Math.sin(time * params.floatSpeed) * params.floatAmp;
     
     if (diamondBase) { 
