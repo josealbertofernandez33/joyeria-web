@@ -1,8 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Lato:wght@300;400&display=swap');
 
-/* REAJUSTADO: 950vh para un scroll elegante pero no eterno */
 body { 
-    margin: 0; height: 950vh; background: #000; overflow-x: hidden; color: white; 
+    margin: 0; height: 850vh; background: #000; overflow-x: hidden; color: white; 
     -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; overscroll-behavior: none;
 }
 canvas { position: fixed; top: 0; left: 0; outline: none; z-index: 1; pointer-events: none; }
@@ -130,11 +129,10 @@ header.menu-open #menu-toggle { z-index: 101; border-color: #fff; color: #fff; p
 .dot-sapphire { background-image: url('./texture-sapphire.png'); }
 .dot-emerald { background-image: url('./texture-emerald.png'); }
 
-/* CORREGIDO: rotateX a 10deg para que las imágenes estén casi verticales pero sin colisionar */
 .stack-wrapper { 
     position: relative; width: 350px; height: 450px; 
     transform-style: preserve-3d; 
-    transform: rotateX(10deg) rotateZ(10deg); 
+    transform: rotateX(55deg) rotateZ(35deg); 
     pointer-events: none; 
 }
 
@@ -199,7 +197,9 @@ input[type="file"] { display: none; }
     #selection-display { font-size: 1rem; top: 45%; }
 }
 
-.seo-ghost { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; white-space: nowrap; }
+.seo-ghost {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; white-space: nowrap; 
+}
 
 #scroll-indicator {
     position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
