@@ -72,6 +72,7 @@ window.addEventListener('scroll', () => {
     // --- TIMELINE ---
     if (scrollPercent <= 0.10) {
         const p = scrollPercent / 0.10; 
+        // Solo afectamos Z en scroll, X e Y los dejamos para el parallax en animate()
         camera.position.z = params.camPos.z - (p * 10); 
         
         homeGroup.position.y = 0; aboutGroup.position.y = -60; contactGroup.position.y = -200; 
@@ -353,25 +354,35 @@ if (!isMobile) {
     maskPlane.rotation.x = -Math.PI/2; maskPlane.position.y = -6.99; homeGroup.add(maskPlane);
 }
 
-// --- GESTIÓN DE INTERACCIÓN: ANILLO 2 (CUSTOM) ---
-// Características:
-// 1. Rotación en TODOS los ejes (X e Y).
-// 2. Sensibilidad muy baja (requiere varias pasadas).
-// 3. Bloqueo de scroll en móviles al tocar el anillo.
-
+// --- VARIABLES GLOBALES DE INTERACCIÓN ---
 let isDragging = false;
 let previousMousePosition = { x: 0, y: 0 };
+let mouseXNorm = 0; // Normalizada -1 a 1 para parallax
+let mouseYNorm = 0;
 
-// CONFIGURACIÓN DE SENSIBILIDAD
-// Valor bajo = rotación "pesada" y lenta. 
-// Valor alto = rotación rápida.
-const ROTATION_SPEED = 0.004; 
+// Configuración de sensibilidad (Custom Ring)
+const ROTATION_SPEED = 0.004; // Muy bajo = pesado/premium
 
-// --- EVENTOS DE RATÓN (PC) ---
+// 1. EVENTOS DE CURSOR GLOBAL (Para Parallax Home)
+document.addEventListener('mousemove', (event) => {
+    const halfX = window.innerWidth / 2;
+    const halfY = window.innerHeight / 2;
+    mouseXNorm = (event.clientX - halfX) / halfX; 
+    mouseYNorm = (event.clientY - halfY) / halfY;
+});
+
+// Evento touch para parallax (pasivo, no bloquea scroll)
+document.addEventListener('touchmove', (event) => {
+    const halfX = window.innerWidth / 2;
+    const halfY = window.innerHeight / 2;
+    mouseXNorm = (event.touches[0].clientX - halfX) / halfX; 
+    mouseYNorm = (event.touches[0].clientY - halfY) / halfY;
+}, { passive: true });
+
+
+// 2. EVENTOS MOUSE DRAG (Para Custom Ring)
 window.addEventListener('mousedown', (e) => { 
     if (e.target.closest('.config-dot')) return;
-    
-    // Solo activamos si el anillo custom es visible
     if (finalRingGroup.visible) {
         isDragging = true;
         previousMousePosition = { x: e.clientX, y: e.clientY };
@@ -385,20 +396,16 @@ window.addEventListener('mousemove', (e) => {
         const deltaX = e.clientX - previousMousePosition.x;
         const deltaY = e.clientY - previousMousePosition.y;
         
-        // Rotación en Y (Izquierda/Derecha)
         finalRingModel.rotation.y += deltaX * ROTATION_SPEED;
-        
-        // Rotación en X (Arriba/Abajo) - ¡Añadido!
         finalRingModel.rotation.x += deltaY * ROTATION_SPEED;
         
         previousMousePosition = { x: e.clientX, y: e.clientY };
     }
 });
 
-// --- EVENTOS TÁCTILES (MÓVIL) ---
+// 3. EVENTOS TOUCH DRAG (Para Custom Ring + Bloqueo Scroll)
 window.addEventListener('touchstart', (e) => { 
     if (e.target.closest('.config-dot')) return;
-    
     if (finalRingGroup.visible) {
         isDragging = true;
         previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -409,13 +416,12 @@ window.addEventListener('touchend', () => { isDragging = false; });
 
 window.addEventListener('touchmove', (e) => {
     if (isDragging && finalRingGroup.visible && finalRingModel) {
-        // --- BLOQUEO DE SCROLL ---
-        e.preventDefault(); // Esto evita que la pantalla se mueva
+        // AQUÍ BLOQUEAMOS EL SCROLL AL MOVER EL ANILLO
+        e.preventDefault(); 
         
         const deltaX = e.touches[0].clientX - previousMousePosition.x;
         const deltaY = e.touches[0].clientY - previousMousePosition.y;
         
-        // Aplicamos la misma rotación "pesada"
         finalRingModel.rotation.y += deltaX * ROTATION_SPEED;
         finalRingModel.rotation.x += deltaY * ROTATION_SPEED;
         
@@ -440,10 +446,21 @@ function animate() {
     requestAnimationFrame(animate);
     const time = performance.now() * 0.001;
 
-    // Primer Anillo (Home) - Flotación automática suave
+    // --- ANIMACIÓN PARALLAX SUAVE (HOME) ---
+    // Mueve la cámara sutilmente basado en la posición del ratón/dedo
+    if(homeGroup.visible) {
+        const targetX = mouseXNorm * 1.5;  // Rango de movimiento X
+        const targetY = mouseYNorm * 1.5;  // Rango de movimiento Y
+        
+        // Lerp suavizado para la cámara
+        camera.position.x += (targetX - camera.position.x) * 0.05;
+        camera.position.y += (targetY - camera.position.y) * 0.05;
+    }
+
+    // --- ANIMACIÓN FLOTACIÓN BASE ---
     ringContainer.position.y = params.floatYBase + Math.sin(time * params.floatSpeed) * params.floatAmp;
     
-    // Opcional: Parallax muy leve en el primer anillo si se desea
+    // Parallax rotacional sutil extra para el anillo home (opcional)
     ringContainer.rotation.y = 0.2 + Math.sin(time * 0.1) * 0.05;
 
     if (diamondBase) { 
