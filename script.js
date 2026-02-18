@@ -15,13 +15,8 @@ loadingManager.onProgress = function(url, itemsLoaded, itemsTotal) {
 
 loadingManager.onLoad = function() {
     if(loadingScreen) {
-        // 1. Desvanecer loader
         loadingScreen.style.opacity = '0';
-        
-        // 2. Activar aparición de la web (clase CSS)
         document.body.classList.add('loaded');
-        
-        // 3. Eliminar loader del DOM tras la animación
         setTimeout(() => { loadingScreen.style.display = 'none'; }, 1500);
     }
 };
@@ -60,6 +55,8 @@ window.addEventListener('scroll', () => {
     }
     
     const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+    
+    // Control de interacción del CSS
     if (scrollPercent > 0.60 && scrollPercent < 0.92) { 
         if(customSection) customSection.classList.add('active-interaction');
         if(layer4) layer4.style.opacity = 0; 
@@ -68,13 +65,25 @@ window.addEventListener('scroll', () => {
         if(layer4) layer4.style.opacity = 1;
     }
 
+    // --- LÓGICA DE ESCENA 3D ---
     if (scrollPercent <= 0.10) {
-        const p = scrollPercent / 0.10; camera.position.z = params.camPos.z - (p * 10); ringContainer.rotation.y = 0.2 + (p * 0.3);
+        // ESTAMOS EN HOME
+        const p = scrollPercent / 0.10; 
+        camera.position.z = params.camPos.z - (p * 10); 
+        
+        // MODIFICACIÓN: Comentamos la rotación forzada del anillo para que el usuario pueda rotarlo libremente
+        // ringContainer.rotation.y = 0.2 + (p * 0.3); 
+
         homeGroup.position.y = 0; aboutGroup.position.y = -60; contactGroup.position.y = -200; 
-        finalRingGroup.visible = false; homeGroup.visible = true; if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
+        finalRingGroup.visible = false; homeGroup.visible = true; 
+        if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
         setVisibility(aboutSection, 0, 20); setVisibility(customSection, 0, 0); setVisibility(contactSection, 0, 30);
         if(contactSection) contactSection.classList.remove('active'); 
         if(diamondMat) diamondMat.opacity = 1; if(diamondBase) diamondBase.visible = true; 
+        
+        // Activamos interacción en Home también
+        if(interactionZone) interactionZone.style.pointerEvents = "auto";
+
     } else if (scrollPercent > 0.10 && scrollPercent <= 0.25) {
         const p = (scrollPercent - 0.10) / 0.15; homeGroup.position.y = p * 80; aboutGroup.position.y = -60 + (p * 60); 
         setVisibility(aboutSection, 0, 20); setVisibility(customSection, 0, 0); if(diamondMat) diamondMat.opacity = 1; if(diamondBase) diamondBase.visible = true;
@@ -350,46 +359,85 @@ if (!isMobile) {
     maskPlane.rotation.x = -Math.PI/2; maskPlane.position.y = -6.99; homeGroup.add(maskPlane);
 }
 
+// --- GESTIÓN DE INTERACCIÓN UNIFICADA (HOME + CUSTOM) ---
 let isDragging = false;
 let previousMousePosition = { x: 0, y: 0 };
+let currentTarget = null; // Para saber qué anillo estamos moviendo
 const interactionZone = document.getElementById('custom-section');
 
+// --- EVENTOS RATÓN ---
 window.addEventListener('mousedown', (e) => { 
     if (e.target.closest('.config-dot')) return;
-    if(finalRingGroup.visible) { isDragging = true; interactionZone.classList.add('grabbing'); previousMousePosition = { x: e.clientX, y: e.clientY }; }
-});
-window.addEventListener('mouseup', () => { isDragging = false; interactionZone.classList.remove('grabbing'); });
-window.addEventListener('mousemove', (e) => {
-    if (isDragging && finalRingGroup.visible && finalRingModel) {
-        const deltaX = e.clientX - previousMousePosition.x;
-        const deltaY = e.clientY - previousMousePosition.y;
-        finalRingModel.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), deltaX * 0.005);
-        finalRingModel.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), deltaY * 0.005);
+
+    // Detectar si estamos en Home (arriba) o en Custom (abajo)
+    if (homeGroup.visible) {
+        currentTarget = ringContainer; // Movemos el anillo de portada
+        isDragging = true;
+    } else if (finalRingGroup.visible) {
+        currentTarget = finalRingModel; // Movemos el anillo custom
+        isDragging = true;
+    }
+    
+    if (isDragging) {
         previousMousePosition = { x: e.clientX, y: e.clientY };
     }
 });
 
-interactionZone.addEventListener('touchstart', (e) => { 
+window.addEventListener('mouseup', () => { isDragging = false; currentTarget = null; });
+
+window.addEventListener('mousemove', (e) => {
+    if (isDragging && currentTarget) {
+        const deltaX = e.clientX - previousMousePosition.x;
+        const deltaY = e.clientY - previousMousePosition.y;
+        
+        // Rotamos el objeto que hayamos capturado (sea el de Home o el Custom)
+        currentTarget.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), deltaX * 0.005);
+        currentTarget.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), deltaY * 0.005);
+        
+        previousMousePosition = { x: e.clientX, y: e.clientY };
+    }
+});
+
+// --- EVENTOS TÁCTILES ---
+window.addEventListener('touchstart', (e) => { 
     if (e.target.closest('.config-dot')) return;
+    
+    // Zonas seguras para móviles (bordes)
     const touchX = e.touches[0].clientX;
     const width = window.innerWidth;
     const margin = width * 0.15; 
-    if (touchX < margin || touchX > width - margin) { isDragging = false; return; }
-    if(finalRingGroup.visible) { isDragging = true; previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }
+    
+    // Solo limitamos zona en el Custom (abajo), en Home permitimos rotar más libre
+    if (finalRingGroup.visible && (touchX < margin || touchX > width - margin)) { isDragging = false; return; }
+
+    if (homeGroup.visible) {
+        currentTarget = ringContainer;
+        isDragging = true;
+    } else if (finalRingGroup.visible) {
+        currentTarget = finalRingModel;
+        isDragging = true;
+    }
+
+    if(isDragging) {
+         previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
 }, { passive: false });
 
-window.addEventListener('touchend', () => isDragging = false);
+window.addEventListener('touchend', () => { isDragging = false; currentTarget = null; });
 
-interactionZone.addEventListener('touchmove', (e) => {
-    if (isDragging && finalRingGroup.visible && finalRingModel) {
-        e.preventDefault(); 
+window.addEventListener('touchmove', (e) => {
+    if (isDragging && currentTarget) {
+        // e.preventDefault(); // Comentado para permitir scroll si el usuario arrastra muy vertical, o descomentar para bloquear scroll
         const deltaX = e.touches[0].clientX - previousMousePosition.x;
         const deltaY = e.touches[0].clientY - previousMousePosition.y;
-        finalRingModel.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), deltaX * 0.005);
-        finalRingModel.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), deltaY * 0.005);
+        
+        currentTarget.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), deltaX * 0.005);
+        currentTarget.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), deltaY * 0.005);
+        
         previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     }
 }, { passive: false });
+
 
 function setVisibility(element, opacity, blur, clickable = false) {
     if(!element) return;

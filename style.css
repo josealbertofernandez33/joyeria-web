@@ -11,7 +11,7 @@ canvas { position: fixed; top: 0; left: 0; outline: none; z-index: 1; pointer-ev
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: #000; z-index: 9999;
     display: flex; justify-content: center; align-items: center;
-    transition: opacity 1.5s ease-out; /* Transición más lenta y suave */
+    transition: opacity 1.5s ease-out;
 }
 .loader-content { text-align: center; width: 280px; }
 .loader-title {
@@ -30,12 +30,10 @@ canvas { position: fixed; top: 0; left: 0; outline: none; z-index: 1; pointer-ev
 }
 
 /* EFECTO DE APARICIÓN SUAVE DE LA WEB */
-/* Ocultamos elementos principales al inicio */
 body > header, body > section {
     opacity: 0;
-    transition: opacity 2s ease; /* Aparición muy lenta y elegante */
+    transition: opacity 2s ease;
 }
-/* Cuando se añade la clase 'loaded', se muestran */
 body.loaded > header, body.loaded > section {
     opacity: 1;
 }
@@ -199,22 +197,21 @@ input[type="file"] { display: none; }
 .success-content h3 { font-size: 1.5rem; letter-spacing: 3px; margin-bottom: 20px; line-height: 1.4; }
 .success-content p { font-family: 'Lato', sans-serif; font-size: 0.9rem; color: rgba(255,255,255,0.7); letter-spacing: 1px; }
 
-/* FIX MENÚ MÓVIL: Reducimos espacio y fuente para que entren en una línea */
+/* FIX MENÚ MÓVIL */
 @media (max-width: 768px) { 
     .glass-card { width: 85%; padding: 30px; } 
     h2 { font-size: 1.5rem !important; } 
     header { top: 20px; }
     #config-ui { padding: 100px 20px 60px 20px; }
     
-    /* MENÚ COMPACTO */
     #nav-container { 
-        gap: 12px; /* Menos espacio entre palabras */
+        gap: 12px; 
         width: 100%; 
         padding: 0 5px; 
         box-sizing: border-box; 
     }
     .nav-item { 
-        font-size: 0.6rem; /* Letra un pelín más pequeña */
+        font-size: 0.6rem; 
         letter-spacing: 1px; 
     }
     
@@ -222,8 +219,7 @@ input[type="file"] { display: none; }
     #selection-display { font-size: 1rem; top: 45%; }
 }
 
-/* --- SEO GHOST (INVISIBLE PARA HUMANOS, VISIBLE PARA GOOGLE) --- */
-/* Técnica de accesibilidad para ocultar texto sin que Google penalice */
+/* --- SEO GHOST --- */
 .seo-ghost {
     position: absolute;
     width: 1px;
@@ -234,4 +230,51 @@ input[type="file"] { display: none; }
     clip: rect(0,0,0,0);
     border: 0;
     white-space: nowrap; 
+}
+
+/* --- SCROLL INDICATOR (OPCIÓN A) --- */
+#scroll-indicator {
+    position: fixed;
+    bottom: 0; 
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    z-index: 50;
+    opacity: 0;
+    animation: fadeIn 2s ease 3.5s forwards;
+    pointer-events: none;
+    height: 100px;
+}
+
+.scroll-text {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 4px;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    animation: textPulse 3s infinite;
+}
+
+.scroll-line {
+    width: 1px;
+    height: 100%;
+    background: linear-gradient(to bottom, #d4af37 0%, transparent 100%);
+    animation: lineDrop 2s cubic-bezier(0.77, 0, 0.175, 1) infinite;
+}
+
+/* OCULTAR INDICADOR AL HACER SCROLL */
+header.scrolled ~ #scroll-indicator {
+    opacity: 0;
+    transition: opacity 0.5s;
+}
+
+@keyframes fadeIn { to { opacity: 1; } }
+@keyframes textPulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+@keyframes lineDrop {
+    0% { transform: translateY(-100%); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translateY(100%); opacity: 0; }
 }
