@@ -46,7 +46,7 @@ window.scrollToPercent = function(percentage) {
     window.scrollTo({ top: totalHeight * percentage, behavior: 'smooth' });
 }
 
-// Variables para la nueva interacción suave
+// Variables para la nueva interacción suave (Parallax)
 let targetRotationX = 0;
 let targetRotationY = 0;
 let mouseX = 0;
@@ -55,9 +55,9 @@ const windowHalfX = window.innerWidth / 2;
 const windowHalfY = window.innerHeight / 2;
 
 window.addEventListener('scroll', () => {
+    // INDICADOR SCROLL: Se oculta definitivamente al bajar 50px
     if (window.scrollY > 50) {
         header.classList.add('scrolled');
-        // REFUERZO: Ocultar indicador por completo al hacer scroll
         if(scrollIndicator) scrollIndicator.style.display = 'none'; 
     } else {
         header.classList.remove('scrolled');
@@ -67,7 +67,7 @@ window.addEventListener('scroll', () => {
     
     const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
     
-    // Control CSS
+    // Control CSS para la zona de interacción
     if (scrollPercent > 0.60 && scrollPercent < 0.92) { 
         if(customSection) customSection.classList.add('active-interaction');
         if(layer4) layer4.style.opacity = 0; 
@@ -76,8 +76,9 @@ window.addEventListener('scroll', () => {
         if(layer4) layer4.style.opacity = 1;
     }
 
-    // --- TIMELINE DE SCROLL ---
+    // --- TIMELINE SIN HUECOS ---
     if (scrollPercent <= 0.10) {
+        // HOME
         const p = scrollPercent / 0.10; 
         camera.position.z = params.camPos.z - (p * 10); 
         homeGroup.position.y = 0; aboutGroup.position.y = -60; contactGroup.position.y = -200; 
@@ -104,37 +105,29 @@ window.addEventListener('scroll', () => {
         setVisibility(aboutSection, 0, 20); const pIn = (scrollPercent - 0.50) / 0.10; if(customSection) customSection.style.opacity = pIn;
         resetLayer(layer1, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); resetLayer(layer4, 0); finalRingGroup.visible = false; homeGroup.visible = false;
     } else if (scrollPercent > 0.60 && scrollPercent <= 0.92) {
+        // ZONA CRÍTICA ARREGLADA: Eliminados los espacios vacíos
         if(diamondMat) diamondMat.opacity = 0; if(diamondBase) diamondBase.visible = false; homeGroup.visible = false; 
         if(customSection) customSection.style.opacity = 1; if(interactionZone) interactionZone.classList.add('interactive');
         setVisibility(contactSection, 0, 30); contactGroup.position.y = -200;
         if(contactSection) contactSection.classList.remove('active'); 
         
-        // --- CAMBIO: Añadido hueco de espacio (gap) ---
-        // Antes era todo seguido. Ahora dividimos el 32% (0.60 a 0.92) en partes
-        // 0.60 -> 0.80: Fotos vuelan
-        // 0.80 -> 0.85: Espacio vacio (descanso)
-        // 0.85 -> 0.92: Aparece anillo custom
+        // Dividimos el espacio 0.60 -> 0.92 en dos fases continuas
+        // Fase 1: Fotos (0.60 -> 0.85)
+        // Fase 2: Anillo (0.85 -> 0.92)
         
-        if (scrollPercent <= 0.80) {
-            // Fase FOTOS
-            const pLayer = (scrollPercent - 0.60) / 0.20; // 0 a 1
-            const step = 1 / 4; 
+        if (scrollPercent <= 0.85) {
+            // Animación de capas extendida para cubrir todo el espacio
+            const pLayer = (scrollPercent - 0.60) / 0.25; // 0 a 1
+            const step = 1 / 3; 
             if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
-            finalRingGroup.visible = false; // Asegurar oculto
+            finalRingGroup.visible = false;
 
             if (pLayer <= step) { let p = pLayer / step; updateLuxuryLayer(layer1, p, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); } 
             else if (pLayer <= step * 2) { liftLayerDone(layer1); let p = (pLayer - step) / step; updateLuxuryLayer(layer2, p, 60); resetLayer(layer3, 30); } 
-            else if (pLayer <= step * 3) { liftLayerDone(layer1); liftLayerDone(layer2); let p = (pLayer - step*2) / step; updateLuxuryLayer(layer3, p, 30); }
-            else { liftLayerDone(layer1); liftLayerDone(layer2); liftLayerDone(layer3); }
+            else { liftLayerDone(layer1); liftLayerDone(layer2); let p = (pLayer - step*2) / step; updateLuxuryLayer(layer3, p, 30); }
             
-        } else if (scrollPercent > 0.80 && scrollPercent <= 0.85) {
-            // Fase ESPACIO VACÍO
-             liftLayerDone(layer1); liftLayerDone(layer2); liftLayerDone(layer3);
-             finalRingGroup.visible = false;
-             if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
-
         } else {
-            // Fase ANILLO (0.85 a 0.92)
+            // Fase Anillo inmediata
             liftLayerDone(layer1); liftLayerDone(layer2); liftLayerDone(layer3);
             const pRing = (scrollPercent - 0.85) / 0.07; // 0 a 1
             
@@ -144,7 +137,6 @@ window.addEventListener('scroll', () => {
                 let scale = 0.8 + (pRing * 0.2); 
                 finalRingModel.scale.set(scale, scale, scale); 
             }
-            // UI aparece al final
             if(configUI) { 
                 configUI.style.opacity = pRing; 
                 configUI.style.pointerEvents = (pRing > 0.9) ? "auto" : "none"; 
