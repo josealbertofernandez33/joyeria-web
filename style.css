@@ -71,14 +71,15 @@ header.menu-open #menu-toggle { z-index: 101; border-color: #fff; color: #fff; p
 .nav-item:hover { color: #ffffff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
 .nav-item:hover::after { width: 100%; }
 
-/* --- SECCIÓN ABOUT (MEJORADA: TARJETA DE CRISTAL) --- */
+/* --- SECCIÓN ABOUT (VERSIÓN GRANDE PC / COMPACTA MÓVIL) --- */
 #about-section {
     position: fixed; 
     top: 50%; 
     left: 50%; 
     transform: translate(-50%, -50%); 
     width: 85%; 
-    max-width: 550px; 
+    /* PC: Tarjeta ancha */
+    max-width: 900px; 
     text-align: center; 
     z-index: 5;
     font-family: 'Lato', sans-serif; 
@@ -86,29 +87,32 @@ header.menu-open #menu-toggle { z-index: 101; border-color: #fff; color: #fff; p
     pointer-events: none; 
     opacity: 0; 
     
-    /* Estilo Glassmorphism para legibilidad */
+    /* Estilo Glassmorphism */
     background: rgba(5, 5, 5, 0.65); 
     backdrop-filter: blur(12px); 
     -webkit-backdrop-filter: blur(12px); 
     border: 1px solid rgba(212, 175, 55, 0.2); 
-    padding: 50px 40px; 
+    /* PC: Padding amplio */
+    padding: 70px 60px; 
     box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
     border-radius: 4px; 
 }
 
 #about-section h2 { 
     font-family: 'Cinzel', serif; 
-    font-size: 1.8rem; 
-    margin-bottom: 25px; 
-    letter-spacing: 6px; 
+    /* PC: Fuente grande */
+    font-size: 2.8rem; 
+    margin-bottom: 35px; 
+    letter-spacing: 8px; 
     color: #d4af37; 
     text-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
 }
 
 #about-section p { 
-    font-size: 0.95rem; 
+    /* PC: Texto de cuerpo legible */
+    font-size: 1.25rem; 
     line-height: 1.8; 
-    margin-bottom: 20px; 
+    margin-bottom: 25px; 
     color: rgba(255,255,255,0.9); 
 }
 
@@ -121,22 +125,23 @@ header.menu-open #menu-toggle { z-index: 101; border-color: #fff; color: #fff; p
 
 .highlight-quote {
     font-family: 'Cinzel', serif; 
-    font-size: 1.1rem; 
+    /* PC: Cita destacada */
+    font-size: 1.6rem; 
     color: #fff; 
-    margin: 30px 0; 
+    margin: 40px 0; 
     line-height: 1.6; 
     letter-spacing: 3px;
     border-top: 1px solid rgba(212, 175, 55, 0.3); 
     border-bottom: 1px solid rgba(212, 175, 55, 0.3); 
-    padding: 25px 0; 
+    padding: 30px 0; 
 }
 
 #about-section .signature { 
     font-family: 'Cinzel', serif; 
-    font-size: 0.7rem; 
+    font-size: 0.9rem; 
     opacity: 0.5; 
-    margin-top: 30px; 
-    letter-spacing: 4px; 
+    margin-top: 40px; 
+    letter-spacing: 5px; 
     display: inline-block; 
     text-transform: uppercase;
 }
@@ -186,7 +191,6 @@ header.menu-open #menu-toggle { z-index: 101; border-color: #fff; color: #fff; p
 .dot-sapphire { background-image: url('./texture-sapphire.png'); }
 .dot-emerald { background-image: url('./texture-emerald.png'); }
 
-/* STACK WRAPPER: Rotación original (tumbada) */
 .stack-wrapper { 
     position: relative; width: 350px; height: 450px; 
     transform-style: preserve-3d; 
@@ -245,7 +249,7 @@ input[type="file"] { display: none; }
 .success-content h3 { font-size: 1.5rem; letter-spacing: 3px; margin-bottom: 20px; line-height: 1.4; }
 .success-content p { font-family: 'Lato', sans-serif; font-size: 0.9rem; color: rgba(255,255,255,0.7); letter-spacing: 1px; }
 
-/* FIX MENÚ MÓVIL */
+/* FIX MENÚ MÓVIL Y ADAPTACIÓN ABOUT */
 @media (max-width: 768px) { 
     .glass-card { width: 85%; padding: 30px; } 
     h2 { font-size: 1.5rem !important; } 
@@ -266,15 +270,17 @@ input[type="file"] { display: none; }
     .config-dot { width: 44px; height: 44px; } 
     #selection-display { font-size: 1rem; top: 45%; }
 
-    /* Ajuste About Card Móvil */
+    /* RESET ABOUT CARD PARA MÓVIL (COMPACTO) */
     #about-section {
         width: 90%;
-        padding: 30px 20px;
-        background: rgba(5, 5, 5, 0.75);
+        max-width: none; /* Quitamos límite ancho */
+        padding: 30px 20px; /* Padding original pequeño */
+        background: rgba(5, 5, 5, 0.75); 
     }
-    #about-section h2 { font-size: 1.4rem; }
-    #about-section p { font-size: 0.85rem; }
-    .highlight-quote { font-size: 0.9rem; margin: 20px 0; padding: 15px 0; }
+    #about-section h2 { font-size: 1.5rem; letter-spacing: 4px; margin-bottom: 20px; }
+    #about-section p { font-size: 0.9rem; line-height: 1.6; margin-bottom: 20px; }
+    .highlight-quote { font-size: 1rem; margin: 20px 0; padding: 15px 0; }
+    #about-section .signature { font-size: 0.7rem; margin-top: 25px; }
 }
 
 /* --- SEO GHOST --- */
