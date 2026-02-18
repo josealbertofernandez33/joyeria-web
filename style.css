@@ -1,7 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Lato:wght@300;400&display=swap');
 
+/* AUMENTADO height a 1200vh para que el scroll sea más lento y suave */
 body { 
-    margin: 0; height: 850vh; background: #000; overflow-x: hidden; color: white; 
+    margin: 0; height: 1200vh; background: #000; overflow-x: hidden; color: white; 
     -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; overscroll-behavior: none;
 }
 canvas { position: fixed; top: 0; left: 0; outline: none; z-index: 1; pointer-events: none; }
@@ -30,13 +31,8 @@ canvas { position: fixed; top: 0; left: 0; outline: none; z-index: 1; pointer-ev
 }
 
 /* EFECTO DE APARICIÓN SUAVE DE LA WEB */
-body > header, body > section {
-    opacity: 0;
-    transition: opacity 2s ease;
-}
-body.loaded > header, body.loaded > section {
-    opacity: 1;
-}
+body > header, body > section { opacity: 0; transition: opacity 2s ease; }
+body.loaded > header, body.loaded > section { opacity: 1; }
 
 /* HEADER DINÁMICO */
 header {
@@ -44,19 +40,14 @@ header {
     transition: all 0.4s ease; padding-top: 50px;
     display: flex; flex-direction: column; align-items: center;
 }
-
-header.scrolled {
-    padding-top: 20px;
-    background: transparent;
-}
+header.scrolled { padding-top: 20px; background: transparent; }
 
 #menu-toggle {
     font-family: 'Cinzel', serif; font-size: 0.85rem; font-weight: 600; color: #d4af37;
     text-transform: uppercase; letter-spacing: 3px; cursor: pointer;
     border: 1px solid rgba(212, 175, 55, 0.5); padding: 10px 20px; border-radius: 30px;
     background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
-    display: none; 
-    transition: all 0.3s ease; pointer-events: auto;
+    display: none; transition: all 0.3s ease; pointer-events: auto;
 }
 #menu-toggle:hover { background: rgba(212, 175, 55, 0.1); border-color: #fff; color: #fff; }
 
@@ -66,22 +57,15 @@ header.scrolled {
     text-transform: uppercase; letter-spacing: 3px; pointer-events: none;
     transition: all 0.4s ease;
 }
-
-header.scrolled #nav-container {
-    opacity: 0; pointer-events: none; transform: translateY(-20px); position: absolute;
-}
+header.scrolled #nav-container { opacity: 0; pointer-events: none; transform: translateY(-20px); position: absolute; }
 header.scrolled #menu-toggle { display: block; }
-
 header.menu-open #nav-container {
     opacity: 1; pointer-events: auto; transform: translateY(0); position: relative;
     flex-direction: column; background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(15px);
     width: 100vw; height: 100vh; position: fixed; top: 0; left: 0;
     justify-content: center; align-items: center; gap: 40px;
 }
-header.menu-open #menu-toggle {
-    z-index: 101; border-color: #fff; color: #fff;
-    position: fixed; top: 30px;
-}
+header.menu-open #menu-toggle { z-index: 101; border-color: #fff; color: #fff; position: fixed; top: 30px; }
 
 .nav-item { pointer-events: auto; cursor: pointer; transition: color 0.3s ease; position: relative; }
 .nav-item::after { content: ''; position: absolute; width: 0; height: 1px; bottom: -5px; left: 50%; background-color: #d4af37; transition: all 0.3s ease; transform: translateX(-50%); }
@@ -146,7 +130,14 @@ header.menu-open #menu-toggle {
 .dot-sapphire { background-image: url('./texture-sapphire.png'); }
 .dot-emerald { background-image: url('./texture-emerald.png'); }
 
-.stack-wrapper { position: relative; width: 350px; height: 450px; transform-style: preserve-3d; transform: rotateX(55deg) rotateZ(35deg); pointer-events: none; }
+/* MODIFICADO: rotateX a 15deg para que las imagenes esten mas verticales (levantadas) */
+.stack-wrapper { 
+    position: relative; width: 350px; height: 450px; 
+    transform-style: preserve-3d; 
+    transform: rotateX(15deg) rotateZ(10deg); 
+    pointer-events: none; 
+}
+
 .layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 2px; background-size: contain; background-repeat: no-repeat; background-position: center; background-color: transparent; box-shadow: -15px 15px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255, 255, 255, 0.1); will-change: transform, opacity; }
 #l4 { border: none !important; box-shadow: none !important; background: none !important; }
 #l1 { background-image: url('./1.png'); z-index: 4; } 
@@ -197,79 +188,38 @@ input[type="file"] { display: none; }
 .success-content h3 { font-size: 1.5rem; letter-spacing: 3px; margin-bottom: 20px; line-height: 1.4; }
 .success-content p { font-family: 'Lato', sans-serif; font-size: 0.9rem; color: rgba(255,255,255,0.7); letter-spacing: 1px; }
 
-/* FIX MENÚ MÓVIL */
 @media (max-width: 768px) { 
     .glass-card { width: 85%; padding: 30px; } 
     h2 { font-size: 1.5rem !important; } 
     header { top: 20px; }
     #config-ui { padding: 100px 20px 60px 20px; }
-    
-    #nav-container { 
-        gap: 12px; 
-        width: 100%; 
-        padding: 0 5px; 
-        box-sizing: border-box; 
-    }
-    .nav-item { 
-        font-size: 0.6rem; 
-        letter-spacing: 1px; 
-    }
-    
+    #nav-container { gap: 12px; width: 100%; padding: 0 5px; box-sizing: border-box; }
+    .nav-item { font-size: 0.6rem; letter-spacing: 1px; }
     .config-dot { width: 44px; height: 44px; } 
     #selection-display { font-size: 1rem; top: 45%; }
 }
 
-/* --- SEO GHOST --- */
 .seo-ghost {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0,0,0,0);
-    border: 0;
-    white-space: nowrap; 
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; white-space: nowrap; 
 }
 
-/* --- SCROLL INDICATOR (OPCIÓN A) --- */
 #scroll-indicator {
-    position: fixed;
-    bottom: 0; 
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-    z-index: 50;
-    opacity: 0;
-    animation: fadeIn 2s ease 3.5s forwards;
-    pointer-events: none;
-    height: 100px;
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 15px;
+    z-index: 50; opacity: 0; animation: fadeIn 2s ease 3.5s forwards;
+    pointer-events: none; height: 100px;
 }
-
 .scroll-text {
-    font-family: 'Cinzel', serif;
-    font-size: 0.6rem;
-    letter-spacing: 4px;
-    color: rgba(255, 255, 255, 0.7);
-    text-transform: uppercase;
-    animation: textPulse 3s infinite;
+    font-family: 'Cinzel', serif; font-size: 0.6rem; letter-spacing: 4px;
+    color: rgba(255, 255, 255, 0.7); text-transform: uppercase; animation: textPulse 3s infinite;
 }
-
 .scroll-line {
-    width: 1px;
-    height: 100%;
+    width: 1px; height: 100%;
     background: linear-gradient(to bottom, #d4af37 0%, transparent 100%);
     animation: lineDrop 2s cubic-bezier(0.77, 0, 0.175, 1) infinite;
 }
 
-/* OCULTAR INDICADOR AL HACER SCROLL */
-header.scrolled ~ #scroll-indicator {
-    opacity: 0;
-    transition: opacity 0.5s;
-}
+header.scrolled ~ #scroll-indicator { opacity: 0; transition: opacity 0.5s; }
 
 @keyframes fadeIn { to { opacity: 1; } }
 @keyframes textPulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
