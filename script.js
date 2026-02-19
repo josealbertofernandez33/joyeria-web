@@ -301,7 +301,6 @@ const ringContainer = new THREE.Group();
 const stonesContainer = new THREE.Group(); 
 homeGroup.add(ringContainer); homeGroup.add(stonesContainer);
 ringContainer.position.y = params.floatYBase; stonesContainer.position.y = params.floatYBase; stonesContainer.position.x = -10; 
-// Inicializamos el contenedor del anillo
 ringContainer.rotation.y = 0.2; stonesContainer.rotation.y = 0.2;
 
 const individualStones = []; 
@@ -314,9 +313,8 @@ loader.load('./Alianza.glb', (gltf) => {
     ring.position.sub(center);
     ring.traverse(c => { if(c.isMesh) { c.geometry.deleteAttribute('color'); c.material = c.material.name.includes('Material.001') ? crystalMat : silverMat; }});
     
-    // --- NUEVO ÁNGULO DE PORTADA ---
-    // Ajustado para que se vea la cara de la piedra más atractiva desde el inicio.
-    ring.rotation.set(0.8, -0.3, 0); 
+    // --- VUELTA AL ÁNGULO DE PORTADA ORIGINAL (CLAVADO A LA CAPTURA) ---
+    ring.rotation.set(1.17, 0, -0.03); 
     
     ringContainer.add(ring); 
 });
@@ -363,7 +361,7 @@ window.updateRingConfig = function(type, value, element, displayName) {
             let shouldChange = false;
             if(type === 'main' && c.userData.isMainStone) shouldChange = true;
             if(type === 'side' && c.userData.isSideStone) shouldChange = true;
-            if(type === 'metal' && c.userData.isMetal) shouldChange = true;
+            if(type === 'metal' && c.userData.isMetal) scheduleChange = true;
             if(shouldChange) { const currentOp = c.material.opacity; c.material = newMat.clone(); c.material.transparent = true; c.material.opacity = currentOp; }
         }
     });
