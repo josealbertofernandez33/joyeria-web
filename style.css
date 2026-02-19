@@ -266,7 +266,9 @@ input[type="file"] { display: none; }
     #about-section .signature { font-size: 0.7rem; margin-top: 25px; }
     .fan-container { width: 100vw; height: 280px; }
     .fan-card { width: 150px; height: 210px; }
-    .process-header-text { font-size: 0.65rem; }
+    .process-header-text { font-size: 0.52rem; letter-spacing: 0.8px; }
+    .fan-num { font-size: 0.5rem; }
+    .fan-name { font-size: 0.45rem; letter-spacing: 2px; }
     #process-header { width: 88%; }
 }
 
@@ -274,7 +276,7 @@ input[type="file"] { display: none; }
 .seo-ghost { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; white-space: nowrap; }
 
 /* --- SCROLL INDICATOR --- */
-#scroll-indicator { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 15px; z-index: 50; opacity: 0; animation: fadeIn 2s ease 3.5s forwards; pointer-events: none; height: 100px; }
+#scroll-indicator { position: fixed; bottom: 0; right: 40px; left: auto; transform: none; display: flex; flex-direction: column; align-items: center; gap: 15px; z-index: 50; opacity: 0; animation: fadeIn 2s ease 3.5s forwards; pointer-events: none; height: 100px; }
 .scroll-text { font-family: 'Cinzel', serif; font-size: 0.6rem; letter-spacing: 4px; color: rgba(255,255,255,0.7); text-transform: uppercase; animation: textPulse 3s infinite; }
 .scroll-line { width: 1px; height: 100%; background: linear-gradient(to bottom, #d4af37 0%, transparent 100%); animation: lineDrop 2s cubic-bezier(0.77,0,0.175,1) infinite; }
 header.scrolled ~ #scroll-indicator { opacity: 0; transition: opacity 0.5s; }
