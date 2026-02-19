@@ -47,8 +47,41 @@ window.scrollToPercent = function(percentage) {
     window.scrollTo({ top: totalHeight * percentage, behavior: 'smooth' });
 }
 
-// --- LOGICA DEL SCROLL ---
+// --- LOGICA DE NAVEGACIÓN Y SNAP ---
+const sections = [0, 0.32, 0.75, 1.0]; // Puntos de anclaje (Home, About, Custom, Order)
+let isScrollingTimer;
+const isMobileDevice = window.innerWidth < 768; // Detección simple
+
+// Botones Móviles
+const btnUp = document.getElementById('btn-up');
+const btnDown = document.getElementById('btn-down');
+
+function getCurrentSectionIndex() {
+    const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+    // Buscar el índice más cercano
+    let closestIndex = 0;
+    let minDiff = 100;
+    sections.forEach((val, index) => {
+        const diff = Math.abs(val - scrollPercent);
+        if(diff < minDiff) { minDiff = diff; closestIndex = index; }
+    });
+    return closestIndex;
+}
+
+if(btnUp && btnDown) {
+    btnUp.addEventListener('click', () => {
+        const current = getCurrentSectionIndex();
+        if(current > 0) window.navigate(sections[current - 1]);
+    });
+    btnDown.addEventListener('click', () => {
+        const current = getCurrentSectionIndex();
+        if(current < sections.length - 1) window.navigate(sections[current + 1]);
+    });
+}
+
+// Logic del Scroll
 window.addEventListener('scroll', () => {
+    // 1. Header y Indicador
     if (window.scrollY > 50) {
         header.classList.add('scrolled');
         if(scrollIndicator) scrollIndicator.style.display = 'none';
@@ -58,6 +91,17 @@ window.addEventListener('scroll', () => {
         if(header.classList.contains('menu-open')) toggleMenu();
     }
     
+    // 2. MAGNETIC SNAP (Solo Desktop)
+    if (!isMobileDevice) {
+        window.clearTimeout(isScrollingTimer);
+        isScrollingTimer = setTimeout(() => {
+            // Cuando el usuario deja de hacer scroll (100ms pausa)
+            const currentIdx = getCurrentSectionIndex();
+            // "Imán" suave hacia la sección más cercana
+            window.navigate(sections[currentIdx]); 
+        }, 150); 
+    }
+
     const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
     
     // Control CSS Interacción
@@ -69,7 +113,7 @@ window.addEventListener('scroll', () => {
         if(layer4) layer4.style.opacity = 1;
     }
 
-    // --- TIMELINE ---
+    // --- TIMELINE DE ANIMACIÓN ---
     if (scrollPercent <= 0.10) {
         const p = scrollPercent / 0.10; 
         camera.position.z = params.camPos.z - (p * 10); 
@@ -443,16 +487,11 @@ function animate() {
     requestAnimationFrame(animate);
     const time = performance.now() * 0.001;
     
-    // Calcular porcentaje de scroll para lógica de Home
     const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
 
     // --- EFECTO PARALLAX DE CÁMARA (LADEO/ORBIT) ---
     // Solo activo si estamos en Home (0% - 15%)
     if (scrollPercent < 0.15 && homeGroup.visible) {
-        // Rotamos el GRUPO entero suavemente según el ratón
-        // Y = mouseX (Orbitar izq/der)
-        // X = mouseY (Inclinar arriba/abajo)
-        
         const targetRotY = mouseXNorm * 0.15; // Intensidad del ladeo
         const targetRotX = mouseYNorm * 0.10; 
 
@@ -460,7 +499,6 @@ function animate() {
         homeGroup.rotation.y += (targetRotY - homeGroup.rotation.y) * 0.05;
         homeGroup.rotation.x += (targetRotX - homeGroup.rotation.x) * 0.05;
     } else {
-        // Si bajamos del home, reseteamos la rotación suavemente a 0 para que no afecte a About
         homeGroup.rotation.y += (0 - homeGroup.rotation.y) * 0.1;
         homeGroup.rotation.x += (0 - homeGroup.rotation.x) * 0.1;
     }
