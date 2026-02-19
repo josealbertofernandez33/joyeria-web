@@ -3,7 +3,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { Reflector } from 'three/addons/objects/Reflector.js';
 
-// --- GESTIÓN DE CARGA ---
+// --- GESTIÓN DE CARGA Y TRANSICIÓN SUAVE ---
 const loadingScreen = document.getElementById('loading-screen');
 const loadingBar = document.getElementById('loader-bar');
 const loadingManager = new THREE.LoadingManager();
@@ -23,7 +23,6 @@ loadingManager.onLoad = function() {
 
 const header = document.getElementById('main-header');
 const menuToggle = document.getElementById('menu-toggle');
-const scrollIndicator = document.getElementById('scroll-indicator');
 
 window.toggleMenu = function() {
     header.classList.toggle('menu-open');
@@ -47,48 +46,18 @@ window.scrollToPercent = function(percentage) {
     window.scrollTo({ top: totalHeight * percentage, behavior: 'smooth' });
 }
 
-// --- LOGICA DE BOTONES MOVILES ---
-const sections = [0, 0.32, 0.75, 1.0]; 
-const btnUp = document.getElementById('btn-up');
-const btnDown = document.getElementById('btn-down');
-
-function getCurrentSectionIndex() {
-    const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
-    let closestIndex = 0;
-    let minDiff = 100;
-    sections.forEach((val, index) => {
-        const diff = Math.abs(val - scrollPercent);
-        if(diff < minDiff) { minDiff = diff; closestIndex = index; }
-    });
-    return closestIndex;
-}
-
-if(btnUp && btnDown) {
-    btnUp.addEventListener('click', () => {
-        const current = getCurrentSectionIndex();
-        if(current > 0) window.navigate(sections[current - 1]);
-    });
-    btnDown.addEventListener('click', () => {
-        const current = getCurrentSectionIndex();
-        if(current < sections.length - 1) window.navigate(sections[current + 1]);
-    });
-}
-
-// --- LOGICA DEL SCROLL (LIBRE Y SUAVE) ---
 window.addEventListener('scroll', () => {
     if (window.scrollY > 50) {
         header.classList.add('scrolled');
-        if(scrollIndicator) scrollIndicator.style.display = 'none';
     } else {
         header.classList.remove('scrolled');
-        if(scrollIndicator) scrollIndicator.style.display = 'flex';
         if(header.classList.contains('menu-open')) toggleMenu();
     }
-
+    
     const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
     
-    // Control CSS Interacción
-    if (scrollPercent > 0.65 && scrollPercent < 0.92) { 
+    // Control de interacción del CSS
+    if (scrollPercent > 0.60 && scrollPercent < 0.92) { 
         if(customSection) customSection.classList.add('active-interaction');
         if(layer4) layer4.style.opacity = 0; 
     } else { 
@@ -96,12 +65,15 @@ window.addEventListener('scroll', () => {
         if(layer4) layer4.style.opacity = 1;
     }
 
-    // --- TIMELINE OPTIMIZADO (ABOUT FIJO MÁS TIEMPO) ---
+    // --- LÓGICA DE ESCENA 3D ---
     if (scrollPercent <= 0.10) {
-        // HOME
+        // ESTAMOS EN HOME
         const p = scrollPercent / 0.10; 
         camera.position.z = params.camPos.z - (p * 10); 
         
+        // MODIFICACIÓN: Comentamos la rotación forzada del anillo para que el usuario pueda rotarlo libremente
+        // ringContainer.rotation.y = 0.2 + (p * 0.3); 
+
         homeGroup.position.y = 0; aboutGroup.position.y = -60; contactGroup.position.y = -200; 
         finalRingGroup.visible = false; homeGroup.visible = true; 
         if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
@@ -109,49 +81,33 @@ window.addEventListener('scroll', () => {
         if(contactSection) contactSection.classList.remove('active'); 
         if(diamondMat) diamondMat.opacity = 1; if(diamondBase) diamondBase.visible = true; 
         
-    } else if (scrollPercent > 0.10 && scrollPercent <= 0.20) {
-        // TRANSICIÓN DE ENTRADA A ABOUT
-        const p = (scrollPercent - 0.10) / 0.10; 
-        homeGroup.position.y = p * 80; aboutGroup.position.y = -60 + (p * 60); 
-        setVisibility(aboutSection, p, 20 - (p * 20)); // Entra suavemente
-        setVisibility(customSection, 0, 0); 
-        if(diamondMat) diamondMat.opacity = 1; if(diamondBase) diamondBase.visible = true;
+        // Activamos interacción en Home también
+        if(interactionZone) interactionZone.style.pointerEvents = "auto";
 
-    } else if (scrollPercent > 0.20 && scrollPercent <= 0.45) {
-        // ABOUT "SIEMPRE ESTÁ" (Se mantiene fijo durante todo este trayecto)
+    } else if (scrollPercent > 0.10 && scrollPercent <= 0.25) {
+        const p = (scrollPercent - 0.10) / 0.15; homeGroup.position.y = p * 80; aboutGroup.position.y = -60 + (p * 60); 
+        setVisibility(aboutSection, 0, 20); setVisibility(customSection, 0, 0); if(diamondMat) diamondMat.opacity = 1; if(diamondBase) diamondBase.visible = true;
+    } else if (scrollPercent > 0.25 && scrollPercent <= 0.40) {
         homeGroup.position.y = 80; aboutGroup.position.y = 0; contactGroup.position.y = -200;
-        setVisibility(aboutSection, 1, 0); // Totalmente visible y fijo
-        setVisibility(customSection, 0, 0); 
-        if(diamondMat) diamondMat.opacity = 1; if(diamondBase) diamondBase.visible = true;
-
-    } else if (scrollPercent > 0.45 && scrollPercent <= 0.55) {
-        // TRANSICIÓN DE SALIDA DE ABOUT
-        const pOut = (scrollPercent - 0.45) / 0.10; 
-        aboutGroup.position.y = 0; 
-        setVisibility(aboutSection, 1 - pOut, pOut * 20); // Se desvanece
-        if(diamondMat) diamondMat.opacity = 1 - pOut; 
-        if(diamondBase) diamondBase.visible = true;
+        const pText = (scrollPercent - 0.25) / 0.05; let o = pText; if(o>1) o=1; let b = 20 - (pText * 20); if(b<0) b=0;
+        setVisibility(aboutSection, o, b); setVisibility(customSection, 0, 0); if(diamondMat) diamondMat.opacity = 1; if(diamondBase) diamondBase.visible = true;
+    } else if (scrollPercent > 0.40 && scrollPercent <= 0.50) {
+        const pOut = (scrollPercent - 0.40) / 0.10; aboutGroup.position.y = 0; 
+        setVisibility(aboutSection, 1 - pOut, pOut * 20); if(diamondMat) diamondMat.opacity = 1 - pOut; if(diamondBase) diamondBase.visible = true;
         if(customSection) customSection.style.opacity = 0; if(configUI) configUI.style.opacity = 0;
         resetLayer(layer1, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); resetLayer(layer4, 0);
         setVisibility(contactSection, 0, 30); contactGroup.position.y = -200; finalRingGroup.visible = false;
-
-    } else if (scrollPercent > 0.55 && scrollPercent <= 0.65) {
-        // ENTRANDO AL CUSTOM (CAPAS)
+    } else if (scrollPercent > 0.50 && scrollPercent <= 0.60) {
         aboutGroup.position.y = 0; if(diamondMat) diamondMat.opacity = 0; if(diamondBase) diamondBase.visible = false; 
-        setVisibility(aboutSection, 0, 20); 
-        const pIn = (scrollPercent - 0.55) / 0.10; 
-        if(customSection) customSection.style.opacity = pIn;
-        resetLayer(layer1, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); resetLayer(layer4, 0); 
-        finalRingGroup.visible = false; homeGroup.visible = false;
-
-    } else if (scrollPercent > 0.65 && scrollPercent <= 0.92) {
-        // CUSTOM INTERACTIVO
+        setVisibility(aboutSection, 0, 20); const pIn = (scrollPercent - 0.50) / 0.10; if(customSection) customSection.style.opacity = pIn;
+        resetLayer(layer1, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); resetLayer(layer4, 0); finalRingGroup.visible = false; homeGroup.visible = false;
+    } else if (scrollPercent > 0.60 && scrollPercent <= 0.92) {
         if(diamondMat) diamondMat.opacity = 0; if(diamondBase) diamondBase.visible = false; homeGroup.visible = false; 
-        if(customSection) customSection.style.opacity = 1; 
+        if(customSection) customSection.style.opacity = 1; if(interactionZone) interactionZone.classList.add('interactive');
         setVisibility(contactSection, 0, 30); contactGroup.position.y = -200;
         if(contactSection) contactSection.classList.remove('active'); 
         
-        const pCustom = (scrollPercent - 0.65) / 0.20; 
+        const pCustom = (scrollPercent - 0.60) / 0.20; 
         if(pCustom <= 1.0) {
             const step = 1 / 4; 
             if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
@@ -166,8 +122,8 @@ window.addEventListener('scroll', () => {
             if(finalRingModel) { finalRingGroup.visible = true; finalRingModel.traverse(c => { if(c.isMesh) c.material.opacity = 1; }); finalRingModel.scale.set(1, 1, 1); }
         }
     } else {
-        // CONTACT FORM
         homeGroup.position.y = 200; aboutGroup.position.y = 200; homeGroup.visible = false; if(diamondBase) diamondBase.visible = false;
+        if(interactionZone) interactionZone.classList.remove('interactive');
         if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
         const pForm = (scrollPercent - 0.92) / 0.08; 
         if(customSection) customSection.style.opacity = 1 - pForm; 
@@ -216,10 +172,9 @@ function renderFileList() {
     }
 }
 
-// AJUSTE CLAVE: CÁMARA MÁS ALTA Y MIRANDO HACIA ABAJO PARA PROFUNDIDAD Y REFLEJOS
 const params = {
     bgColor: 0x000000, floorColor: 0x998133, maskOpacity: 1.0,
-    camFOV: 45, camPos: { x: 0, y: 15, z: 70 }, camRot: { x: -0.25, y: 0, z: 0 }, // CÁMARA ALTA, MIRANDO ABAJO
+    camFOV: 45, camPos: { x: 0, y: 0, z: 90 }, camRot: { x: 0, y: 0, z: -0.2 },
     lightInt: 600, lightColor: 0xffffff, lightSpeed: 0.5, 
     envInt: 0.4, envRot: 0.2,   
     cryFlat: false, cryTrans: 1.0, cryOp: 1.0, cryIOR: 2.463, cryThick: 0.41, 
@@ -237,8 +192,6 @@ const aboutSection = document.getElementById('about-section');
 const customSection = document.getElementById('custom-section');
 const contactSection = document.getElementById('contact-section'); 
 const configUI = document.getElementById('config-ui'); 
-const displayLabel = document.getElementById('selection-display');
-let displayTimeout = null;
 const layer1 = document.getElementById('l1');
 const layer2 = document.getElementById('l2');
 const layer3 = document.getElementById('l3');
@@ -285,8 +238,10 @@ light1.position.set(20, 20, 20); scene.add(light1);
 const light2 = new THREE.PointLight(params.lightColor, params.lightInt);
 light2.position.set(-20, -10, 20); scene.add(light2);
 
+// IMPORTANTE: USAMOS EL LOADING MANAGER EN LOS LOADERS
 const loader = new GLTFLoader(loadingManager);
 
+// Cargar EXR con el LoadingManager también
 new EXRLoader(loadingManager).load('./studio_v2.exr', (texture) => {
     texture.mapping = THREE.EquirectangularReflectionMapping;
     texture.offset.x = params.envRot;
@@ -304,10 +259,7 @@ const ringContainer = new THREE.Group();
 const stonesContainer = new THREE.Group(); 
 homeGroup.add(ringContainer); homeGroup.add(stonesContainer);
 ringContainer.position.y = params.floatYBase; stonesContainer.position.y = params.floatYBase; stonesContainer.position.x = -10; 
-// AJUSTE: Reseteamos rotación del contenedor para que las piedras rodeen bien al anillo
-ringContainer.rotation.set(0,0,0); 
-stonesContainer.position.set(0, params.floatYBase, 5); // Acercamos piedras a cámara para profundidad
-stonesContainer.rotation.set(0,0,0);
+ringContainer.rotation.y = 0.2; stonesContainer.rotation.y = 0.2;
 
 const individualStones = []; 
 const contactStones = [];    
@@ -318,11 +270,7 @@ loader.load('./Alianza.glb', (gltf) => {
     const center = box.getCenter(new THREE.Vector3());
     ring.position.sub(center);
     ring.traverse(c => { if(c.isMesh) { c.geometry.deleteAttribute('color'); c.material = c.material.name.includes('Material.001') ? crystalMat : silverMat; }});
-    
-    // AJUSTE: Ángulo del anillo para que mire más a cámara y se vea el reflejo abajo
-    ring.rotation.set(0.4, -0.3, 0); 
-    
-    ringContainer.add(ring); 
+    ringContainer.add(ring); ring.rotation.set(1.17, 0, -0.03); 
 });
 
 let finalRingModel = null;
@@ -411,70 +359,80 @@ if (!isMobile) {
     maskPlane.rotation.x = -Math.PI/2; maskPlane.position.y = -6.99; homeGroup.add(maskPlane);
 }
 
-// --- VARIABLES GLOBALES DE INTERACCIÓN ---
+// --- GESTIÓN DE INTERACCIÓN UNIFICADA (HOME + CUSTOM) ---
 let isDragging = false;
 let previousMousePosition = { x: 0, y: 0 };
-let mouseXNorm = 0; 
-let mouseYNorm = 0;
+let currentTarget = null; // Para saber qué anillo estamos moviendo
+const interactionZone = document.getElementById('custom-section');
 
-const ROTATION_SPEED = 0.004; 
-
-document.addEventListener('mousemove', (event) => {
-    const halfX = window.innerWidth / 2;
-    const halfY = window.innerHeight / 2;
-    mouseXNorm = (event.clientX - halfX) / halfX; 
-    mouseYNorm = (event.clientY - halfY) / halfY;
-});
-
-document.addEventListener('touchmove', (event) => {
-    const halfX = window.innerWidth / 2;
-    const halfY = window.innerHeight / 2;
-    mouseXNorm = (event.touches[0].clientX - halfX) / halfX; 
-    mouseYNorm = (event.touches[0].clientY - halfY) / halfY;
-}, { passive: true });
-
-
+// --- EVENTOS RATÓN ---
 window.addEventListener('mousedown', (e) => { 
     if (e.target.closest('.config-dot')) return;
-    if (finalRingGroup.visible) {
+
+    // Detectar si estamos en Home (arriba) o en Custom (abajo)
+    if (homeGroup.visible) {
+        currentTarget = ringContainer; // Movemos el anillo de portada
         isDragging = true;
+    } else if (finalRingGroup.visible) {
+        currentTarget = finalRingModel; // Movemos el anillo custom
+        isDragging = true;
+    }
+    
+    if (isDragging) {
         previousMousePosition = { x: e.clientX, y: e.clientY };
     }
 });
 
-window.addEventListener('mouseup', () => { isDragging = false; });
+window.addEventListener('mouseup', () => { isDragging = false; currentTarget = null; });
 
 window.addEventListener('mousemove', (e) => {
-    if (isDragging && finalRingGroup.visible && finalRingModel) {
+    if (isDragging && currentTarget) {
         const deltaX = e.clientX - previousMousePosition.x;
         const deltaY = e.clientY - previousMousePosition.y;
         
-        finalRingModel.rotation.y += deltaX * ROTATION_SPEED;
-        finalRingModel.rotation.x += deltaY * ROTATION_SPEED;
+        // Rotamos el objeto que hayamos capturado (sea el de Home o el Custom)
+        currentTarget.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), deltaX * 0.005);
+        currentTarget.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), deltaY * 0.005);
         
         previousMousePosition = { x: e.clientX, y: e.clientY };
     }
 });
 
+// --- EVENTOS TÁCTILES ---
 window.addEventListener('touchstart', (e) => { 
     if (e.target.closest('.config-dot')) return;
-    if (finalRingGroup.visible) {
-        isDragging = true;
-        previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    }
-}, { passive: false }); 
+    
+    // Zonas seguras para móviles (bordes)
+    const touchX = e.touches[0].clientX;
+    const width = window.innerWidth;
+    const margin = width * 0.15; 
+    
+    // Solo limitamos zona en el Custom (abajo), en Home permitimos rotar más libre
+    if (finalRingGroup.visible && (touchX < margin || touchX > width - margin)) { isDragging = false; return; }
 
-window.addEventListener('touchend', () => { isDragging = false; });
+    if (homeGroup.visible) {
+        currentTarget = ringContainer;
+        isDragging = true;
+    } else if (finalRingGroup.visible) {
+        currentTarget = finalRingModel;
+        isDragging = true;
+    }
+
+    if(isDragging) {
+         previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+}, { passive: false });
+
+window.addEventListener('touchend', () => { isDragging = false; currentTarget = null; });
 
 window.addEventListener('touchmove', (e) => {
-    if (isDragging && finalRingGroup.visible && finalRingModel) {
-        e.preventDefault(); 
-        
+    if (isDragging && currentTarget) {
+        // e.preventDefault(); // Comentado para permitir scroll si el usuario arrastra muy vertical, o descomentar para bloquear scroll
         const deltaX = e.touches[0].clientX - previousMousePosition.x;
         const deltaY = e.touches[0].clientY - previousMousePosition.y;
         
-        finalRingModel.rotation.y += deltaX * ROTATION_SPEED;
-        finalRingModel.rotation.x += deltaY * ROTATION_SPEED;
+        currentTarget.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), deltaX * 0.005);
+        currentTarget.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), deltaY * 0.005);
         
         previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     }
@@ -496,27 +454,8 @@ resetLayer(layer1, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); resetLay
 function animate() {
     requestAnimationFrame(animate);
     const time = performance.now() * 0.001;
-    
-    const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
-
-    // --- EFECTO PARALLAX DE CÁMARA (LADEO/ORBIT) ---
-    if (scrollPercent < 0.15 && homeGroup.visible) {
-        const targetRotY = mouseXNorm * 0.15; 
-        const targetRotX = mouseYNorm * 0.10; 
-
-        homeGroup.rotation.y += (targetRotY - homeGroup.rotation.y) * 0.05;
-        homeGroup.rotation.x += (targetRotX - homeGroup.rotation.x) * 0.05;
-    } else {
-        homeGroup.rotation.y += (0 - homeGroup.rotation.y) * 0.1;
-        homeGroup.rotation.x += (0 - homeGroup.rotation.x) * 0.1;
-    }
-
-    // Flotación automática
     ringContainer.position.y = params.floatYBase + Math.sin(time * params.floatSpeed) * params.floatAmp;
     
-    // Rotación automática sutil extra del anillo en Home
-    ringContainer.rotation.y = 0.2 + Math.sin(time * 0.1) * 0.05;
-
     if (diamondBase) { 
         diamondBase.rotation.x = params.diaRotX + (Math.sin(time * 0.2) * 0.05); 
         diamondBase.rotation.y = params.diaRotY + (time * params.diaAnimSpeed); 
