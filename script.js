@@ -60,8 +60,7 @@ window.addEventListener('scroll', () => {
 
     // --- TIMELINE DE SCROLL ---
     if (scrollPercent <= 0.10) {
-        const p = scrollPercent / 0.10; 
-        camera.position.z = params.camPos.z - (p * 10); 
+        const p = scrollPercent / 0.10;  
         homeGroup.position.y = 0; aboutGroup.position.y = -60; contactGroup.position.y = -200; 
         finalRingGroup.visible = false; homeGroup.visible = true; 
         if(configUI) { configUI.style.opacity = 0; configUI.style.pointerEvents = "none"; }
@@ -269,7 +268,7 @@ const ringContainer = new THREE.Group();
 const stonesContainer = new THREE.Group(); 
 homeGroup.add(ringContainer); homeGroup.add(stonesContainer);
 ringContainer.position.y = params.floatYBase;
-stonesContainer.position.y = params.floatYBase;
+stonesContainer.position.set(4, params.floatYBase, -10);
 ringContainer.rotation.y = 0.2; stonesContainer.rotation.y = 0.2;
 
 const individualStones = []; 
