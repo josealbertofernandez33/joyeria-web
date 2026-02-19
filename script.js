@@ -50,7 +50,6 @@ window.addEventListener('scroll', () => {
     
     const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
     
-    // Control de interacción del custom section
     if (scrollPercent > 0.60 && scrollPercent < 0.92) { 
         if(customSection) customSection.classList.add('active-interaction');
         if(layer4) layer4.style.opacity = 0; 
@@ -205,8 +204,8 @@ const aboutSection = document.getElementById('about-section');
 const customSection = document.getElementById('custom-section');
 const contactSection = document.getElementById('contact-section'); 
 const configUI = document.getElementById('config-ui');
-const displayLabel = document.getElementById('selection-display');  // CORREGIDO: declarado aquí
-let displayTimeout = null;                                           // CORREGIDO: declarado aquí
+const displayLabel = document.getElementById('selection-display');
+let displayTimeout = null;
 const layer1 = document.getElementById('l1');
 const layer2 = document.getElementById('l2');
 const layer3 = document.getElementById('l3');
@@ -342,9 +341,7 @@ window.updateRingConfig = function(type, value, element, displayName) {
         displayLabel.textContent = displayName;
         displayLabel.classList.add('visible');
         clearTimeout(displayTimeout);
-        displayTimeout = setTimeout(() => {
-            displayLabel.classList.remove('visible');
-        }, 3000);
+        displayTimeout = setTimeout(() => { displayLabel.classList.remove('visible'); }, 3000);
     }
 };
 
@@ -357,45 +354,42 @@ loader.load('./piedras.glb', (gltf) => {
     stonesClone.position.set(0, 0, -15); stonesClone.scale.set(0.8, 0.8, 0.8); stonesClone.rotation.set(0.5, 0.5, 0); contactGroup.add(stonesClone);
 });
 
-const isMobile = window.innerWidth < 768;
+// --- PARALLAX HOME: posición normalizada del ratón ---
+let mouseXNorm = 0;
+let mouseYNorm = 0;
 
-if (!isMobile) {
-    const groundMirror = new Reflector(new THREE.PlaneGeometry(800, 800), { clipBias: 0.003, textureWidth: window.innerWidth*window.devicePixelRatio, textureHeight: window.innerHeight*window.devicePixelRatio, color: params.floorColor });
-    groundMirror.rotation.x = -Math.PI/2; groundMirror.position.y = -7; 
-    homeGroup.add(groundMirror);
+document.addEventListener('mousemove', (e) => {
+    mouseXNorm = (e.clientX / window.innerWidth) * 2 - 1;   // -1 a +1
+    mouseYNorm = (e.clientY / window.innerHeight) * 2 - 1;  // -1 a +1
+});
 
-    const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 1024; const ctx = canvas.getContext('2d');
-    const grad = ctx.createRadialGradient(512, 512, 0, 512, 512, 512); grad.addColorStop(0, 'rgba(0,0,0,0)'); grad.addColorStop(0.12, 'rgba(0,0,0,1)'); 
-    ctx.fillStyle = grad; ctx.fillRect(0, 0, 1024, 1024); 
-    const maskPlane = new THREE.Mesh(new THREE.PlaneGeometry(800, 800), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, opacity: params.maskOpacity }));
-    maskPlane.rotation.x = -Math.PI/2; maskPlane.position.y = -6.99; homeGroup.add(maskPlane);
-}
+document.addEventListener('touchmove', (e) => {
+    if(e.touches.length > 0) {
+        mouseXNorm = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
+        mouseYNorm = (e.touches[0].clientY / window.innerHeight) * 2 - 1;
+    }
+}, { passive: true });
 
-// --- INTERACCIÓN: DRAG PARA ROTAR ---
+// --- DRAG SOLO EN CUSTOM (finalRingModel) ---
 let isDragging = false;
 let previousMousePosition = { x: 0, y: 0 };
-let currentTarget = null;
 
 window.addEventListener('mousedown', (e) => { 
     if (e.target.closest('.config-dot')) return;
-    if (homeGroup.visible) {
-        currentTarget = ringContainer;
+    if (finalRingGroup.visible && finalRingModel) {
         isDragging = true;
-    } else if (finalRingGroup.visible) {
-        currentTarget = finalRingModel;
-        isDragging = true;
+        previousMousePosition = { x: e.clientX, y: e.clientY };
     }
-    if (isDragging) previousMousePosition = { x: e.clientX, y: e.clientY };
 });
 
-window.addEventListener('mouseup', () => { isDragging = false; currentTarget = null; });
+window.addEventListener('mouseup', () => { isDragging = false; });
 
 window.addEventListener('mousemove', (e) => {
-    if (isDragging && currentTarget) {
+    if (isDragging && finalRingGroup.visible && finalRingModel) {
         const deltaX = e.clientX - previousMousePosition.x;
         const deltaY = e.clientY - previousMousePosition.y;
-        currentTarget.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), deltaX * 0.005);
-        currentTarget.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), deltaY * 0.005);
+        finalRingModel.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), deltaX * 0.005);
+        finalRingModel.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), deltaY * 0.005);
         previousMousePosition = { x: e.clientX, y: e.clientY };
     }
 });
@@ -405,28 +399,25 @@ window.addEventListener('touchstart', (e) => {
     const touchX = e.touches[0].clientX;
     const width = window.innerWidth;
     const margin = width * 0.15; 
-    if (finalRingGroup.visible && (touchX < margin || touchX > width - margin)) { isDragging = false; return; }
-    if (homeGroup.visible) {
-        currentTarget = ringContainer; isDragging = true;
-    } else if (finalRingGroup.visible) {
-        currentTarget = finalRingModel; isDragging = true;
-    }
-    if(isDragging) previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-}, { passive: false });
-
-window.addEventListener('touchend', () => { isDragging = false; currentTarget = null; });
-
-window.addEventListener('touchmove', (e) => {
-    if (isDragging && currentTarget) {
-        const deltaX = e.touches[0].clientX - previousMousePosition.x;
-        const deltaY = e.touches[0].clientY - previousMousePosition.y;
-        currentTarget.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), deltaX * 0.005);
-        currentTarget.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), deltaY * 0.005);
+    if (finalRingGroup.visible && finalRingModel && !(touchX < margin || touchX > width - margin)) {
+        isDragging = true;
         previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     }
 }, { passive: false });
 
-// --- HELPERS DE ANIMACIÓN CSS ---
+window.addEventListener('touchend', () => { isDragging = false; });
+
+window.addEventListener('touchmove', (e) => {
+    if (isDragging && finalRingGroup.visible && finalRingModel) {
+        const deltaX = e.touches[0].clientX - previousMousePosition.x;
+        const deltaY = e.touches[0].clientY - previousMousePosition.y;
+        finalRingModel.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), deltaX * 0.005);
+        finalRingModel.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), deltaY * 0.005);
+        previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+}, { passive: false });
+
+// --- HELPERS ---
 function setVisibility(element, opacity, blur, clickable = false) {
     if(!element) return;
     element.style.opacity = opacity;
@@ -449,6 +440,21 @@ resetLayer(layer1, 90); resetLayer(layer2, 60); resetLayer(layer3, 30); resetLay
 function animate() {
     requestAnimationFrame(animate);
     const time = performance.now() * 0.001;
+    const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+
+    // PARALLAX HOME: rotación orbital suave del grupo alrededor del anillo
+    if (scrollPercent < 0.15 && homeGroup.visible) {
+        const targetRotY = mouseXNorm * 0.12;   // amplitud lateral: sutil
+        const targetRotX = mouseYNorm * 0.07;   // amplitud vertical: más sutil aún
+        homeGroup.rotation.y += (targetRotY - homeGroup.rotation.y) * 0.04;  // lerp suave
+        homeGroup.rotation.x += (targetRotX - homeGroup.rotation.x) * 0.04;
+    } else {
+        // Fuera de Home: vuelve a neutral suavemente
+        homeGroup.rotation.y += (0 - homeGroup.rotation.y) * 0.08;
+        homeGroup.rotation.x += (0 - homeGroup.rotation.x) * 0.08;
+    }
+
+    // Flotación del anillo
     ringContainer.position.y = params.floatYBase + Math.sin(time * params.floatSpeed) * params.floatAmp;
     
     if (diamondBase) { 
@@ -473,7 +479,7 @@ window.addEventListener('resize', () => {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });
 
-// --- FORMULARIO DE CONTACTO ---
+// --- FORMULARIO ---
 const form = document.getElementById('contact-form');
 const statusMsg = document.getElementById('form-status');
 const submitBtn = form.querySelector('.submit-btn');
