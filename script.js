@@ -216,9 +216,10 @@ function renderFileList() {
     }
 }
 
+// AJUSTE CLAVE: CÁMARA MÁS ALTA Y MIRANDO HACIA ABAJO PARA PROFUNDIDAD Y REFLEJOS
 const params = {
     bgColor: 0x000000, floorColor: 0x998133, maskOpacity: 1.0,
-    camFOV: 45, camPos: { x: 0, y: 0, z: 90 }, camRot: { x: 0, y: 0, z: -0.2 },
+    camFOV: 45, camPos: { x: 0, y: 15, z: 70 }, camRot: { x: -0.25, y: 0, z: 0 }, // CÁMARA ALTA, MIRANDO ABAJO
     lightInt: 600, lightColor: 0xffffff, lightSpeed: 0.5, 
     envInt: 0.4, envRot: 0.2,   
     cryFlat: false, cryTrans: 1.0, cryOp: 1.0, cryIOR: 2.463, cryThick: 0.41, 
@@ -301,7 +302,10 @@ const ringContainer = new THREE.Group();
 const stonesContainer = new THREE.Group(); 
 homeGroup.add(ringContainer); homeGroup.add(stonesContainer);
 ringContainer.position.y = params.floatYBase; stonesContainer.position.y = params.floatYBase; stonesContainer.position.x = -10; 
-ringContainer.rotation.y = 0.2; stonesContainer.rotation.y = 0.2;
+// AJUSTE: Reseteamos rotación del contenedor para que las piedras rodeen bien al anillo
+ringContainer.rotation.set(0,0,0); 
+stonesContainer.position.set(0, params.floatYBase, 5); // Acercamos piedras a cámara para profundidad
+stonesContainer.rotation.set(0,0,0);
 
 const individualStones = []; 
 const contactStones = [];    
@@ -313,8 +317,8 @@ loader.load('./Alianza.glb', (gltf) => {
     ring.position.sub(center);
     ring.traverse(c => { if(c.isMesh) { c.geometry.deleteAttribute('color'); c.material = c.material.name.includes('Material.001') ? crystalMat : silverMat; }});
     
-    // --- VUELTA AL ÁNGULO DE PORTADA ORIGINAL (CLAVADO A LA CAPTURA) ---
-    ring.rotation.set(1.17, 0, -0.03); 
+    // AJUSTE: Ángulo del anillo para que mire más a cámara y se vea el reflejo abajo
+    ring.rotation.set(0.4, -0.3, 0); 
     
     ringContainer.add(ring); 
 });
@@ -361,7 +365,7 @@ window.updateRingConfig = function(type, value, element, displayName) {
             let shouldChange = false;
             if(type === 'main' && c.userData.isMainStone) shouldChange = true;
             if(type === 'side' && c.userData.isSideStone) shouldChange = true;
-            if(type === 'metal' && c.userData.isMetal) scheduleChange = true;
+            if(type === 'metal' && c.userData.isMetal) shouldChange = true;
             if(shouldChange) { const currentOp = c.material.opacity; c.material = newMat.clone(); c.material.transparent = true; c.material.opacity = currentOp; }
         }
     });
