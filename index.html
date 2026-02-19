@@ -10,23 +10,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="google-site-verification" content="30rSwtF2nJwnRhB0Xqp2Yrs_m_km2leTvFzVqh_Xk6o" />
     <meta name="p:domain_verify" content="14d08cda6ceb393dad8d79437db8b8b4"/>
-    
     <title>Ascanio Jewelry | Bespoke High Jewelry & 3D Design</title>
-    
-    <meta name="description" content="Exclusive bespoke high jewelry studio in Madrid & Worldwide. We blend traditional craftsmanship with advanced 3D design to create unique engagement rings and fine jewelry. Experience the art of Ascanio.">
+    <meta name="description" content="Exclusive bespoke high jewelry studio in Madrid & Worldwide. We blend traditional craftsmanship with advanced 3D design to create unique engagement rings and fine jewelry.">
     <meta name="keywords" content="Bespoke Jewelry, High Jewelry, Custom Engagement Rings, 3D Jewelry Design, Luxury Rings, Diamond Jewelry, Ascanio Jewelry, Unique Jewelry, Fine Jewelry Designer, CAD Design, Anillos de compromiso personalizados, Joyería a medida Madrid, Alta Joyería">
     <meta name="author" content="José Alberto Ascanio Fernández">
-
     <meta property="og:title" content="Ascanio Jewelry - The Bespoke Experience">
     <meta property="og:description" content="I don't need a sketch. I need your story. Discover the new era of High Jewelry.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://ascaniojewelry.com">
-    <meta property="og:image" content="https://ascaniojewelry.com/preview.jpg"> 
+    <meta property="og:image" content="https://ascaniojewelry.com/preview.jpg">
     <meta property="og:locale" content="en_US">
-
     <link rel="stylesheet" href="./style.css">
     <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
-
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -35,30 +30,12 @@
       "image": "https://ascaniojewelry.com/preview.jpg",
       "@id": "https://ascaniojewelry.com",
       "url": "https://ascaniojewelry.com",
-      "telephone": "",
       "priceRange": "$$$$",
       "address": { "@type": "PostalAddress", "addressCountry": "ES" },
       "description": "Exclusive bespoke high jewelry studio blending traditional craftsmanship with advanced 3D design.",
-      "founder": { "@type": "Person", "name": "Alberto Ascanio" },
-      "openingHoursSpecification": {
-        "@type": "OpeningHoursSpecification",
-        "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"],
-        "opens": "09:00",
-        "closes": "18:00"
-      },
-      "sameAs": ["https://www.instagram.com/ascaniojewelry","https://www.behance.net/ascaniojewelry"],
-      "hasOfferCatalog": {
-        "@type": "OfferCatalog",
-        "name": "Bespoke Jewelry Services",
-        "itemListElement": [
-          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Custom Engagement Rings Design" } },
-          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "3D Jewelry Modeling & Rendering" } },
-          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "High Jewelry Manufacturing" } }
-        ]
-      }
+      "founder": { "@type": "Person", "name": "Alberto Ascanio" }
     }
     </script>
-
     <script type="importmap">
         {
             "imports": {
@@ -78,9 +55,7 @@
     <div id="loading-screen">
         <div class="loader-content">
             <div class="loader-title">LOADING</div>
-            <div class="loader-bar-container">
-                <div id="loader-bar"></div>
-            </div>
+            <div class="loader-bar-container"><div id="loader-bar"></div></div>
             <div id="loader-text">ATELIER...</div>
         </div>
     </div>
@@ -94,12 +69,14 @@
         <div id="menu-toggle" onclick="toggleMenu()">MENU +</div>
         <nav id="nav-container">
             <div class="nav-item" onclick="navigate(0)">HOME</div>
-            <div class="nav-item" onclick="navigate(0.32)">ABOUT</div>
-            <div class="nav-item" onclick="navigate(0.75)">CUSTOM</div>
-            <div class="nav-item" onclick="navigate(1.0)">ORDER</div>
+            <div class="nav-item" onclick="navigate(0.20)">ABOUT</div>
+            <div class="nav-item" onclick="navigate(0.48)">CUSTOM</div>
+            <div class="nav-item" onclick="navigate(0.68)">SAMPLE</div>
+            <div class="nav-item" onclick="navigate(0.92)">ORDER</div>
         </nav>
     </header>
 
+    <!-- ABOUT -->
     <section id="about-section">
         <h2>THE ARTISAN</h2>
         <p>
@@ -113,52 +90,101 @@
         </div>
         <p>
             My specialty is translating abstract concepts into tangible designs.<br>
-            I merge cutting-edge digital tools with the mastery of traditional artisans 
+            I merge cutting-edge digital tools with the mastery of traditional artisans
             to ensure that each piece is not just a jewel, but a legacy.
         </p>
         <div class="signature">LIMITATION IS JUST A WORD</div>
+
+        <div class="portfolio-request">
+            <div class="portfolio-divider"></div>
+            <p class="portfolio-label">REQUEST PORTFOLIO</p>
+            <form id="portfolio-form" class="portfolio-form" action="https://formsubmit.co/josealbertofernandez33@gmail.com" method="POST">
+                <input type="hidden" name="_captcha" value="false">
+                <input type="hidden" name="_subject" value="Portfolio Request">
+                <input type="hidden" name="_template" value="table">
+                <div class="portfolio-input-wrap">
+                    <input type="email" name="email" class="portfolio-input" placeholder="Your email address" required>
+                    <button type="submit" class="portfolio-btn">SEND</button>
+                </div>
+            </form>
+        </div>
     </section>
 
+    <!-- CUSTOM: proceso + configurador -->
     <section id="custom-section">
-        <div class="stack-wrapper">
-            <div id="l1" class="layer"></div>
-            <div id="l2" class="layer"></div>
-            <div id="l3" class="layer"></div>
-            <div id="l4" class="layer"></div>
+
+        <!-- PROCESO CREATIVO: abanico de 3 imágenes -->
+        <div id="process-gallery">
+            <div id="process-header">
+                <div class="process-header-line"></div>
+                <p class="process-header-text">
+                    Every jewel begins as a vision. We give it form through concept, 
+                    precision engineering, and master craftsmanship — 
+                    from the first line on paper to the final piece cast in precious metal.
+                </p>
+                <div class="process-header-line"></div>
+            </div>
+
+            <div class="fan-container">
+                <div id="l1" class="fan-card">
+                    <div class="fan-img" style="background-image: url('./1.png')"></div>
+                    <div class="fan-label">
+                        <span class="fan-num">01</span>
+                        <span class="fan-name">CONCEPT & SKETCH</span>
+                    </div>
+                </div>
+                <div id="l2" class="fan-card">
+                    <div class="fan-img" style="background-image: url('./2.png')"></div>
+                    <div class="fan-label">
+                        <span class="fan-num">02</span>
+                        <span class="fan-name">3D CAD DESIGN</span>
+                    </div>
+                </div>
+                <div id="l3" class="fan-card">
+                    <div class="fan-img" style="background-image: url('./3.png')"></div>
+                    <div class="fan-label">
+                        <span class="fan-num">03</span>
+                        <span class="fan-name">CASTABLE RESIN</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
+        <!-- CONFIGURADOR -->
         <div id="config-ui">
             <div id="selection-display">CONFIGURE YOUR PIECE</div>
             <div class="ui-top">
                 <div class="metal-row">
-                    <div class="config-dot dot-gold" onclick="updateRingConfig('metal', 'gold', this, '18K YELLOW GOLD')"></div>
-                    <div class="config-dot dot-silver" onclick="updateRingConfig('metal', 'silver', this, 'STERLING SILVER')"></div>
+                    <div class="config-dot dot-gold"   onclick="updateRingConfig('metal','gold',this,'18K YELLOW GOLD')"></div>
+                    <div class="config-dot dot-silver" onclick="updateRingConfig('metal','silver',this,'STERLING SILVER')"></div>
                 </div>
             </div>
             <div class="ui-bottom">
                 <div class="stone-category">
                     <div class="category-title">CENTER STONE</div>
-                    <div class="stone-row center-stones">
-                        <div class="config-dot dot-diamond" onclick="updateRingConfig('main', 'diamond', this, 'FLAWLESS DIAMOND')"></div>
-                        <div class="config-dot dot-ruby" onclick="updateRingConfig('main', 'ruby', this, 'PIGEON BLOOD RUBY')"></div>
-                        <div class="config-dot dot-sapphire" onclick="updateRingConfig('main', 'sapphire', this, 'ROYAL BLUE SAPPHIRE')"></div>
-                        <div class="config-dot dot-emerald" onclick="updateRingConfig('main', 'emerald', this, 'COLOMBIAN EMERALD')"></div>
+                    <div class="stone-row">
+                        <div class="config-dot dot-diamond" onclick="updateRingConfig('main','diamond',this,'FLAWLESS DIAMOND')"></div>
+                        <div class="config-dot dot-ruby"    onclick="updateRingConfig('main','ruby',this,'PIGEON BLOOD RUBY')"></div>
+                        <div class="config-dot dot-sapphire" onclick="updateRingConfig('main','sapphire',this,'ROYAL BLUE SAPPHIRE')"></div>
+                        <div class="config-dot dot-emerald" onclick="updateRingConfig('main','emerald',this,'COLOMBIAN EMERALD')"></div>
                     </div>
                 </div>
                 <div class="divider-line"></div>
                 <div class="stone-category">
                     <div class="category-title">SIDE ACCENTS</div>
-                    <div class="stone-row side-stones">
-                        <div class="config-dot dot-diamond" onclick="updateRingConfig('side', 'diamond', this, 'DIAMOND ACCENTS')"></div>
-                        <div class="config-dot dot-ruby" onclick="updateRingConfig('side', 'ruby', this, 'RUBY ACCENTS')"></div>
-                        <div class="config-dot dot-sapphire" onclick="updateRingConfig('side', 'sapphire', this, 'SAPPHIRE ACCENTS')"></div>
-                        <div class="config-dot dot-emerald" onclick="updateRingConfig('side', 'emerald', this, 'EMERALD ACCENTS')"></div>
+                    <div class="stone-row">
+                        <div class="config-dot dot-diamond" onclick="updateRingConfig('side','diamond',this,'DIAMOND ACCENTS')"></div>
+                        <div class="config-dot dot-ruby"    onclick="updateRingConfig('side','ruby',this,'RUBY ACCENTS')"></div>
+                        <div class="config-dot dot-sapphire" onclick="updateRingConfig('side','sapphire',this,'SAPPHIRE ACCENTS')"></div>
+                        <div class="config-dot dot-emerald" onclick="updateRingConfig('side','emerald',this,'EMERALD ACCENTS')"></div>
                     </div>
                 </div>
             </div>
         </div>
+
     </section>
 
+    <!-- CONTACTO -->
     <section id="contact-section">
         <div class="glass-card">
             <h2>DESCRIBE YOUR JEWEL</h2>
@@ -169,20 +195,18 @@
                 <div class="input-group">
                     <textarea name="description" placeholder="Describe your vision, materials, stones, sizes, and details..." required></textarea>
                 </div>
-                <label class="file-upload-label" for="attachment">
-                    + ATTACH REFERENCES (IMG / PDF)
-                </label>
+                <label class="file-upload-label" for="attachment">+ ATTACH REFERENCES (IMG / PDF)</label>
                 <input type="file" id="attachment" name="attachment" accept="image/*,.pdf" multiple>
                 <div id="file-list"></div>
                 <div class="input-row">
                     <input class="styled-input" type="email" name="email" placeholder="Email Address" required>
-                    <input class="styled-input" type="tel" name="phone" placeholder="Phone Number">
+                    <input class="styled-input" type="tel"   name="phone" placeholder="Phone Number">
                 </div>
                 <div class="input-group">
                     <input class="styled-input" type="text" name="country" placeholder="Country of Residence">
                 </div>
                 <button type="submit" class="submit-btn">SEND REQUEST</button>
-                <p id="form-status" style="margin-top: 15px; font-size: 0.9rem; display: none;"></p>
+                <p id="form-status" style="margin-top:15px;font-size:0.9rem;display:none;"></p>
             </form>
         </div>
     </section>
@@ -197,23 +221,11 @@
     <div class="seo-ghost">
         <article lang="es">
             <h3>Alta Joyería y Diseño 3D en España</h3>
-            <p>Ascanio Jewelry es un estudio de diseño de joyas especializado en <strong>anillos de compromiso a medida</strong> y piezas únicas. Combinamos la artesanía tradicional de la alta joyería con la tecnología de <strong>modelado 3D</strong> para crear obras maestras personalizadas. Somos tu taller de joyería de confianza, expertos en diamantes certificados, zafiros, rubíes y esmeraldas. Diseñamos tu anillo ideal desde cero, ofreciendo un servicio exclusivo de joyería online y presencial para clientes que buscan exclusividad.</p>
-            <ul>
-                <li>Diseño de joyas personalizado Madrid</li>
-                <li>Anillos de pedida únicos</li>
-                <li>Joyería 3D y renderizado</li>
-                <li>Alta joyería artesanal</li>
-            </ul>
+            <p>Ascanio Jewelry es un estudio de diseño de joyas especializado en <strong>anillos de compromiso a medida</strong> y piezas únicas.</p>
         </article>
         <article lang="en">
             <h3>Bespoke High Jewelry & Custom Engagement Rings</h3>
-            <p>Premier online <strong>bespoke jewelry studio</strong>. We create <strong>custom engagement rings</strong> and fine jewelry using advanced 3D CAD design and traditional goldsmithing techniques. Order your unique diamond ring, custom necklace, or personalized fine jewelry from anywhere in the world. High-end craftsmanship, GIA certified diamonds, and 18k gold masterpieces tailored to your story.</p>
-            <ul>
-                <li>Custom Engagement Rings</li>
-                <li>3D Jewelry Designer</li>
-                <li>Luxury Diamond Rings</li>
-                <li>Unique Wedding Bands</li>
-            </ul>
+            <p>Premier online <strong>bespoke jewelry studio</strong>. Custom engagement rings using advanced 3D CAD design and traditional goldsmithing.</p>
         </article>
     </div>
 
