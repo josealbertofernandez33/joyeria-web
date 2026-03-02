@@ -27,10 +27,9 @@ window.toggleMenu = function() {
 };
 
 // --- HELPERS ---
-function setVisibility(el, opacity, blur, clickable = false) {
+function setVisibility(el, opacity, clickable = false) {
     if(!el) return;
     el.style.opacity       = opacity;
-    el.style.filter        = `blur(${blur}px)`;
     el.style.pointerEvents = clickable ? 'all' : 'none';
     el.style.visibility    = opacity <= 0 ? 'hidden' : 'visible';
 }
@@ -97,11 +96,9 @@ function updateTimeline(sp) {
         // HOME
         homeGroup.position.y = 0; aboutGroup.position.y = -60; contactGroup.position.y = -200;
         homeGroup.visible = true;
-        setVisibility(aboutSection,  0, 20);
-        setVisibility(contactSection, 0, 30);
+        setVisibility(aboutSection,  0);
+        setVisibility(contactSection, 0);
         if(contactSection) { contactSection.classList.remove('active'); contactSection.style.transform = 'translateY(100vh)'; }
-        if(diamondMat) diamondMat.opacity = 1;
-        if(diamondBase) diamondBase.visible = true;
         scene.background = new THREE.Color(0x000000);
 
     } else if(sp > 0.10 && sp <= 0.22) {
@@ -109,46 +106,37 @@ function updateTimeline(sp) {
         const p = linearMap(sp, 0.10, 0.22);
         homeGroup.position.y  = p * 80;
         aboutGroup.position.y = -60 + p * 60;
-        setVisibility(aboutSection, 0, 20);
-        setVisibility(contactSection, 0, 30);
-        if(diamondMat) diamondMat.opacity = 1;
-        if(diamondBase) diamondBase.visible = true;
+        setVisibility(aboutSection, 0);
+        setVisibility(contactSection, 0);
         scene.background = new THREE.Color(0x000000);
 
     } else if(sp > 0.22 && sp <= 0.35) {
         // ABOUT aparece
         homeGroup.position.y = 80; aboutGroup.position.y = 0; contactGroup.position.y = -200;
         const o = linearMap(sp, 0.22, 0.32);
-        setVisibility(aboutSection, o, Math.max(20 - o*20, 0));
-        setVisibility(contactSection, 0, 30);
-        if(diamondMat) diamondMat.opacity = 1;
-        if(diamondBase) diamondBase.visible = true;
+        setVisibility(aboutSection, o);
+        setVisibility(contactSection, 0);
         scene.background = new THREE.Color(0x000000);
 
     } else if(sp > 0.35 && sp <= 0.55) {
         // ABOUT fijo
         aboutGroup.position.y = 0; contactGroup.position.y = -200;
-        setVisibility(aboutSection, 1, 0);
+        setVisibility(aboutSection, 1);
         if(contactSection) { contactSection.classList.remove('active'); contactSection.style.transform = 'translateY(100vh)'; }
-        if(diamondMat) diamondMat.opacity = 1;
-        if(diamondBase) diamondBase.visible = true;
         scene.background = new THREE.Color(0x000000);
 
     } else if(sp > 0.55 && sp <= 0.65) {
         // ABOUT sale
         const pOut = linearMap(sp, 0.55, 0.65);
         aboutGroup.position.y = 0;
-        setVisibility(aboutSection, 1 - pOut, pOut * 20);
+        setVisibility(aboutSection, 1 - pOut);
         if(contactSection) { contactSection.classList.remove('active'); contactSection.style.transform = 'translateY(100vh)'; }
-        if(diamondMat) diamondMat.opacity = 1 - pOut;
-        if(diamondBase) diamondBase.visible = true;
         scene.background = new THREE.Color(0x000000);
 
     } else {
         // ORDER
         homeGroup.visible = false;
-        if(diamondBase) diamondBase.visible = false;
-        setVisibility(aboutSection, 0, 0);
+        setVisibility(aboutSection, 0);
 
         const pForm = linearMap(sp, 0.70, 1.0);
         const eased = 1 - Math.pow(1 - pForm, 5);
@@ -158,7 +146,6 @@ function updateTimeline(sp) {
         if(contactSection) {
             contactSection.style.visibility    = 'visible';
             contactSection.style.opacity       = '1';
-            contactSection.style.filter        = 'none';
             contactSection.style.pointerEvents = pForm > 0.3 ? 'all' : 'none';
             const slideUp = (1 - eased) * 180;
             contactSection.style.transform = `translateY(${slideUp}vh)`;
@@ -208,11 +195,7 @@ const params = {
     cryDisp: 0.8, crySpec: 4.105, cryClear: 0.0, cryEnv: 1.5, cryAttDist: 6.74,
     cryAttColor: 0xededed, cryColor: 0xffffff,
     metalColor: 0xffffff, metalRough: 0.086, metalMetal: 1.0,
-    floatYBase: 1.5, floatSpeed: 0.8, floatAmp: 0.15,
-    diaPosY: 0, diaRotX: 0, diaRotY: 1.6, diaRotZ: 0.911061,
-    diaAnimSpeed: 0.208, diaFloatSpeed: 0.438, diaFloatAmp: 0.3,
-    d_Thick: 0, d_AbsDist: 5.88, d_Env: 1.5, d_Spec: 4.1,
-    d_Tint: 0xffffff, d_AbsColor: 0xededed, d_Trans: 1.0, d_IOR: 2.626, d_Disp: 0.8
+    floatYBase: 1.5, floatSpeed: 0.8, floatAmp: 0.15
 };
 
 const scene  = new THREE.Scene();
@@ -229,7 +212,6 @@ renderer.toneMappingExposure = 1.0;
 document.body.appendChild(renderer.domElement);
 
 const crystalMat = new THREE.MeshPhysicalMaterial({ color: params.cryColor, transmission: params.cryTrans, opacity: params.cryOp, metalness: 0, roughness: 0, ior: params.cryIOR, thickness: params.cryThick, dispersion: params.cryDisp, envMapIntensity: params.cryEnv, specularIntensity: params.crySpec, clearcoat: params.cryClear, side: THREE.DoubleSide, flatShading: params.cryFlat, attenuationColor: new THREE.Color(params.cryAttColor), attenuationDistance: params.cryAttDist });
-const diamondMat = new THREE.MeshPhysicalMaterial({ color: params.d_Tint, transmission: params.d_Trans, opacity: 1, metalness: 0, roughness: 0, ior: params.d_IOR, thickness: params.d_Thick, dispersion: params.d_Disp, envMapIntensity: params.d_Env, specularIntensity: params.d_Spec, side: THREE.DoubleSide, flatShading: false, attenuationColor: new THREE.Color(params.d_AbsColor), attenuationDistance: params.d_AbsDist, transparent: true });
 const silverMat  = new THREE.MeshPhysicalMaterial({ color: params.metalColor, metalness: params.metalMetal, roughness: params.metalRough, envMapIntensity: 1 });
 
 const light1 = new THREE.PointLight(params.lightColor, params.lightInt);
@@ -265,15 +247,6 @@ loader.load('./Alianza.glb', (gltf) => {
     ring.position.sub(box.getCenter(new THREE.Vector3()));
     ring.traverse(c => { if(c.isMesh) { c.geometry.deleteAttribute('color'); c.material = c.material.name.includes('Material.001') ? crystalMat : silverMat; }});
     ringContainer.add(ring); ring.rotation.set(1.17, 0, -0.03);
-});
-
-let diamondBase = null;
-loader.load('./diamante.glb', (gltf) => {
-    const diamond = gltf.scene;
-    const box = new THREE.Box3().setFromObject(diamond);
-    diamond.position.sub(box.getCenter(new THREE.Vector3()));
-    diamond.traverse(c => { if(c.isMesh) c.material = diamondMat; });
-    aboutGroup.add(diamond); diamondBase = diamond;
 });
 
 loader.load('./piedras.glb', (gltf) => {
@@ -365,13 +338,6 @@ function animate() {
     }
 
     ringContainer.position.y = params.floatYBase + Math.sin(time * params.floatSpeed) * params.floatAmp;
-
-    if(diamondBase) {
-        diamondBase.rotation.x = params.diaRotX + Math.sin(time * 0.2) * 0.05;
-        diamondBase.rotation.y = params.diaRotY + time * params.diaAnimSpeed;
-        diamondBase.rotation.z = params.diaRotZ;
-        diamondBase.position.y = params.diaPosY + Math.sin(time * params.diaFloatSpeed) * params.diaFloatAmp;
-    }
 
     individualStones.forEach(s => s.rotateOnAxis(s.userData.axis, s.userData.rotSpeed));
     contactStones.forEach(s    => s.rotateOnAxis(s.userData.axis, s.userData.rotSpeed));

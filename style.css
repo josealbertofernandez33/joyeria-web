@@ -147,9 +147,8 @@ header.menu-open #menu-toggle { z-index: 101; border-color: #fff; color: #fff; p
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
     width: 85%; max-width: 850px; text-align: center; z-index: 5;
     font-family: 'Lato', sans-serif; font-weight: 300; pointer-events: auto;
-    opacity: 0; filter: blur(20px);
-    background: rgba(0,0,0,0.35);
-    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    opacity: 0;
+    background: rgba(10,10,10,0.95);
     border: 1px solid rgba(212,175,55,0.45);
     box-shadow: 0 0 0 1px rgba(212,175,55,0.12), inset 0 0 40px rgba(212,175,55,0.04), 0 25px 60px rgba(0,0,0,0.6);
     border-radius: 4px; padding: 60px 70px; box-sizing: border-box; visibility: hidden;
