@@ -1,11 +1,10 @@
 import * as THREE from 'three'; 
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
-import { Reflector } from 'three/addons/objects/Reflector.js';
 
 // --- CARGA ---
-const loadingScreen = document.getElementById('loading-screen');
-const loadingBar    = document.getElementById('loader-bar');
+const loadingScreen  = document.getElementById('loading-screen');
+const loadingBar     = document.getElementById('loader-bar');
 const loadingManager = new THREE.LoadingManager();
 
 loadingManager.onProgress = (url, loaded, total) => {
@@ -26,13 +25,6 @@ window.toggleMenu = function() {
     header.classList.toggle('menu-open');
     menuToggle.textContent = header.classList.contains('menu-open') ? 'CLOSE' : 'MENU +';
 };
-window.navigate = function(pct) {
-    if(header.classList.contains('menu-open')) toggleMenu();
-    window.scrollTo({ top: (document.documentElement.scrollHeight - window.innerHeight) * pct, behavior: 'smooth' });
-};
-window.scrollToPercent = function(pct) {
-    window.scrollTo({ top: (document.documentElement.scrollHeight - window.innerHeight) * pct, behavior: 'smooth' });
-};
 
 // --- HELPERS ---
 function setVisibility(el, opacity, blur, clickable = false) {
@@ -45,234 +37,148 @@ function setVisibility(el, opacity, blur, clickable = false) {
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 function linearMap(v, a, b) { return clamp((v - a) / (b - a), 0, 1); }
 
-// --- REFERENCIAS DOM ---
+// --- DOM ---
 const aboutSection   = document.getElementById('about-section');
-const customSection  = document.getElementById('custom-section');
 const contactSection = document.getElementById('contact-section');
-const configUI       = document.getElementById('config-ui');
-const displayLabel   = document.getElementById('selection-display');
-let   displayTimeout = null;
 
-const processGallery    = document.getElementById('process-gallery');
-const scrollIndicator   = document.getElementById('scroll-indicator');
-const card1 = document.getElementById('l1');
-const card2 = document.getElementById('l2');
-const card3 = document.getElementById('l3');
+// ─────────────────────────────────────────────────────────────────
+// NAVEGACIÓN POR SECCIONES
+// HOME=0  ABOUT=1  ORDER=2
+// ─────────────────────────────────────────────────────────────────
+const SECTION_SP  = [0.04, 0.50, 1.00];
+const LERP_SPEED  = 0.032;
+let targetSection = 0;
+let virtualSP     = 0.04;
+let isTransitioning = false;
 
-function applyFan(fanP) {
-    const p = clamp(fanP, 0, 1);
-    if(card1) {
-        card1.style.transform = `translateX(${-300*p}px) translateY(${35*p}px) rotate(${-20*p}deg)`;
-        card1.style.opacity   = String(clamp(p * 3, 0, 1));
-    }
-    if(card2) {
-        card2.style.transform = `translateX(0px) translateY(${-15*p}px) rotate(0deg)`;
-        card2.style.opacity   = String(clamp(p * 3, 0, 1));
-    }
-    if(card3) {
-        card3.style.transform = `translateX(${300*p}px) translateY(${35*p}px) rotate(${20*p}deg)`;
-        card3.style.opacity   = String(clamp(p * 3, 0, 1));
-    }
-}
+window.goToSection = function(idx) {
+    idx = Math.max(0, Math.min(2, idx));
+    targetSection = idx;
+    updateDots();
+    updateHeader();
+    updateArrows();
+    if(header.classList.contains('menu-open')) toggleMenu();
+};
+window.nextSection = function() { goToSection(targetSection + 1); };
+window.prevSection = function() { goToSection(targetSection - 1); };
+window.navigate    = function(idx) { goToSection(idx); };
 
-function closeFan() {
-    [card1, card2, card3].forEach(c => {
-        if(c) { c.style.transform = 'translateX(0) translateY(0) rotate(0deg)'; c.style.opacity = '0'; }
+function updateDots() {
+    document.querySelectorAll('.section-dot').forEach((d, i) => {
+        d.classList.toggle('active', i === targetSection);
     });
-    if(processGallery) { processGallery.style.opacity = '0'; processGallery.classList.remove('fan-active'); }
+}
+function updateHeader() {
+    if(targetSection === 0) header.classList.remove('scrolled');
+    else header.classList.add('scrolled');
+}
+function updateArrows() {
+    const up   = document.getElementById('arrow-up');
+    const down = document.getElementById('arrow-down');
+    if(up)   up.classList.toggle('disabled',  targetSection === 0);
+    if(down) down.classList.toggle('disabled', targetSection === 2);
 }
 
-// --- SCROLL ---
-window.addEventListener('scroll', () => {
-    if(window.scrollY > 50) {
-        header.classList.add('scrolled');
-    } else {
-        header.classList.remove('scrolled');
-        if(header.classList.contains('menu-open')) toggleMenu();
+// Teclado
+document.addEventListener('keydown', (e) => {
+    if(e.key === 'ArrowDown' || e.key === 'ArrowRight') nextSection();
+    if(e.key === 'ArrowUp'   || e.key === 'ArrowLeft')  prevSection();
+});
+
+// Swipe móvil
+let touchStartY = 0;
+document.addEventListener('touchstart', (e) => { touchStartY = e.touches[0].clientY; }, { passive: true });
+document.addEventListener('touchend', (e) => {
+    const diff = touchStartY - e.changedTouches[0].clientY;
+    if(Math.abs(diff) > 60) {
+        if(diff > 0) nextSection();
+        else prevSection();
     }
+}, { passive: true });
 
-    const sp = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+// ─────────────────────────────────────────────────────────────────
+// TIMELINE  (sp: 0 → 1)
+//  HOME   0.00 – 0.10
+//  ABOUT  0.10 – 0.60
+//  ORDER  0.60 – 1.00
+// ─────────────────────────────────────────────────────────────────
+function updateTimeline(sp) {
 
-    if(sp > 0.65 && sp < 0.74) {
-        if(customSection) customSection.classList.add('active-interaction');
-    } else {
-        if(customSection) customSection.classList.remove('active-interaction');
-    }
-
-    // Scroll indicator: solo visible antes del ORDER
-    if(scrollIndicator) scrollIndicator.style.opacity = sp > 0.54 ? '0' : '';
-
-    // ─────────────── TIMELINE ───────────────
-    //  HOME      0.00 – 0.08
-    //  ABOUT     0.08 – 0.42
-    //  CUSTOM    0.47 – 0.65  (3 imágenes)
-    //  SAMPLE    0.65 – 0.74  (anillo configurador)
-    //  ORDER     0.74 – 1.00  (salida anillo + formulario)
-
-    if(sp <= 0.08) {
+    if(sp <= 0.10) {
+        // HOME
         homeGroup.position.y = 0; aboutGroup.position.y = -60; contactGroup.position.y = -200;
-        finalRingGroup.visible = false; homeGroup.visible = true;
-        if(configUI) { configUI.style.opacity = '0'; configUI.style.pointerEvents = 'none'; configUI.style.transform = 'translateY(0)'; }
+        homeGroup.visible = true;
         setVisibility(aboutSection,  0, 20);
-        setVisibility(customSection, 0, 0);
-        setVisibility(contactSection,0, 30);
-        if(contactSection) { contactSection.classList.remove('active'); contactSection.style.transform = 'translateY(100vh)'; }
-        if(diamondMat) diamondMat.opacity = 1; if(diamondBase) diamondBase.visible = true;
-        scene.background = new THREE.Color(0x000000);
-        closeFan();
-        const scrollIndicator = document.getElementById('scroll-indicator');
-        if(scrollIndicator) scrollIndicator.style.opacity = '0';
-
-    } else if(sp > 0.08 && sp <= 0.18) {
-        const p = linearMap(sp, 0.08, 0.18);
-        homeGroup.position.y  =  p * 80;
-        aboutGroup.position.y = -60 + p * 60;
-        setVisibility(aboutSection,  0, 20);
-        setVisibility(customSection, 0, 0);
-        if(diamondMat) diamondMat.opacity = 1; if(diamondBase) diamondBase.visible = true;
-        scene.background = new THREE.Color(0x000000);
-        closeFan();
-
-    } else if(sp > 0.18 && sp <= 0.30) {
-        homeGroup.position.y = 80; aboutGroup.position.y = 0; contactGroup.position.y = -200;
-        const o = clamp(linearMap(sp, 0.18, 0.24), 0, 1);
-        setVisibility(aboutSection, o, Math.max(20 - o*20, 0));
-        setVisibility(customSection, 0, 0);
-        if(diamondMat) diamondMat.opacity = 1; if(diamondBase) diamondBase.visible = true;
-        scene.background = new THREE.Color(0x000000);
-        closeFan();
-
-    } else if(sp > 0.30 && sp <= 0.42) {
-        aboutGroup.position.y = 0;
-        setVisibility(aboutSection, 1, 0);
-        if(diamondMat) diamondMat.opacity = 1; if(diamondBase) diamondBase.visible = true;
-        if(customSection) { customSection.style.opacity = '0'; customSection.style.visibility = 'hidden'; }
-        if(configUI) configUI.style.opacity = '0';
         setVisibility(contactSection, 0, 30);
-        contactGroup.position.y = -200; finalRingGroup.visible = false;
+        if(contactSection) { contactSection.classList.remove('active'); contactSection.style.transform = 'translateY(100vh)'; }
+        if(diamondMat) diamondMat.opacity = 1;
+        if(diamondBase) diamondBase.visible = true;
         scene.background = new THREE.Color(0x000000);
-        closeFan();
 
-    } else if(sp > 0.42 && sp <= 0.47) {
-        const pOut = linearMap(sp, 0.42, 0.47);
+    } else if(sp > 0.10 && sp <= 0.22) {
+        // HOME → ABOUT (transición)
+        const p = linearMap(sp, 0.10, 0.22);
+        homeGroup.position.y  = p * 80;
+        aboutGroup.position.y = -60 + p * 60;
+        setVisibility(aboutSection, 0, 20);
+        setVisibility(contactSection, 0, 30);
+        if(diamondMat) diamondMat.opacity = 1;
+        if(diamondBase) diamondBase.visible = true;
+        scene.background = new THREE.Color(0x000000);
+
+    } else if(sp > 0.22 && sp <= 0.35) {
+        // ABOUT aparece
+        homeGroup.position.y = 80; aboutGroup.position.y = 0; contactGroup.position.y = -200;
+        const o = linearMap(sp, 0.22, 0.32);
+        setVisibility(aboutSection, o, Math.max(20 - o*20, 0));
+        setVisibility(contactSection, 0, 30);
+        if(diamondMat) diamondMat.opacity = 1;
+        if(diamondBase) diamondBase.visible = true;
+        scene.background = new THREE.Color(0x000000);
+
+    } else if(sp > 0.35 && sp <= 0.55) {
+        // ABOUT fijo
+        aboutGroup.position.y = 0; contactGroup.position.y = -200;
+        setVisibility(aboutSection, 1, 0);
+        if(contactSection) { contactSection.classList.remove('active'); contactSection.style.transform = 'translateY(100vh)'; }
+        if(diamondMat) diamondMat.opacity = 1;
+        if(diamondBase) diamondBase.visible = true;
+        scene.background = new THREE.Color(0x000000);
+
+    } else if(sp > 0.55 && sp <= 0.65) {
+        // ABOUT sale
+        const pOut = linearMap(sp, 0.55, 0.65);
         aboutGroup.position.y = 0;
         setVisibility(aboutSection, 1 - pOut, pOut * 20);
-        if(diamondMat) diamondMat.opacity = 1 - pOut; if(diamondBase) diamondBase.visible = true;
-        if(customSection) { customSection.style.opacity = '0'; customSection.style.visibility = 'hidden'; }
-        if(configUI) configUI.style.opacity = '0';
-        setVisibility(contactSection, 0, 30);
-        contactGroup.position.y = -200; finalRingGroup.visible = false;
-        scene.background = new THREE.Color(0x000000);
-        closeFan();
-
-    } else if(sp > 0.47 && sp <= 0.54) {
-        setVisibility(aboutSection, 0, 0);
-        if(diamondMat) diamondMat.opacity = 0; if(diamondBase) diamondBase.visible = false;
-        if(customSection) { customSection.style.opacity = '0'; customSection.style.visibility = 'hidden'; }
-        if(configUI) configUI.style.opacity = '0';
-        finalRingGroup.visible = false; homeGroup.visible = false;
-        scene.background = new THREE.Color(0x000000);
-        closeFan();
-
-    } else if(sp > 0.54 && sp <= 0.65) {
-        // ─── CUSTOM: ABANICO DE IMÁGENES ───
-        scene.background = new THREE.Color(0x000000);
-        if(diamondMat) diamondMat.opacity = 0; if(diamondBase) diamondBase.visible = false;
-        homeGroup.visible = false;
-        if(customSection) { customSection.style.opacity = '1'; customSection.style.visibility = 'visible'; }
-        setVisibility(contactSection, 0, 30); contactGroup.position.y = -200;
         if(contactSection) { contactSection.classList.remove('active'); contactSection.style.transform = 'translateY(100vh)'; }
-        if(configUI) { configUI.style.opacity = '0'; configUI.style.pointerEvents = 'none'; }
-        finalRingGroup.visible = false;
-        setVisibility(aboutSection, 0, 0);
-
-        const fadeIn  = linearMap(sp, 0.54, 0.58);
-        const fadeOut = 1 - linearMap(sp, 0.61, 0.65);
-        const galleryOpacity = Math.min(fadeIn, fadeOut);
-        if(processGallery) {
-            processGallery.style.opacity    = String(galleryOpacity);
-            processGallery.style.visibility = galleryOpacity > 0 ? 'visible' : 'hidden';
-            if(fadeIn > 0.3) processGallery.classList.add('fan-active');
-        }
-        applyFan(linearMap(sp, 0.54, 0.62));
-
-    } else if(sp > 0.65 && sp <= 0.74) {
-        // ─── SAMPLE: ANILLO CONFIGURADOR ───
-        if(diamondMat) diamondMat.opacity = 0; if(diamondBase) diamondBase.visible = false;
-        homeGroup.visible = false;
-        if(customSection) { customSection.style.opacity = '1'; customSection.style.visibility = 'visible'; }
-        setVisibility(contactSection, 0, 30); contactGroup.position.y = -200;
-        if(contactSection) { contactSection.classList.remove('active'); contactSection.style.transform = 'translateY(100vh)'; }
-        setVisibility(aboutSection, 0, 0);
-        closeFan();
-
-        const bgP = linearMap(sp, 0.65, 0.68) * 0.15;
-        scene.background = new THREE.Color(bgP, bgP, bgP);
-
-        if(finalRingModel) {
-            finalRingGroup.visible = true;
-            finalRingGroup.position.y = 0;
-            finalRingModel.traverse(c => { if(c.isMesh) c.material.opacity = 1; });
-            finalRingModel.scale.set(1, 1, 1);
-        }
-        if(configUI) {
-            configUI.style.opacity       = '1';
-            configUI.style.pointerEvents = 'auto';
-            configUI.style.transform     = 'translateY(0)';
-        }
+        if(diamondMat) diamondMat.opacity = 1 - pOut;
+        if(diamondBase) diamondBase.visible = true;
+        scene.background = new THREE.Color(0x000000);
 
     } else {
-        // ─── ORDER: SALIDA ANILLO + ENTRADA FORMULARIO ───
-        homeGroup.visible = false; if(diamondBase) diamondBase.visible = false;
-        closeFan();
-        const scrollIndicator = document.getElementById('scroll-indicator');
-        if(scrollIndicator) scrollIndicator.style.opacity = '0';
+        // ORDER
+        homeGroup.visible = false;
+        if(diamondBase) diamondBase.visible = false;
+        setVisibility(aboutSection, 0, 0);
 
-        const pExit = linearMap(sp, 0.74, 0.88);
-        const pForm = linearMap(sp, 0.80, 1.0);
+        const pForm = linearMap(sp, 0.70, 1.0);
+        const eased = 1 - Math.pow(1 - pForm, 5);
 
-        // Anillo sube y se desvanece
-        if(finalRingGroup) {
-            finalRingGroup.visible = pExit < 1;
-            finalRingGroup.position.y = pExit * 90;
-        }
-        if(finalRingModel) {
-            finalRingModel.traverse(c => { if(c.isMesh) c.material.opacity = clamp(1 - pExit * 1.3, 0, 1); });
-        }
+        scene.background = new THREE.Color(0x000000);
 
-        // Botones desaparecen rápido
-        if(configUI) {
-            configUI.style.opacity       = String(clamp(1 - pExit * 3.5, 0, 1));
-            configUI.style.transform     = `translateY(${-pExit * 70}vh)`;
-            configUI.style.pointerEvents = pExit > 0.05 ? 'none' : 'auto';
-        }
-
-        if(customSection) {
-            const csOp = clamp(1 - pExit * 1.3, 0, 1);
-            customSection.style.opacity    = String(csOp);
-            customSection.style.visibility = csOp <= 0 ? 'hidden' : 'visible';
-        }
-
-        // Fondo gris → negro
-        const bgVal = clamp((1 - pExit * 1.2) * 0.15, 0, 1);
-        scene.background = new THREE.Color(bgVal, bgVal, bgVal);
-
-        // Formulario y piedras suben juntos con easing
         if(contactSection) {
             contactSection.style.visibility    = 'visible';
             contactSection.style.opacity       = '1';
             contactSection.style.filter        = 'none';
             contactSection.style.pointerEvents = pForm > 0.3 ? 'all' : 'none';
-            const eased   = 1 - Math.pow(1 - pForm, 5);
             const slideUp = (1 - eased) * 180;
             contactSection.style.transform = `translateY(${slideUp}vh)`;
             if(pForm > 0.5) contactSection.classList.add('active');
             else contactSection.classList.remove('active');
         }
-        const easedGroup = 1 - Math.pow(1 - pForm, 5);
-        contactGroup.position.y = -200 + easedGroup * 200;
+        contactGroup.position.y = -200 + eased * 200;
     }
-});
+}
 
 // --- ARCHIVOS ---
 const fileInput       = document.getElementById('attachment');
@@ -290,7 +196,6 @@ if(fileInput) {
         this.files = dt.files; renderFileList();
     });
 }
-
 function renderFileList() {
     if(!fileListDisplay) return;
     fileListDisplay.innerHTML = '';
@@ -315,16 +220,15 @@ const params = {
     cryAttColor: 0xededed, cryColor: 0xffffff,
     metalColor: 0xffffff, metalRough: 0.086, metalMetal: 1.0,
     floatYBase: 1.5, floatSpeed: 0.8, floatAmp: 0.15,
-    diaPosX: 0, diaPosY: 0, diaPosZ: 4.8,
-    diaRotX: 0, diaRotY: 1.6, diaRotZ: 0.911061, diaAnimSpeed: 0.208,
-    diaFloatSpeed: 0.438, diaFloatAmp: 0.3,
+    diaPosY: 0, diaRotX: 0, diaRotY: 1.6, diaRotZ: 0.911061,
+    diaAnimSpeed: 0.208, diaFloatSpeed: 0.438, diaFloatAmp: 0.3,
     d_Thick: 0, d_AbsDist: 5.88, d_Env: 1.5, d_Spec: 4.1,
     d_Tint: 0xffffff, d_AbsColor: 0xededed, d_Trans: 1.0, d_IOR: 2.626, d_Disp: 0.8
 };
 
-const scene    = new THREE.Scene();
+const scene  = new THREE.Scene();
 scene.background = new THREE.Color(params.bgColor);
-const camera   = new THREE.PerspectiveCamera(params.camFOV, window.innerWidth/window.innerHeight, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(params.camFOV, window.innerWidth/window.innerHeight, 0.1, 1000);
 camera.position.set(params.camPos.x, params.camPos.y, params.camPos.z);
 camera.rotation.set(params.camRot.x, params.camRot.y, params.camRot.z);
 
@@ -339,18 +243,6 @@ const crystalMat = new THREE.MeshPhysicalMaterial({ color: params.cryColor, tran
 const diamondMat = new THREE.MeshPhysicalMaterial({ color: params.d_Tint, transmission: params.d_Trans, opacity: 1, metalness: 0, roughness: 0, ior: params.d_IOR, thickness: params.d_Thick, dispersion: params.d_Disp, envMapIntensity: params.d_Env, specularIntensity: params.d_Spec, side: THREE.DoubleSide, flatShading: false, attenuationColor: new THREE.Color(params.d_AbsColor), attenuationDistance: params.d_AbsDist, transparent: true });
 const silverMat  = new THREE.MeshPhysicalMaterial({ color: params.metalColor, metalness: params.metalMetal, roughness: params.metalRough, envMapIntensity: 1 });
 
-function createGemMaterial(colorHex, attColorHex, iorVal) {
-    return new THREE.MeshPhysicalMaterial({ color: colorHex, transmission: 0.98, opacity: 1, metalness: 0, roughness: 0, ior: iorVal, thickness: 2.5, dispersion: 0.6, envMapIntensity: 2, specularIntensity: 1, clearcoat: 1, side: THREE.DoubleSide, attenuationColor: new THREE.Color(attColorHex), attenuationDistance: 5 });
-}
-const emeraldMat      = createGemMaterial(0x00ff00, 0x003300, 1.57);
-const rubyMat         = createGemMaterial(0xff0000, 0x440000, 1.76);
-const sapphireMat     = createGemMaterial(0x0000ff, 0x000044, 1.76);
-const diamondStoneMat = new THREE.MeshPhysicalMaterial({ color: params.cryColor, transmission: params.cryTrans, opacity: params.cryOp, metalness: 0, roughness: 0, ior: params.cryIOR, thickness: params.cryThick, dispersion: params.cryDisp, envMapIntensity: params.cryEnv, specularIntensity: params.crySpec, clearcoat: params.cryClear, side: THREE.DoubleSide, attenuationColor: new THREE.Color(params.cryAttColor), attenuationDistance: params.cryAttDist });
-const goldMat         = new THREE.MeshPhysicalMaterial({ color: 0xFFC96F, metalness: 1, roughness: 0.1, envMapIntensity: 2.5, clearcoat: 0.8, clearcoatRoughness: 0.1 });
-
-const stoneOptions = { diamond: diamondStoneMat, ruby: rubyMat, sapphire: sapphireMat, emerald: emeraldMat };
-const metalOptions = { silver: silverMat, gold: goldMat };
-
 const light1 = new THREE.PointLight(params.lightColor, params.lightInt);
 light1.position.set(20, 20, 20); scene.add(light1);
 const light2 = new THREE.PointLight(params.lightColor, params.lightInt);
@@ -364,10 +256,9 @@ new EXRLoader(loadingManager).load('./studio_v2.exr', (texture) => {
     scene.environment = texture; scene.environmentIntensity = params.envInt;
 });
 
-const homeGroup      = new THREE.Group(); scene.add(homeGroup);
-const aboutGroup     = new THREE.Group(); scene.add(aboutGroup); aboutGroup.position.y = -60;
-const contactGroup   = new THREE.Group(); scene.add(contactGroup); contactGroup.position.y = -200;
-const finalRingGroup = new THREE.Group(); scene.add(finalRingGroup); finalRingGroup.visible = false;
+const homeGroup    = new THREE.Group(); scene.add(homeGroup);
+const aboutGroup   = new THREE.Group(); scene.add(aboutGroup); aboutGroup.position.y = -60;
+const contactGroup = new THREE.Group(); scene.add(contactGroup); contactGroup.position.y = -200;
 
 const ringContainer   = new THREE.Group();
 const stonesContainer = new THREE.Group();
@@ -376,8 +267,53 @@ ringContainer.position.y = params.floatYBase;
 stonesContainer.position.set(4, params.floatYBase, -1);
 ringContainer.rotation.y = 0.2; stonesContainer.rotation.y = 0.5;
 
-const individualStones = [];
-const contactStones    = [];
+const individualStones  = [];
+const contactStones     = [];
+const interactiveMeshes = [];
+const PORTFOLIO_URLS    = ['./portfolio-1.html', './portfolio-2.html', './portfolio-3.html'];
+
+// Textura placeholder generada con canvas
+function makePlaceholderTexture(colorA, colorB, label) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256; canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    const grad = ctx.createRadialGradient(128, 128, 8, 128, 128, 128);
+    grad.addColorStop(0, colorA);
+    grad.addColorStop(1, colorB);
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, 256, 256);
+    ctx.strokeStyle = 'rgba(212,175,55,0.7)'; ctx.lineWidth = 5;
+    ctx.strokeRect(8, 8, 240, 240);
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.font = 'bold 16px serif'; ctx.textAlign = 'center';
+    ctx.fillText('PORTFOLIO', 128, 114);
+    ctx.font = '13px serif';
+    ctx.fillText(label, 128, 140);
+    return new THREE.CanvasTexture(canvas);
+}
+
+const placeholderTextures = [
+    makePlaceholderTexture('rgba(212,175,55,0.95)', 'rgba(60,35,5,0.98)',  '— I —'),
+    makePlaceholderTexture('rgba(160,210,255,0.95)','rgba(5,20,70,0.98)',  '— II —'),
+    makePlaceholderTexture('rgba(255,160,160,0.95)','rgba(70,5,15,0.98)',  '— III —'),
+];
+
+function makeInteractiveMat() {
+    return new THREE.MeshPhysicalMaterial({
+        color: 0xfff8e0,
+        transmission: params.cryTrans, opacity: params.cryOp,
+        metalness: 0, roughness: 0,
+        ior: params.cryIOR, thickness: params.cryThick,
+        dispersion: params.cryDisp,
+        envMapIntensity: params.cryEnv * 1.5,
+        specularIntensity: params.crySpec,
+        clearcoat: 0.6,
+        side: THREE.DoubleSide,
+        attenuationColor: new THREE.Color(0xffe090),
+        attenuationDistance: params.cryAttDist * 0.6,
+        emissive: new THREE.Color(0xd4af37),
+        emissiveIntensity: 0.10,
+    });
+}
 
 loader.load('./Alianza.glb', (gltf) => {
     const ring = gltf.scene;
@@ -385,42 +321,6 @@ loader.load('./Alianza.glb', (gltf) => {
     ring.position.sub(box.getCenter(new THREE.Vector3()));
     ring.traverse(c => { if(c.isMesh) { c.geometry.deleteAttribute('color'); c.material = c.material.name.includes('Material.001') ? crystalMat : silverMat; }});
     ringContainer.add(ring); ring.rotation.set(1.17, 0, -0.03);
-});
-
-let finalRingModel = null;
-loader.load('./anillofotos.glb', (gltf) => {
-    finalRingModel = gltf.scene;
-    const box = new THREE.Box3().setFromObject(finalRingModel);
-    finalRingModel.position.sub(box.getCenter(new THREE.Vector3()));
-    finalRingModel.traverse(c => {
-        if(c.isMesh) {
-            c.material.transparent = true; c.material.opacity = 0;
-            if(c.material.name.includes('Material.003'))      { c.userData.isMainStone = true; c.material = emeraldMat.clone(); }
-            else if(c.material.name.includes('Material.004')) { c.userData.isSideStone = true; c.material = diamondStoneMat.clone(); }
-            else if(c.material.name.includes('Material2'))    { c.userData.isMetal = true;     c.material = silverMat.clone(); }
-            c.material.transparent = true;
-        }
-    });
-    finalRingModel.rotation.set(0.96, 0, 0.61);
-    finalRingModel.scale.set(0.8, 0.8, 0.8);
-    finalRingGroup.add(finalRingModel);
-
-    // Materiales por defecto: plata + rubí
-    finalRingModel.traverse(c => {
-        if(!c.isMesh) return;
-        if(c.userData.isMainStone || c.userData.isSideStone) {
-            const op = c.material.opacity;
-            c.material = rubyMat.clone();
-            c.material.transparent = true;
-            c.material.opacity = op;
-        }
-        if(c.userData.isMetal) {
-            const op = c.material.opacity;
-            c.material = silverMat.clone();
-            c.material.transparent = true;
-            c.material.opacity = op;
-        }
-    });
 });
 
 let diamondBase = null;
@@ -432,35 +332,114 @@ loader.load('./diamante.glb', (gltf) => {
     aboutGroup.add(diamond); diamondBase = diamond;
 });
 
-window.updateRingConfig = function(type, value, element, displayName) {
-    if(!finalRingModel) return;
-    const newMat = type === 'metal' ? metalOptions[value] : stoneOptions[value];
-    if(!newMat) return;
-    finalRingModel.traverse(c => {
-        if(!c.isMesh) return;
-        const match = (type === 'main'  && c.userData.isMainStone) ||
-                      (type === 'side'  && c.userData.isSideStone) ||
-                      (type === 'metal' && c.userData.isMetal);
-        if(match) { const op = c.material.opacity; c.material = newMat.clone(); c.material.transparent = true; c.material.opacity = op; }
-    });
-    if(element) { [...element.parentNode.children].forEach(s => s.classList.remove('active')); element.classList.add('active'); }
-    if(displayLabel && displayName) {
-        displayLabel.textContent = displayName;
-        displayLabel.classList.add('visible');
-        clearTimeout(displayTimeout);
-        displayTimeout = setTimeout(() => displayLabel.classList.remove('visible'), 3000);
-    }
-};
-
 loader.load('./piedras.glb', (gltf) => {
     const stones = gltf.scene;
-    stones.traverse(c => { if(c.isMesh) { c.material = crystalMat; c.userData = { rotSpeed: 0.003 + Math.random()*0.005, axis: new THREE.Vector3(Math.random(),1,Math.random()).normalize() }; individualStones.push(c); }});
-    stonesContainer.add(stones); stones.rotation.set(0.7, -0.2, 0); stones.scale.set(0.5, 0.5, 0.5);
+    const allMeshes = [];
+    stones.traverse(c => {
+        if(c.isMesh) {
+            c.material = crystalMat;
+            c.userData = { rotSpeed: 0.003 + Math.random()*0.005, axis: new THREE.Vector3(Math.random(),1,Math.random()).normalize() };
+            individualStones.push(c);
+            allMeshes.push(c);
+        }
+    });
+    stonesContainer.add(stones);
+    stones.rotation.set(0.7, -0.2, 0);
+    stones.scale.set(0.5, 0.5, 0.5);
+
+    // Seleccionar 3 meshes repartidos
+    const cnt = allMeshes.length;
+    const picks = cnt >= 3
+        ? [allMeshes[0], allMeshes[Math.floor(cnt/2)], allMeshes[cnt-1]]
+        : allMeshes.slice(0, Math.min(3, cnt));
+
+    picks.forEach((mesh, i) => {
+        mesh.material = makeInteractiveMat();
+        mesh.userData.isInteractive = true;
+        mesh.userData.portfolioIndex = i;
+        interactiveMeshes.push(mesh);
+
+        // Calcular tamaño del mesh para el plano interior
+        mesh.geometry.computeBoundingBox();
+        const bb = mesh.geometry.boundingBox;
+        const sz = bb.getSize(new THREE.Vector3());
+        const planeSize = Math.min(sz.x, sz.y, sz.z) * 0.85;
+
+        const imgPlane = new THREE.Mesh(
+            new THREE.PlaneGeometry(planeSize, planeSize),
+            new THREE.MeshBasicMaterial({
+                map: placeholderTextures[i],
+                transparent: true,
+                opacity: 0.80,
+                depthWrite: false,
+            })
+        );
+        const center = bb.getCenter(new THREE.Vector3());
+        imgPlane.position.copy(center);
+        mesh.add(imgPlane);
+        mesh.userData.imgPlane = imgPlane;
+    });
+
+    // Clone para contact group
     const clone = stones.clone();
-    clone.traverse(c => { if(c.isMesh) { c.material = crystalMat; c.userData = { rotSpeed: 0.001 + Math.random()*0.004, axis: new THREE.Vector3(Math.random(),1,Math.random()).normalize() }; contactStones.push(c); }});
+    clone.traverse(c => {
+        if(c.isMesh) {
+            c.material = crystalMat;
+            c.userData = { rotSpeed: 0.001 + Math.random()*0.004, axis: new THREE.Vector3(Math.random(),1,Math.random()).normalize() };
+            contactStones.push(c);
+        }
+    });
     clone.position.set(0, 0, -15); clone.scale.set(0.8, 0.8, 0.8); clone.rotation.set(0.5, 0.5, 0);
     contactGroup.add(clone);
 });
+
+// ─── RAYCASTING ───
+const raycaster = new THREE.Raycaster();
+const mouse     = new THREE.Vector2();
+let   hoveredMesh = null;
+
+renderer.domElement.addEventListener('mousemove', (e) => {
+    if(targetSection !== 0) return;
+    mouse.x =  (e.clientX / window.innerWidth)  * 2 - 1;
+    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    const hits = raycaster.intersectObjects(interactiveMeshes, false);
+    if(hits.length > 0) {
+        const h = hits[0].object;
+        if(hoveredMesh !== h) {
+            if(hoveredMesh) hoveredMesh.material.emissiveIntensity = 0.10;
+            hoveredMesh = h;
+            hoveredMesh.material.emissiveIntensity = 0.35;
+            renderer.domElement.style.cursor = 'pointer';
+        }
+    } else {
+        if(hoveredMesh) { hoveredMesh.material.emissiveIntensity = 0.10; hoveredMesh = null; }
+        renderer.domElement.style.cursor = 'default';
+    }
+});
+
+renderer.domElement.addEventListener('click', (e) => {
+    if(targetSection !== 0) return;
+    mouse.x =  (e.clientX / window.innerWidth)  * 2 - 1;
+    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    const hits = raycaster.intersectObjects(interactiveMeshes, false);
+    if(hits.length > 0) {
+        window.open(PORTFOLIO_URLS[hits[0].object.userData.portfolioIndex], '_blank');
+    }
+});
+
+renderer.domElement.addEventListener('touchend', (e) => {
+    if(targetSection !== 0) return;
+    const t = e.changedTouches[0];
+    mouse.x =  (t.clientX / window.innerWidth)  * 2 - 1;
+    mouse.y = -(t.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    const hits = raycaster.intersectObjects(interactiveMeshes, false);
+    if(hits.length > 0) {
+        window.open(PORTFOLIO_URLS[hits[0].object.userData.portfolioIndex], '_blank');
+    }
+}, { passive: true });
 
 // --- PARALLAX HOME ---
 let mouseXNorm = 0, mouseYNorm = 0;
@@ -468,49 +447,26 @@ document.addEventListener('mousemove', (e) => {
     mouseXNorm = (e.clientX / window.innerWidth)  * 2 - 1;
     mouseYNorm = (e.clientY / window.innerHeight) * 2 - 1;
 });
-document.addEventListener('touchmove', (e) => {
-    if(e.touches.length > 0) {
-        mouseXNorm = (e.touches[0].clientX / window.innerWidth)  * 2 - 1;
-        mouseYNorm = (e.touches[0].clientY / window.innerHeight) * 2 - 1;
-    }
-}, { passive: true });
-
-// --- DRAG EN CONFIGURADOR ---
-let isDragging = false, prevMouse = { x:0, y:0 };
-
-window.addEventListener('mousedown', (e) => {
-    if(e.target.closest('.config-dot')) return;
-    if(finalRingGroup.visible && finalRingModel) { isDragging = true; prevMouse = { x: e.clientX, y: e.clientY }; }
-});
-window.addEventListener('mouseup', () => { isDragging = false; });
-window.addEventListener('mousemove', (e) => {
-    if(!isDragging || !finalRingGroup.visible || !finalRingModel) return;
-    finalRingModel.rotateOnWorldAxis(new THREE.Vector3(0,1,0), (e.clientX - prevMouse.x) * 0.005);
-    finalRingModel.rotateOnWorldAxis(new THREE.Vector3(1,0,0), (e.clientY - prevMouse.y) * 0.005);
-    prevMouse = { x: e.clientX, y: e.clientY };
-});
-window.addEventListener('touchstart', (e) => {
-    if(e.target.closest('.config-dot')) return;
-    const tx = e.touches[0].clientX, w = window.innerWidth;
-    if(finalRingGroup.visible && finalRingModel && tx >= w*0.15 && tx <= w*0.85) {
-        isDragging = true; prevMouse = { x: tx, y: e.touches[0].clientY };
-    }
-}, { passive: false });
-window.addEventListener('touchend', () => { isDragging = false; });
-window.addEventListener('touchmove', (e) => {
-    if(!isDragging || !finalRingGroup.visible || !finalRingModel) return;
-    finalRingModel.rotateOnWorldAxis(new THREE.Vector3(0,1,0), (e.touches[0].clientX - prevMouse.x) * 0.005);
-    finalRingModel.rotateOnWorldAxis(new THREE.Vector3(1,0,0), (e.touches[0].clientY - prevMouse.y) * 0.005);
-    prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-}, { passive: false });
 
 // --- LOOP ---
 function animate() {
     requestAnimationFrame(animate);
     const time = performance.now() * 0.001;
-    const sp   = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
 
-    if(sp < 0.15 && homeGroup.visible) {
+    // Lerp virtualSP
+    const targetSP = SECTION_SP[targetSection];
+    virtualSP += (targetSP - virtualSP) * LERP_SPEED;
+    if(Math.abs(virtualSP - targetSP) < 0.0003) {
+        virtualSP = targetSP;
+        isTransitioning = false;
+    } else {
+        isTransitioning = true;
+    }
+
+    updateTimeline(virtualSP);
+
+    // Parallax home
+    if(targetSection === 0 && homeGroup.visible) {
         homeGroup.rotation.y += (mouseXNorm * 0.12 - homeGroup.rotation.y) * 0.04;
         homeGroup.rotation.x += (mouseYNorm * 0.07 - homeGroup.rotation.x) * 0.04;
     } else {
@@ -529,6 +485,12 @@ function animate() {
 
     individualStones.forEach(s => s.rotateOnAxis(s.userData.axis, s.userData.rotSpeed));
     contactStones.forEach(s    => s.rotateOnAxis(s.userData.axis, s.userData.rotSpeed));
+
+    // Pulso de brillo en los 3 diamantes interactivos
+    interactiveMeshes.forEach((m, i) => {
+        if(m === hoveredMesh) return;
+        m.material.emissiveIntensity = 0.06 + Math.abs(Math.sin(time * 0.8 + i * 1.2)) * 0.10;
+    });
     light1.position.x = Math.sin(time * 0.5) * 30;
     light1.position.z = Math.cos(time * 0.5) * 30;
     renderer.render(scene, camera);
