@@ -85,17 +85,6 @@ document.addEventListener('keydown', (e) => {
     if(e.key === 'ArrowUp'   || e.key === 'ArrowLeft')  prevSection();
 });
 
-// Swipe móvil
-let touchStartY = 0;
-document.addEventListener('touchstart', (e) => { touchStartY = e.touches[0].clientY; }, { passive: true });
-document.addEventListener('touchend', (e) => {
-    const diff = touchStartY - e.changedTouches[0].clientY;
-    if(Math.abs(diff) > 60) {
-        if(diff > 0) nextSection();
-        else prevSection();
-    }
-}, { passive: true });
-
 // ─────────────────────────────────────────────────────────────────
 // TIMELINE  (sp: 0 → 1)
 //  HOME   0.00 – 0.10
@@ -269,51 +258,6 @@ ringContainer.rotation.y = 0.2; stonesContainer.rotation.y = 0.5;
 
 const individualStones  = [];
 const contactStones     = [];
-const interactiveMeshes = [];
-const PORTFOLIO_URLS    = ['./portfolio-1.html', './portfolio-2.html', './portfolio-3.html'];
-
-// Textura placeholder generada con canvas
-function makePlaceholderTexture(colorA, colorB, label) {
-    const canvas = document.createElement('canvas');
-    canvas.width = 256; canvas.height = 256;
-    const ctx = canvas.getContext('2d');
-    const grad = ctx.createRadialGradient(128, 128, 8, 128, 128, 128);
-    grad.addColorStop(0, colorA);
-    grad.addColorStop(1, colorB);
-    ctx.fillStyle = grad; ctx.fillRect(0, 0, 256, 256);
-    ctx.strokeStyle = 'rgba(212,175,55,0.7)'; ctx.lineWidth = 5;
-    ctx.strokeRect(8, 8, 240, 240);
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    ctx.font = 'bold 16px serif'; ctx.textAlign = 'center';
-    ctx.fillText('PORTFOLIO', 128, 114);
-    ctx.font = '13px serif';
-    ctx.fillText(label, 128, 140);
-    return new THREE.CanvasTexture(canvas);
-}
-
-const placeholderTextures = [
-    makePlaceholderTexture('rgba(212,175,55,0.95)', 'rgba(60,35,5,0.98)',  '— I —'),
-    makePlaceholderTexture('rgba(160,210,255,0.95)','rgba(5,20,70,0.98)',  '— II —'),
-    makePlaceholderTexture('rgba(255,160,160,0.95)','rgba(70,5,15,0.98)',  '— III —'),
-];
-
-function makeInteractiveMat() {
-    return new THREE.MeshPhysicalMaterial({
-        color: 0xfff8e0,
-        transmission: params.cryTrans, opacity: params.cryOp,
-        metalness: 0, roughness: 0,
-        ior: params.cryIOR, thickness: params.cryThick,
-        dispersion: params.cryDisp,
-        envMapIntensity: params.cryEnv * 1.5,
-        specularIntensity: params.crySpec,
-        clearcoat: 0.6,
-        side: THREE.DoubleSide,
-        attenuationColor: new THREE.Color(0xffe090),
-        attenuationDistance: params.cryAttDist * 0.6,
-        emissive: new THREE.Color(0xd4af37),
-        emissiveIntensity: 0.10,
-    });
-}
 
 loader.load('./Alianza.glb', (gltf) => {
     const ring = gltf.scene;
@@ -334,51 +278,16 @@ loader.load('./diamante.glb', (gltf) => {
 
 loader.load('./piedras.glb', (gltf) => {
     const stones = gltf.scene;
-    const allMeshes = [];
     stones.traverse(c => {
         if(c.isMesh) {
             c.material = crystalMat;
             c.userData = { rotSpeed: 0.003 + Math.random()*0.005, axis: new THREE.Vector3(Math.random(),1,Math.random()).normalize() };
             individualStones.push(c);
-            allMeshes.push(c);
         }
     });
     stonesContainer.add(stones);
     stones.rotation.set(0.7, -0.2, 0);
     stones.scale.set(0.5, 0.5, 0.5);
-
-    // Seleccionar 3 meshes repartidos
-    const cnt = allMeshes.length;
-    const picks = cnt >= 3
-        ? [allMeshes[0], allMeshes[Math.floor(cnt/2)], allMeshes[cnt-1]]
-        : allMeshes.slice(0, Math.min(3, cnt));
-
-    picks.forEach((mesh, i) => {
-        mesh.material = makeInteractiveMat();
-        mesh.userData.isInteractive = true;
-        mesh.userData.portfolioIndex = i;
-        interactiveMeshes.push(mesh);
-
-        // Calcular tamaño del mesh para el plano interior
-        mesh.geometry.computeBoundingBox();
-        const bb = mesh.geometry.boundingBox;
-        const sz = bb.getSize(new THREE.Vector3());
-        const planeSize = Math.min(sz.x, sz.y, sz.z) * 0.85;
-
-        const imgPlane = new THREE.Mesh(
-            new THREE.PlaneGeometry(planeSize, planeSize),
-            new THREE.MeshBasicMaterial({
-                map: placeholderTextures[i],
-                transparent: true,
-                opacity: 0.80,
-                depthWrite: false,
-            })
-        );
-        const center = bb.getCenter(new THREE.Vector3());
-        imgPlane.position.copy(center);
-        mesh.add(imgPlane);
-        mesh.userData.imgPlane = imgPlane;
-    });
 
     // Clone para contact group
     const clone = stones.clone();
@@ -393,60 +302,41 @@ loader.load('./piedras.glb', (gltf) => {
     contactGroup.add(clone);
 });
 
-// ─── RAYCASTING ───
-const raycaster = new THREE.Raycaster();
-const mouse     = new THREE.Vector2();
-let   hoveredMesh = null;
-
-renderer.domElement.addEventListener('mousemove', (e) => {
-    if(targetSection !== 0) return;
-    mouse.x =  (e.clientX / window.innerWidth)  * 2 - 1;
-    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-    raycaster.setFromCamera(mouse, camera);
-    const hits = raycaster.intersectObjects(interactiveMeshes, false);
-    if(hits.length > 0) {
-        const h = hits[0].object;
-        if(hoveredMesh !== h) {
-            if(hoveredMesh) hoveredMesh.material.emissiveIntensity = 0.10;
-            hoveredMesh = h;
-            hoveredMesh.material.emissiveIntensity = 0.35;
-            renderer.domElement.style.cursor = 'pointer';
-        }
-    } else {
-        if(hoveredMesh) { hoveredMesh.material.emissiveIntensity = 0.10; hoveredMesh = null; }
-        renderer.domElement.style.cursor = 'default';
-    }
-});
-
-renderer.domElement.addEventListener('click', (e) => {
-    if(targetSection !== 0) return;
-    mouse.x =  (e.clientX / window.innerWidth)  * 2 - 1;
-    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-    raycaster.setFromCamera(mouse, camera);
-    const hits = raycaster.intersectObjects(interactiveMeshes, false);
-    if(hits.length > 0) {
-        window.open(PORTFOLIO_URLS[hits[0].object.userData.portfolioIndex], '_blank');
-    }
-});
-
-renderer.domElement.addEventListener('touchend', (e) => {
-    if(targetSection !== 0) return;
-    const t = e.changedTouches[0];
-    mouse.x =  (t.clientX / window.innerWidth)  * 2 - 1;
-    mouse.y = -(t.clientY / window.innerHeight) * 2 + 1;
-    raycaster.setFromCamera(mouse, camera);
-    const hits = raycaster.intersectObjects(interactiveMeshes, false);
-    if(hits.length > 0) {
-        window.open(PORTFOLIO_URLS[hits[0].object.userData.portfolioIndex], '_blank');
-    }
-}, { passive: true });
-
-// --- PARALLAX HOME ---
+// --- PARALLAX HOME Y SWIPE MÓVIL ---
 let mouseXNorm = 0, mouseYNorm = 0;
+let touchStartY = 0;
+
+// Parallax con el ratón
 document.addEventListener('mousemove', (e) => {
     mouseXNorm = (e.clientX / window.innerWidth)  * 2 - 1;
     mouseYNorm = (e.clientY / window.innerHeight) * 2 - 1;
 });
+
+// Parallax con el dedo (y registro de inicio para swipe)
+document.addEventListener('touchstart', (e) => { 
+    if(e.touches.length > 0) {
+        touchStartY = e.touches[0].clientY; 
+        mouseXNorm = (e.touches[0].clientX / window.innerWidth)  * 2 - 1;
+        mouseYNorm = (e.touches[0].clientY / window.innerHeight) * 2 - 1;
+    }
+}, { passive: true });
+
+document.addEventListener('touchmove', (e) => {
+    if(e.touches.length > 0) {
+        mouseXNorm = (e.touches[0].clientX / window.innerWidth)  * 2 - 1;
+        mouseYNorm = (e.touches[0].clientY / window.innerHeight) * 2 - 1;
+    }
+}, { passive: true });
+
+// Deslizar (Swipe) para cambiar de sección
+document.addEventListener('touchend', (e) => {
+    const diff = touchStartY - e.changedTouches[0].clientY;
+    if(Math.abs(diff) > 60) {
+        if(diff > 0) nextSection();
+        else prevSection();
+    }
+}, { passive: true });
+
 
 // --- LOOP ---
 function animate() {
@@ -486,11 +376,6 @@ function animate() {
     individualStones.forEach(s => s.rotateOnAxis(s.userData.axis, s.userData.rotSpeed));
     contactStones.forEach(s    => s.rotateOnAxis(s.userData.axis, s.userData.rotSpeed));
 
-    // Pulso de brillo en los 3 diamantes interactivos
-    interactiveMeshes.forEach((m, i) => {
-        if(m === hoveredMesh) return;
-        m.material.emissiveIntensity = 0.06 + Math.abs(Math.sin(time * 0.8 + i * 1.2)) * 0.10;
-    });
     light1.position.x = Math.sin(time * 0.5) * 30;
     light1.position.z = Math.cos(time * 0.5) * 30;
     renderer.render(scene, camera);
