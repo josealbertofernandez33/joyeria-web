@@ -2,6 +2,9 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 
+// --- DETECCIÓN DE MÓVIL ---
+const isMobile = window.innerWidth <= 768;
+
 // --- CARGA ---
 const loadingScreen  = document.getElementById('loading-screen');
 const loadingBar     = document.getElementById('loader-bar');
@@ -204,14 +207,32 @@ const camera = new THREE.PerspectiveCamera(params.camFOV, window.innerWidth/wind
 camera.position.set(params.camPos.x, params.camPos.y, params.camPos.z);
 camera.rotation.set(params.camRot.x, params.camRot.y, params.camRot.z);
 
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+// Desactivamos el antialias en móvil para ganar mucho rendimiento
+const renderer = new THREE.WebGLRenderer({ antialias: !isMobile, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+// Limitamos el pixel ratio a 1 en móviles para no ahogar la GPU renderizando a resoluciones 2K/3K
+renderer.setPixelRatio(isMobile ? 1 : Math.min(window.devicePixelRatio, 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;
 document.body.appendChild(renderer.domElement);
 
-const crystalMat = new THREE.MeshPhysicalMaterial({ color: params.cryColor, transmission: params.cryTrans, opacity: params.cryOp, metalness: 0, roughness: 0, ior: params.cryIOR, thickness: params.cryThick, dispersion: params.cryDisp, envMapIntensity: params.cryEnv, specularIntensity: params.crySpec, clearcoat: params.cryClear, side: THREE.DoubleSide, flatShading: params.cryFlat, attenuationColor: new THREE.Color(params.cryAttColor), attenuationDistance: params.cryAttDist });
+// Desactivamos la dispersión cromática (arcoíris) en el cristal si es móvil
+const crystalMat = new THREE.MeshPhysicalMaterial({ 
+    color: params.cryColor, 
+    transmission: params.cryTrans, 
+    opacity: params.cryOp, 
+    metalness: 0, roughness: 0, 
+    ior: params.cryIOR, 
+    thickness: params.cryThick, 
+    dispersion: isMobile ? 0 : params.cryDisp, 
+    envMapIntensity: params.cryEnv, 
+    specularIntensity: params.crySpec, 
+    clearcoat: params.cryClear, 
+    side: THREE.DoubleSide, 
+    flatShading: params.cryFlat, 
+    attenuationColor: new THREE.Color(params.cryAttColor), 
+    attenuationDistance: params.cryAttDist 
+});
 const silverMat  = new THREE.MeshPhysicalMaterial({ color: params.metalColor, metalness: params.metalMetal, roughness: params.metalRough, envMapIntensity: 1 });
 
 const light1 = new THREE.PointLight(params.lightColor, params.lightInt);
@@ -337,10 +358,11 @@ function animate() {
 animate();
 
 window.addEventListener('resize', () => {
+    const isNowMobile = window.innerWidth <= 768;
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(isNowMobile ? 1 : Math.min(window.devicePixelRatio, 2));
 });
 
 // --- FORMULARIO PRINCIPAL ---
