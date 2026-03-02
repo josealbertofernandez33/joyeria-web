@@ -239,7 +239,6 @@ stonesContainer.position.set(4, params.floatYBase, -1);
 ringContainer.rotation.y = 0.2; stonesContainer.rotation.y = 0.5;
 
 const individualStones  = [];
-const contactStones     = [];
 
 loader.load('./Alianza.glb', (gltf) => {
     const ring = gltf.scene;
@@ -261,18 +260,6 @@ loader.load('./piedras.glb', (gltf) => {
     stonesContainer.add(stones);
     stones.rotation.set(0.7, -0.2, 0);
     stones.scale.set(0.5, 0.5, 0.5);
-
-    // Clone para contact group
-    const clone = stones.clone();
-    clone.traverse(c => {
-        if(c.isMesh) {
-            c.material = crystalMat;
-            c.userData = { rotSpeed: 0.001 + Math.random()*0.004, axis: new THREE.Vector3(Math.random(),1,Math.random()).normalize() };
-            contactStones.push(c);
-        }
-    });
-    clone.position.set(0, 0, -15); clone.scale.set(0.8, 0.8, 0.8); clone.rotation.set(0.5, 0.5, 0);
-    contactGroup.add(clone);
 });
 
 // --- PARALLAX HOME Y SWIPE MÓVIL ---
@@ -303,6 +290,8 @@ document.addEventListener('touchmove', (e) => {
 
 // Deslizar (Swipe) para cambiar de sección
 document.addEventListener('touchend', (e) => {
+    if (targetSection === 0) return; // Bloquear swipe si estamos en la sección Home
+    
     const diff = touchStartY - e.changedTouches[0].clientY;
     if(Math.abs(diff) > 60) {
         if(diff > 0) nextSection();
@@ -340,7 +329,6 @@ function animate() {
     ringContainer.position.y = params.floatYBase + Math.sin(time * params.floatSpeed) * params.floatAmp;
 
     individualStones.forEach(s => s.rotateOnAxis(s.userData.axis, s.userData.rotSpeed));
-    contactStones.forEach(s    => s.rotateOnAxis(s.userData.axis, s.userData.rotSpeed));
 
     light1.position.x = Math.sin(time * 0.5) * 30;
     light1.position.z = Math.cos(time * 0.5) * 30;
