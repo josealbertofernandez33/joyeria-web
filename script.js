@@ -307,6 +307,16 @@ document.addEventListener('touchmove', (e) => {
 
 // Navegación táctil desactivada — usar flechas o puntos laterales
 
+// --- SCROLL CON RUEDA (solo PC) ---
+let wheelCooldown = false;
+document.addEventListener('wheel', (e) => {
+    if(isMobile || wheelCooldown) return;
+    wheelCooldown = true;
+    if(e.deltaY > 0) nextSection();
+    else prevSection();
+    setTimeout(() => { wheelCooldown = false; }, 900);
+}, { passive: true });
+
 
 // --- LOOP ---
 function animate() {
