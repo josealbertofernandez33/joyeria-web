@@ -305,15 +305,7 @@ document.addEventListener('touchmove', (e) => {
     }
 }, { passive: true });
 
-document.addEventListener('touchend', (e) => {
-    if (targetSection === 0) return; 
-    
-    const diff = touchStartY - e.changedTouches[0].clientY;
-    if(Math.abs(diff) > 60) {
-        if(diff > 0) nextSection();
-        else prevSection();
-    }
-}, { passive: true });
+// Navegación táctil desactivada — usar flechas o puntos laterales
 
 
 // --- LOOP ---
