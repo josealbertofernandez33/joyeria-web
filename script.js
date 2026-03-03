@@ -1,7 +1,10 @@
-import * as THREE from 'three';
+import * as THREE from 'three'; 
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
+
+// --- DETECCIÓN DE MÓVIL ---
+const isMobile = window.innerWidth <= 768;
 
 // --- CARGA ---
 const loadingScreen  = document.getElementById('loading-screen');
@@ -38,6 +41,7 @@ function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 function linearMap(v, a, b) { return clamp((v - a) / (b - a), 0, 1); }
 
 // --- DOM ---
+const homeUI         = document.getElementById('home-ui');
 const aboutSection   = document.getElementById('about-section');
 const contactSection = document.getElementById('contact-section');
 
@@ -97,6 +101,7 @@ function updateTimeline(sp) {
         // HOME
         homeGroup.position.y = 0; aboutGroup.position.y = -60; contactGroup.position.y = -200;
         homeGroup.visible = true;
+        setVisibility(homeUI, 1, true);
         setVisibility(aboutSection,  0);
         setVisibility(contactSection, 0);
         if(contactSection) { contactSection.classList.remove('active'); contactSection.style.transform = 'translateY(100vh)'; }
@@ -107,6 +112,7 @@ function updateTimeline(sp) {
         const p = linearMap(sp, 0.10, 0.22);
         homeGroup.position.y  = p * 80;
         aboutGroup.position.y = -60 + p * 60;
+        setVisibility(homeUI, 1 - p, false);
         setVisibility(aboutSection, 0);
         setVisibility(contactSection, 0);
         scene.background = new THREE.Color(0x000000);
@@ -115,6 +121,7 @@ function updateTimeline(sp) {
         // ABOUT aparece
         homeGroup.position.y = 80; aboutGroup.position.y = 0; contactGroup.position.y = -200;
         const o = linearMap(sp, 0.22, 0.32);
+        setVisibility(homeUI, 0, false);
         setVisibility(aboutSection, o);
         setVisibility(contactSection, 0);
         scene.background = new THREE.Color(0x000000);
@@ -122,6 +129,7 @@ function updateTimeline(sp) {
     } else if(sp > 0.35 && sp <= 0.55) {
         // ABOUT fijo
         aboutGroup.position.y = 0; contactGroup.position.y = -200;
+        setVisibility(homeUI, 0, false);
         setVisibility(aboutSection, 1);
         if(contactSection) { contactSection.classList.remove('active'); contactSection.style.transform = 'translateY(100vh)'; }
         scene.background = new THREE.Color(0x000000);
@@ -130,6 +138,7 @@ function updateTimeline(sp) {
         // ABOUT sale
         const pOut = linearMap(sp, 0.55, 0.65);
         aboutGroup.position.y = 0;
+        setVisibility(homeUI, 0, false);
         setVisibility(aboutSection, 1 - pOut);
         if(contactSection) { contactSection.classList.remove('active'); contactSection.style.transform = 'translateY(100vh)'; }
         scene.background = new THREE.Color(0x000000);
@@ -137,6 +146,7 @@ function updateTimeline(sp) {
     } else {
         // ORDER
         homeGroup.visible = false;
+        setVisibility(homeUI, 0, false);
         setVisibility(aboutSection, 0);
 
         const pForm = linearMap(sp, 0.70, 1.0);
@@ -205,14 +215,19 @@ const camera = new THREE.PerspectiveCamera(params.camFOV, window.innerWidth/wind
 camera.position.set(params.camPos.x, params.camPos.y, params.camPos.z);
 camera.rotation.set(params.camRot.x, params.camRot.y, params.camRot.z);
 
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+const renderer = new THREE.WebGLRenderer({ antialias: !isMobile, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(isMobile ? 1 : Math.min(window.devicePixelRatio, 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;
 document.body.appendChild(renderer.domElement);
 
-const crystalMat = new THREE.MeshPhysicalMaterial({ color: params.cryColor, transmission: params.cryTrans, opacity: params.cryOp, metalness: 0, roughness: 0, ior: params.cryIOR, thickness: params.cryThick, dispersion: params.cryDisp, envMapIntensity: params.cryEnv, specularIntensity: params.crySpec, clearcoat: params.cryClear, side: THREE.DoubleSide, flatShading: params.cryFlat, attenuationColor: new THREE.Color(params.cryAttColor), attenuationDistance: params.cryAttDist });
+const crystalMat = new THREE.MeshPhysicalMaterial({ 
+    color: params.cryColor, transmission: params.cryTrans, opacity: params.cryOp, metalness: 0, roughness: 0, 
+    ior: params.cryIOR, thickness: params.cryThick, dispersion: isMobile ? 0 : params.cryDisp, 
+    envMapIntensity: params.cryEnv, specularIntensity: params.crySpec, clearcoat: params.cryClear, 
+    side: THREE.DoubleSide, flatShading: params.cryFlat, attenuationColor: new THREE.Color(params.cryAttColor), attenuationDistance: params.cryAttDist 
+});
 const silverMat  = new THREE.MeshPhysicalMaterial({ color: params.metalColor, metalness: params.metalMetal, roughness: params.metalRough, envMapIntensity: 1 });
 
 const light1 = new THREE.PointLight(params.lightColor, params.lightInt);
@@ -270,13 +285,11 @@ loader.load('./piedras.glb', (gltf) => {
 let mouseXNorm = 0, mouseYNorm = 0;
 let touchStartY = 0;
 
-// Parallax con el ratón
 document.addEventListener('mousemove', (e) => {
     mouseXNorm = (e.clientX / window.innerWidth)  * 2 - 1;
     mouseYNorm = (e.clientY / window.innerHeight) * 2 - 1;
 });
 
-// Parallax con el dedo (y registro de inicio para swipe)
 document.addEventListener('touchstart', (e) => { 
     if(e.touches.length > 0) {
         touchStartY = e.touches[0].clientY; 
@@ -292,9 +305,8 @@ document.addEventListener('touchmove', (e) => {
     }
 }, { passive: true });
 
-// Deslizar (Swipe) para cambiar de sección
 document.addEventListener('touchend', (e) => {
-    if (targetSection === 0) return; // Bloquear swipe si estamos en la sección Home
+    if (targetSection === 0) return; 
     
     const diff = touchStartY - e.changedTouches[0].clientY;
     if(Math.abs(diff) > 60) {
@@ -309,7 +321,6 @@ function animate() {
     requestAnimationFrame(animate);
     const time = performance.now() * 0.001;
 
-    // Lerp virtualSP
     const targetSP = SECTION_SP[targetSection];
     virtualSP += (targetSP - virtualSP) * LERP_SPEED;
     if(Math.abs(virtualSP - targetSP) < 0.0003) {
@@ -321,7 +332,6 @@ function animate() {
 
     updateTimeline(virtualSP);
 
-    // Parallax home
     if(targetSection === 0 && homeGroup.visible) {
         homeGroup.rotation.y += (mouseXNorm * 0.12 - homeGroup.rotation.y) * 0.04;
         homeGroup.rotation.x += (mouseYNorm * 0.07 - homeGroup.rotation.x) * 0.04;
@@ -341,10 +351,11 @@ function animate() {
 animate();
 
 window.addEventListener('resize', () => {
+    const isNowMobile = window.innerWidth <= 768;
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(isNowMobile ? 1 : Math.min(window.devicePixelRatio, 2));
 });
 
 // --- FORMULARIO PRINCIPAL ---
