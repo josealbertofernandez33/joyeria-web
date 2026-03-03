@@ -215,9 +215,9 @@ const camera = new THREE.PerspectiveCamera(params.camFOV, window.innerWidth/wind
 camera.position.set(params.camPos.x, params.camPos.y, params.camPos.z);
 camera.rotation.set(params.camRot.x, params.camRot.y, params.camRot.z);
 
-const renderer = new THREE.WebGLRenderer({ antialias: !isMobile, alpha: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(isMobile ? 1 : Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;
 document.body.appendChild(renderer.domElement);
@@ -355,7 +355,7 @@ window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(isNowMobile ? 1 : Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });
 
 // --- FORMULARIO PRINCIPAL ---
