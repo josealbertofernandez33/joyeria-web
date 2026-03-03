@@ -221,7 +221,7 @@ light2.position.set(-20, -10, 20); scene.add(light2);
 
 const loader = new GLTFLoader(loadingManager);
 
-new EXRLoader(loadingManager).load('./studio_v2.exr', (texture) => {
+new EXRLoader().load('./studio_v2.exr', (texture) => {
     texture.mapping = THREE.EquirectangularReflectionMapping;
     texture.offset.x = params.envRot;
     scene.environment = texture; scene.environmentIntensity = params.envInt;
