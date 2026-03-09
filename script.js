@@ -4,7 +4,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 
 // --- DETECCIÓN DE MÓVIL ---
-const isMobile = window.innerWidth <= 768;
+let isMobile = window.innerWidth <= 768;
 
 // --- CARGA ---
 const loadingScreen  = document.getElementById('loading-screen');
@@ -240,7 +240,7 @@ dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5
 const loader = new GLTFLoader(loadingManager);
 loader.setDRACOLoader(dracoLoader);
 
-new EXRLoader().load('./studio_v2.exr', (texture) => {
+new EXRLoader(loadingManager).load('./studio_v2.exr', (texture) => {
     texture.mapping = THREE.EquirectangularReflectionMapping;
     texture.offset.x = params.envRot;
     scene.environment = texture; scene.environmentIntensity = params.envInt;
@@ -353,7 +353,7 @@ function animate() {
 animate();
 
 window.addEventListener('resize', () => {
-    const isNowMobile = window.innerWidth <= 768;
+    isMobile = window.innerWidth <= 768;
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -408,7 +408,7 @@ if(portfolioForm) {
             btn.textContent = '✓';
             input.value = '';
             input.placeholder = 'REQUEST SENT';
-            setTimeout(() => { btn.textContent = 'SEND'; input.placeholder = 'Your email address'; }, 3000);
+            setTimeout(() => { btn.textContent = 'REQUEST'; input.placeholder = 'Enter your email to unlock'; }, 3000);
         } catch(err) {
             btn.textContent = 'SEND';
         }
