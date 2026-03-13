@@ -244,15 +244,15 @@ input[type="file"] { display: none; }
     #home-ui .hero-tagline { font-size: 0.7rem; letter-spacing: 2px; }
     .glass-card { width: 85%; padding: 30px; }
     #contact-section h2 { font-size: 1.3rem; }
-    header { top: 20px; }
+    header { top: 8px; }
     #nav-container { gap: 20px; width: 100%; padding: 0 5px; box-sizing: border-box; }
     .nav-item { font-size: 0.65rem; letter-spacing: 1px; }
     
     #about-section {
         width: 92%; max-width: none; padding: 16px 14px 20px;
-        top: 115px;
+        top: 78px;
         transform: translateX(-50%);
-        max-height: calc(100vh - 195px);
+        max-height: calc(100vh - 158px);
         overflow-y: auto; scrollbar-width: none;
     }
     #about-section::-webkit-scrollbar { display: none; }
