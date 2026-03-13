@@ -258,14 +258,15 @@ input[type="file"] { display: none; }
     #about-section::-webkit-scrollbar { display: none; }
     #about-section h2 { font-size: 1.2rem; letter-spacing: 3px; margin-bottom: 10px; }
     #about-section p { font-size: 0.8rem; line-height: 1.55; margin-bottom: 8px; }
-    .highlight-quote { font-size: 0.85rem; margin: 10px 0; padding: 10px 0; letter-spacing: 1px; }
-    .process-container { flex-direction: row; gap: 0; padding: 10px 0; margin: 10px 0; justify-content: space-around; }
+    .highlight-quote { font-size: 0.85rem; margin: 6px 0; padding: 8px 0; letter-spacing: 1px; }
+    .process-container { flex-direction: row; gap: 0; padding: 8px 0; margin: 6px 0; justify-content: space-around; }
     .process-step { flex: 1; }
     .step-num { font-size: 1rem; }
     .step-text { font-size: 0.55rem; letter-spacing: 1px; }
     #about-section .signature { font-size: 0.65rem; margin-top: 10px; margin-bottom: 6px; }
-    .teaser-gallery { gap: 4px; margin: 16px 0 0; }
-    .portfolio-request { margin-top: 12px; gap: 8px; }
+    .teaser-gallery { gap: 4px; margin: 10px 0 0; }
+    .teaser-item { aspect-ratio: 5/3; }
+    .portfolio-request { margin-top: 8px; gap: 6px; }
     .portfolio-subtext { font-size: 0.7rem !important; }
     
     #section-dots { right: 14px; }
