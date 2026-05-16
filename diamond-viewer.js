@@ -3,7 +3,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-// --- IMPORTS PARA EL EFECTO BLOOM (DESTELLOS) ---
+// --- IMPORTS PARA EL EFECTO BLOOM Y POST-PROCESADO ---
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
@@ -16,20 +16,18 @@ import {
   shaderIntersectFunction,
 } from 'three-mesh-bvh';
 
-// (Bloom selectivo por capas eliminado: con render transparente, las zonas vacías ya quedan
-//  por debajo del umbral del bloom y no participan; un solo compositor es suficiente.)
-
 const DIAMOND_REGEX = /\b(piedra|piedras|diam|diamond|gem|gema|stone|cristal|crystal|brillante|jewel|001)\b/i;
 const METAL_REGEX = /\b(anillo|ring|aro|band|metal|gold|silver|oro|plata|platino|platinum|base|shank|montura|setting|prong|garra)\b/i;
 
-// Detecta automáticamente el "suelo efectivo" del modelo: la Y por encima de la cual reside
-// el cuerpo principal de la geometría, descartando vértices outliers (prongs sueltos, soportes
-// internos, gas, etc., que cuelgan por debajo del aro visible). Heurística:
-//   1) Recoge todas las Y en espacio mundial.
-//   2) Ordena ascendentemente y mira el 5% inferior.
-//   3) Si hay un salto grande (> 3% del rango total) entre dos Y consecutivas en ese tramo,
-//      es la frontera entre outliers y cuerpo → devuelve la Y por encima del salto.
-//   4) Si no, devuelve el mínimo absoluto (AABB ya era correcto).
+function isDiamondByMaterial(mat) {
+  if (!mat) return false;
+  if (mat.metalness && mat.metalness > 0.5) return false; 
+  const transmission = mat.transmission ?? 0;
+  if (transmission > 0.5) return true;
+  return false;
+}
+
+// Calculadora del Suelo Efectivo (Ignora salientes inferiores)
 function computeEffectiveFloorY(root) {
   root.updateMatrixWorld(true);
   const ys = [];
@@ -58,8 +56,6 @@ function computeEffectiveFloorY(root) {
   return ys[0];
 }
 
-// Genera una textura procedural de sombra de contacto: gradiente radial suave,
-// que insinúa que la joya descansa sobre una superficie SIN dibujar la silueta del anillo.
 function makeContactShadowTexture(size = 256) {
   const cnv = document.createElement('canvas');
   cnv.width = size;
@@ -78,14 +74,6 @@ function makeContactShadowTexture(size = 256) {
   tex.anisotropy = 4;
   tex.needsUpdate = true;
   return tex;
-}
-
-function isDiamondByMaterial(mat) {
-  if (!mat) return false;
-  if (mat.metalness && mat.metalness > 0.5) return false; 
-  const transmission = mat.transmission ?? 0;
-  if (transmission > 0.5) return true;
-  return false;
 }
 
 const DIAMOND_VERT = `
@@ -108,7 +96,7 @@ ${shaderStructs}
 ${shaderIntersectFunction}
 
 #define PI 3.14159265359
-#define MAX_BOUNCES 5
+#define MAX_BOUNCES 10 
 
 uniform BVH bvh;
 uniform sampler2D envMap;
@@ -187,8 +175,6 @@ void main() {
   float b = traceChannel(lro, lrB, iorB, 2);
 
   vec3 col = mix(vec3(r, g, b), reflectSample, Fext) * uExposure;
-  col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14);
-  col = pow(clamp(col, 0.0, 1.0), vec3(1.0 / 2.2));
   fragColor = vec4(col, 1.0);
 }
 `;
@@ -207,7 +193,7 @@ async function loadHDR(url, renderer) {
 }
 
 class DiamondViewer extends HTMLElement {
-  static get observedAttributes() { return ['src', 'camera-orbit']; }
+  static get observedAttributes() { return ['src', 'camera-orbit', 'floor-offset']; }
 
   constructor() {
     super();
@@ -216,68 +202,18 @@ class DiamondViewer extends HTMLElement {
       <style>
         :host { display: block; width: 100%; height: 100%; position: relative; overflow: hidden; background-color: #ffffff; }
         canvas { display: block; width: 100%; height: 100%; outline: none; background-color: transparent; }
-        
-        /* Panel de controles oculto en producción. Para reactivarlo, cambiar display a flex. */
-        .debug-panel {
-          display: none;
-          position: absolute; top: 10px; right: 10px; background: rgba(0, 0, 0, 0.85);
-          color: white; padding: 15px; border-radius: 8px; font-family: monospace;
-          font-size: 11px; z-index: 9999; flex-direction: column;
-          gap: 12px; width: 260px; border: 1px solid #d4af37; pointer-events: auto;
-        }
-        .debug-panel h3 { margin: 0; color: #d4af37; text-align: center; font-size: 13px; }
-        .control-group { display: flex; justify-content: space-between; align-items: center; }
-        .control-group label { width: 40%; }
-        .control-group input[type="range"] { width: 45%; cursor: pointer;}
-        .control-group span { width: 15%; text-align: right; font-weight: bold; }
-        .btn-log { background: #d4af37; color: #000; border: none; padding: 8px; cursor: pointer; font-weight: bold; border-radius: 4px; margin-top: 5px; }
-        .btn-log:hover { background: #fff; }
       </style>
       <canvas></canvas>
-
-      <div class="debug-panel" id="debug-panel">
-        <h3>CONTROLES 3D</h3>
-        <div class="control-group">
-          <label>Exposición</label>
-          <input type="range" id="ctrl-exp" min="0.1" max="3.0" step="0.05" value="0.70">
-          <span id="val-exp">0.70</span>
-        </div>
-        <div class="control-group">
-          <label>Brillo Metal</label>
-          <input type="range" id="ctrl-metal" min="0.1" max="10.0" step="0.1" value="1.6">
-          <span id="val-metal">1.6</span>
-        </div>
-        <div class="control-group">
-          <label>Fuerza Bloom</label>
-          <input type="range" id="ctrl-bst" min="0.0" max="3.0" step="0.05" value="0.00">
-          <span id="val-bst">0.00</span>
-        </div>
-        <div class="control-group">
-          <label>Radio Bloom</label>
-          <input type="range" id="ctrl-brad" min="0.0" max="1.0" step="0.01" value="0.46">
-          <span id="val-brad">0.46</span>
-        </div>
-        <div class="control-group">
-          <label>Umbral Bloom</label>
-          <input type="range" id="ctrl-bth" min="0.0" max="1.0" step="0.01" value="1.00">
-          <span id="val-bth">1.00</span>
-        </div>
-        <div class="control-group">
-          <label>Dispersión</label>
-          <input type="range" id="ctrl-disp" min="0.0" max="0.05" step="0.001" value="0.050">
-          <span id="val-disp">0.050</span>
-        </div>
-        <button class="btn-log" id="btn-log">🖨️ IMPRIMIR CONFIG</button>
-      </div>
     `;
     this.canvas = this.shadowRoot.querySelector('canvas');
-    this.metalMaterials = []; 
   }
 
   connectedCallback() {
     if (this._inited) return;
     this._inited = true;
-    this._init().catch(err => { console.error('❌ ERROR FATAL AL INICIAR 3D:', err); });
+    this._init().catch(err => {
+        console.error('❌ ERROR FATAL AL INICIAR 3D:', err);
+    });
   }
 
   attributeChangedCallback(name, oldV, newV) {
@@ -286,46 +222,35 @@ class DiamondViewer extends HTMLElement {
   }
 
   async _init() {
-    // Canvas opaco: el blanco se inyecta manualmente en el shader final, no depende del canal alfa.
     const renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: false });
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     renderer.setClearColor(0xffffff, 1);
 
-    // Sin shadow map: usamos una sombra de contacto procedural (más rápido y más limpio
-    // visualmente para producto/joyería que una sombra literal del modelo).
     renderer.shadowMap.enabled = false;
-
-    // Sin tone mapping en el renderer: lo hacemos manualmente en el mixPass para poder
-    // componer sobre un blanco puro sin que ACES lo aplane a gris.
+    
+    // El ToneMapping se delega al ShaderPass
     renderer.toneMapping = THREE.NoToneMapping;
-    renderer.toneMappingExposure = 1.0;
-    renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // El mixPass escribe ya en sRGB.
+    renderer.outputColorSpace = THREE.LinearSRGBColorSpace; 
     this.renderer = renderer;
 
-    // Exposición efectiva (la usaremos en el mixPass; el slider la conecta más abajo).
-    this._exposure = 0.70;
-
     this.scene = new THREE.Scene();
-    this.scene.background = null; // El fondo blanco lo pinta el mixPass.
-    this.camera = new THREE.PerspectiveCamera(35, 1, 0.01, 1000);
+    this.scene.background = null; 
+    this.camera = new THREE.PerspectiveCamera(35, 1, 0.01, 1000); 
 
-    // Render único de escena con fondo transparente (clear alpha = 0). Las zonas vacías quedan
-    // con rgb=0,a=0; el bloom las ignora (están por debajo del umbral) y el mixPass las detecta
-    // por el alfa para pintar blanco puro detrás.
+    // --- CONFIGURACIÓN EXACTA DE LA HABITACIÓN DE PRUEBAS ---
+    
     const renderScene = new RenderPass(this.scene, this.camera);
     renderScene.clearColor = new THREE.Color(0x000000);
     renderScene.clearAlpha = 0;
 
-    // Defaults: strength=0, radius=0.46, threshold=1.00 (config fija pedida — bloom efectivamente off).
-    this.bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.00, 0.46, 1.00);
+    // Bloom: Strength 0.1, Radius 1, Threshold 0.28
+    this.bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.10, 1.00, 0.28);
 
-    // ---------- MIX PASS: tone mapping + composición sobre BLANCO PURO ----------
-    // Lee una sola textura (la salida del bloom). En píxeles con alpha=0 (fondo), pinta blanco
-    // + la contribución de bloom clamp(0..1) → el fondo nunca se oscurece.
+    // MixPass: Composición sobre blanco puro con Exposición Post 0.50
     const mixMaterial = new THREE.ShaderMaterial({
       uniforms: {
         tDiffuse:  { value: null },
-        uExposure: { value: this._exposure },
+        uExposure: { value: 0.50 }, // Exposición global del Post-Procesado
       },
       vertexShader: `
         varying vec2 vUv;
@@ -355,21 +280,13 @@ class DiamondViewer extends HTMLElement {
         void main() {
           vec4 c = texture2D(tDiffuse, vUv);
           vec3 cSRGB = linearToSRGB(ACESFilm(c.rgb * uExposure));
-
-          // Composición sobre blanco:
-          //   result = white * (1 - alpha) + cSRGB
-          // - alpha=1 (anillo opaco): result = cSRGB (anillo tone-mapeado + su bloom).
-          // - alpha=0 (fondo vacío): result = white + cSRGB. Clampeado a 1 -> SIEMPRE blanco
-          //   si cSRGB es 0, o blanco + halo de bloom clampeado.
           vec3 result = clamp(vec3(1.0) * (1.0 - c.a) + cSRGB, 0.0, 1.0);
-
           gl_FragColor = vec4(result, 1.0);
         }
       `,
     });
     this.mixPass = new ShaderPass(mixMaterial, 'tDiffuse');
 
-    // Un solo compositor: render + bloom + mix. Mismo coste que el setup original.
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(renderScene);
     this.composer.addPass(this.bloomPass);
@@ -379,27 +296,26 @@ class DiamondViewer extends HTMLElement {
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
     this.controls.autoRotate = true; 
-    this.controls.autoRotateSpeed = 1.0;
+    this.controls.autoRotateSpeed = 0.3; // Rotación lenta y elegante
     this.controls.minDistance = 0.1;
     this.controls.maxDistance = 10;
-    this.controls.enableZoom = false; // Zoom bloqueado
+    this.controls.enableZoom = false; 
     this.controls.target.set(0, 0, 0);
 
-    this.scene.add(new THREE.AmbientLight(0xffffff, 1.5));
+    // Iluminación: Ambient 5.0
+    this.scene.add(new THREE.AmbientLight(0xffffff, 5.0));
     
-    const dirLight = new THREE.DirectionalLight(0xffffff, 3.0);
-    dirLight.position.set(3, 5, 3);
-    // Sin castShadow: no proyectamos sombra real, usamos una sombra de contacto procedural.
+    // Iluminación: Direccional 10.0, Pos: 0.4, 1.1, 0.1
+    const dirLight = new THREE.DirectionalLight(0xffffff, 10.0);
+    dirLight.position.set(0.4, 1.1, 0.1);
     this.scene.add(dirLight);
 
-    // Sombra de contacto: plano con textura radial suave, NO recibe sombras reales.
-    // Su tamaño y posición se ajustan tras cargar el modelo.
     const planeGeo = new THREE.PlaneGeometry(1, 1);
     const planeMat = new THREE.MeshBasicMaterial({
       map: makeContactShadowTexture(256),
       transparent: true,
-      depthWrite: false, // No tape al anillo al escribir profundidad.
-      toneMapped: false, // Ya estamos en sRGB; evita doble tone-mapping.
+      depthWrite: false, 
+      toneMapped: false, 
     });
     this.shadowPlane = new THREE.Mesh(planeGeo, planeMat);
     this.shadowPlane.rotation.x = -Math.PI / 2;
@@ -426,15 +342,12 @@ class DiamondViewer extends HTMLElement {
     
     const root = gltf.scene;
 
-    // Normalizamos diagonal a 2 unidades (misma escala visual entre joyas).
     const initialBox = new THREE.Box3().setFromObject(root);
     const initialSize = initialBox.getSize(new THREE.Vector3()).length();
+    
     const scaleFactor = 2.0 / (initialSize || 1);
     root.scale.setScalar(scaleFactor);
 
-    // Pegamos la BASE EFECTIVA de cada anillo al plano y=0, centramos en XZ.
-    // computeEffectiveFloorY descarta geometría outlier (prongs/soportes que cuelgan
-    // por debajo del aro visible), evitando el "anillo flotando" sobre la sombra.
     const scaledBox = new THREE.Box3().setFromObject(root);
     const center = new THREE.Vector3();
     scaledBox.getCenter(center);
@@ -443,33 +356,22 @@ class DiamondViewer extends HTMLElement {
 
     this.scene.add(root);
 
-    // Recalcular tras la traslación. Para el target de cámara usamos el centro VISIBLE
-    // (desde el suelo efectivo hasta el techo del modelo), no el centro del AABB completo,
-    // así los outliers que quedaron por debajo de y=0 no descuadran el encuadre.
     const finalBox = new THREE.Box3().setFromObject(root);
     const finalSize = finalBox.getSize(new THREE.Vector3());
     this._modelCenterY = Math.max(0, finalBox.max.y) / 2;
     this.modelRadius = finalSize.length() / 2;
 
-    // Sombra de contacto sobre y=0 (la base del anillo). Tamaño proporcional a la huella XZ
-    // con margen para el falloff suave. Un único `floor` para todos los anillos.
     const planeSize = Math.max(finalSize.x, finalSize.z) * 2.2;
     this.shadowPlane.scale.set(planeSize, planeSize, 1);
-
-    // floor-offset (atributo HTML, opcional): sube el suelo para compensar geometría suelta
-    // que cuelgue por debajo del aro visible (prongs, soportes, gas internas). Solo es un
-    // parche; lo limpio sería ajustar el origen del modelo en Blender al punto de contacto.
+    
     const floorOffset = parseFloat(this.getAttribute('floor-offset') || '0');
     this.shadowPlane.position.set(0, floorOffset - 0.001, 0);
 
     this.diamondMeshes = [];
-    this.metalMaterials = [];
 
     root.traverse(obj => {
       if (!obj.isMesh) return;
-      // Sin shadow maps: dejamos castShadow/receiveShadow en false (default) y nos ahorramos
-      // el pase de sombras del renderer cada frame.
-
+      
       const combined = `${obj.name || ''} ${obj.material?.name || ''}`.toLowerCase();
       const isMetal = METAL_REGEX.test(combined);
       const isDiamond = !isMetal && (DIAMOND_REGEX.test(combined) || isDiamondByMaterial(obj.material));
@@ -487,19 +389,22 @@ class DiamondViewer extends HTMLElement {
           const bvh = new MeshBVH(geo);
           geo.boundsTree = bvh;
 
+          // Diamante Config: IOR Base 2.415, Dispersion 0.009
+          const baseIOR = 2.415;
+          const disp = 0.009;
+
           const mat = new THREE.ShaderMaterial({
             glslVersion: THREE.GLSL3,
             uniforms: {
               bvh: { value: new MeshBVHUniformStruct() },
               envMap: { value: this.envRaw },
-              // Dispersión inicial = 0.05 (iorR = base - 0.025, iorB = base + 0.025).
-              iorR: { value: 2.3920 },
-              iorG: { value: 2.4170 },
-              iorB: { value: 2.4420 },
+              iorR: { value: baseIOR - (disp / 2) },
+              iorG: { value: baseIOR },
+              iorB: { value: baseIOR + (disp / 2) },
               uInvModelMatrix: { value: new THREE.Matrix4() },
               uModelMatrix: { value: new THREE.Matrix4() },
               uCameraPos: { value: new THREE.Vector3() },
-              uExposure: { value: 0.70 },
+              uExposure: { value: 1.25 }, // Diamante Exposure: 1.25
               uEpsilon: { value: calculatedEpsilon }
             },
             vertexShader: DIAMOND_VERT,
@@ -508,23 +413,23 @@ class DiamondViewer extends HTMLElement {
           });
           mat.uniforms.bvh.value.updateFrom(bvh);
           obj.material = mat;
-          obj.geometry = geo;
+          obj.geometry = geo; 
           this.diamondMeshes.push(obj);
         } catch(e) { }
       } else {
           if (obj.material) {
+              // Metal Config: Roughness 0, Clearcoat 0.7, CC Roughness 1.0, envMapIntensity 1.71 (1.9 * 0.9)
               const newMetalMat = new THREE.MeshPhysicalMaterial({
                   color: 0xffffff,
                   metalness: 1.0,
                   roughness: 0.0,
                   envMap: this.envRaw,
-                  envMapIntensity: 1.6,
-                  clearcoat: 1.0,
-                  clearcoatRoughness: 0.0
+                  envMapIntensity: 1.71, 
+                  clearcoat: 0.7,
+                  clearcoatRoughness: 1.0
               });
               obj.material = newMetalMat;
               obj.material.needsUpdate = true;
-              this.metalMaterials.push(newMetalMat);
           }
       }
     });
@@ -532,8 +437,6 @@ class DiamondViewer extends HTMLElement {
     this._applyOrbit(this.getAttribute('camera-orbit') || '0deg 70deg auto');
     this._resize();
     this._ready = true;
-
-    this._setupUI();
 
     this._visObs = new IntersectionObserver((entries) => {
       this._visible = entries[0].isIntersecting;
@@ -560,81 +463,9 @@ class DiamondViewer extends HTMLElement {
         u.uCameraPos.value.copy(this.camera.position);
       }
       
-      if (this.composer) {
-          this.composer.render();
-      } else {
-          this.renderer.render(this.scene, this.camera);
-      }
+      this.composer.render();
     };
     this._loop();
-  }
-
-  _setupUI() {
-    const $ = (id) => this.shadowRoot.getElementById(id);
-    
-    $('ctrl-exp').addEventListener('input', (e) => {
-      const v = parseFloat(e.target.value);
-      $('val-exp').innerText = v.toFixed(2);
-      this._exposure = v;
-      // Tone mapping ahora se hace en el mixPass; actualizamos su uniform.
-      if (this.mixPass) this.mixPass.uniforms.uExposure.value = v;
-      // Mantenemos uExposure de los diamantes (shader propio) para no romper su look.
-      for (const m of this.diamondMeshes) m.material.uniforms.uExposure.value = v;
-    });
-
-    $('ctrl-metal').addEventListener('input', (e) => {
-      const v = parseFloat(e.target.value);
-      $('val-metal').innerText = v.toFixed(1);
-      for (const mat of this.metalMaterials) {
-        mat.envMapIntensity = v;
-        mat.needsUpdate = true;
-      }
-    });
-
-    $('ctrl-bst').addEventListener('input', (e) => {
-      const v = parseFloat(e.target.value);
-      $('val-bst').innerText = v.toFixed(2);
-      this.bloomPass.strength = v;
-    });
-
-    $('ctrl-brad').addEventListener('input', (e) => {
-      const v = parseFloat(e.target.value);
-      $('val-brad').innerText = v.toFixed(2);
-      this.bloomPass.radius = v;
-    });
-
-    $('ctrl-bth').addEventListener('input', (e) => {
-      const v = parseFloat(e.target.value);
-      $('val-bth').innerText = v.toFixed(2);
-      this.bloomPass.threshold = v;
-    });
-
-    $('ctrl-disp').addEventListener('input', (e) => {
-      const v = parseFloat(e.target.value);
-      $('val-disp').innerText = v.toFixed(3);
-      const baseIOR = 2.4170;
-      for (const m of this.diamondMeshes) {
-        m.material.uniforms.iorR.value = baseIOR - (v / 2);
-        m.material.uniforms.iorG.value = baseIOR;
-        m.material.uniforms.iorB.value = baseIOR + (v / 2);
-      }
-    });
-
-    $('btn-log').addEventListener('click', () => {
-      const config = {
-        Exposicion: parseFloat($('ctrl-exp').value),
-        BrilloMetal: parseFloat($('ctrl-metal').value),
-        BloomFuerza: parseFloat($('ctrl-bst').value),
-        BloomRadio: parseFloat($('ctrl-brad').value),
-        BloomUmbral: parseFloat($('ctrl-bth').value),
-        Dispersion: parseFloat($('ctrl-disp').value)
-      };
-      console.log("================================");
-      console.log("💎 TU CONFIGURACIÓN PERFECTA 💎");
-      console.log(JSON.stringify(config, null, 2));
-      console.log("================================");
-      alert("¡Configuración impresa en la Consola! Pulsa F12 para verla.");
-    });
   }
 
   _applyOrbit(value) {
@@ -644,16 +475,15 @@ class DiamondViewer extends HTMLElement {
     const phi = parseFloat(parts[1] || 70) * Math.PI / 180;
 
     const fovRad = this.camera.fov * Math.PI / 180;
-    const dist = (this.modelRadius || 1.0) / Math.sin(fovRad / 2) * 0.85;
+    const dist = (this.modelRadius || 1.0) / Math.sin(fovRad / 2) * 0.85; 
 
-    // La órbita se levanta al centro vertical del modelo (base anclada en y=0).
     const ty = this._modelCenterY || 0;
     const camPos = new THREE.Vector3().setFromSpherical(new THREE.Spherical(dist, phi, theta));
     camPos.y += ty;
     this.camera.position.copy(camPos);
-    this.camera.lookAt(0, ty, 0);
-
-    if (this.controls) {
+    this.camera.lookAt(0, ty, 0); 
+    
+    if(this.controls) {
         this.controls.target.set(0, ty, 0);
         this.controls.update();
     }
@@ -670,7 +500,6 @@ class DiamondViewer extends HTMLElement {
     this.camera.updateProjectionMatrix();
     
     if (this.composer) this.composer.setSize(w, h);
-    if (this.bloomPass) this.bloomPass.setSize(w, h);
   }
 }
 

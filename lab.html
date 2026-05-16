@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LAB · Materiales y Luces</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.165.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.165.0/examples/jsm/",
+    "three-mesh-bvh": "https://unpkg.com/three-mesh-bvh@0.7.8/build/index.module.js"
+  }
+}
+</script>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; background: #1a1a1a; color: #eee; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .layout { display: grid; grid-template-columns: 1fr 380px; height: 100vh; }
+  .viewer-wrap { background: #fff; position: relative; }
+  .viewer-wrap canvas { display: block; width: 100%; height: 100%; }
+  .topbar {
+    position: absolute; top: 12px; left: 12px; display: flex; gap: 10px; align-items: center;
+    background: rgba(0,0,0,0.6); padding: 8px 12px; border-radius: 8px; backdrop-filter: blur(6px);
+  }
+  .topbar select, .topbar button {
+    background: #2a2a2a; color: #eee; border: 1px solid #444; border-radius: 5px; padding: 5px 10px; font-size: 12px; cursor: pointer;
+  }
+  .topbar label { font-size: 12px; display: flex; align-items: center; gap: 6px; }
+
+  .panel { background: #1a1a1a; border-left: 1px solid #2a2a2a; overflow-y: auto; padding: 16px; }
+  .panel h2 { margin: 0 0 6px; font-size: 13px; color: #d4af37; text-transform: uppercase; letter-spacing: 1px; }
+  .section { background: #232323; border: 1px solid #333; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+  .row { display: grid; grid-template-columns: 110px 1fr 56px; gap: 8px; align-items: center; margin: 6px 0; font-size: 12px; }
+  .row label { color: #bbb; }
+  .row input[type=range] { width: 100%; accent-color: #d4af37; }
+  .row .val { text-align: right; color: #fff; font-variant-numeric: tabular-nums; font-size: 11px; background: #1a1a1a; padding: 2px 6px; border-radius: 4px; }
+  .row input[type=color] { width: 100%; height: 24px; padding: 0; border: 1px solid #444; border-radius: 4px; background: transparent; cursor: pointer; }
+  .row input[type=checkbox] { width: 16px; height: 16px; accent-color: #d4af37; }
+
+  .actions { display: flex; gap: 8px; margin-top: 12px; }
+  .actions button {
+    flex: 1; background: #d4af37; color: #000; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px;
+  }
+  .actions button.secondary { background: #444; color: #eee; }
+  .actions button:hover { filter: brightness(1.1); }
+
+  .config-output {
+    margin-top: 10px; background: #0e0e0e; border: 1px solid #333; border-radius: 6px;
+    padding: 10px; font-family: ui-monospace, "Cascadia Code", monospace; font-size: 11px;
+    max-height: 240px; overflow: auto; white-space: pre; color: #9fdc9f;
+    display: none;
+  }
+  .config-output.visible { display: block; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <div class="viewer-wrap">
+    <canvas id="cv"></canvas>
+    <div class="topbar">
+      <label>Anillo
+        <select id="model">
+          <option value="anillo1.glb">anillo1</option>
+          <option value="anillo2.glb">anillo2</option>
+          <option value="anillo3.glb">anillo3</option>
+          <option value="anillo4.glb">anillo4</option>
+        </select>
+      </label>
+      <label><input type="checkbox" id="autoRotate" checked>Auto-rotar</label>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Iluminación</h2>
+    <div class="section">
+      <div class="row"><label>Ambient</label><input type="range" id="ambientIntensity" min="0" max="5" step="0.05" value="1.5"><span class="val">1.50</span></div>
+      <div class="row"><label>Direccional</label><input type="range" id="dirIntensity" min="0" max="10" step="0.1" value="3.0"><span class="val">3.00</span></div>
+      <div class="row"><label>Dir X</label><input type="range" id="dirX" min="-10" max="10" step="0.1" value="3"><span class="val">3.00</span></div>
+      <div class="row"><label>Dir Y</label><input type="range" id="dirY" min="-10" max="10" step="0.1" value="5"><span class="val">5.00</span></div>
+      <div class="row"><label>Dir Z</label><input type="range" id="dirZ" min="-10" max="10" step="0.1" value="3"><span class="val">3.00</span></div>
+      <div class="row"><label>HDR intensidad</label><input type="range" id="envIntensity" min="0" max="3" step="0.05" value="1.0"><span class="val">1.00</span></div>
+    </div>
+
+    <h2>Metal</h2>
+    <div class="section">
+      <div class="row"><label>Color</label><input type="color" id="metalColor" value="#ffffff"><span class="val">#fff</span></div>
+      <div class="row"><label>Metalness</label><input type="range" id="metalness" min="0" max="1" step="0.01" value="1.0"><span class="val">1.00</span></div>
+      <div class="row"><label>Roughness</label><input type="range" id="roughness" min="0" max="1" step="0.01" value="0.0"><span class="val">0.00</span></div>
+      <div class="row"><label>envMap intens.</label><input type="range" id="envMapIntensity" min="0" max="5" step="0.05" value="1.6"><span class="val">1.60</span></div>
+      <div class="row"><label>Clearcoat</label><input type="range" id="clearcoat" min="0" max="1" step="0.01" value="1.0"><span class="val">1.00</span></div>
+      <div class="row"><label>CC roughness</label><input type="range" id="clearcoatRoughness" min="0" max="1" step="0.01" value="0.0"><span class="val">0.00</span></div>
+    </div>
+
+    <h2>Diamante</h2>
+    <div class="section">
+      <div class="row"><label>Exposure</label><input type="range" id="diamondExposure" min="0.1" max="3" step="0.05" value="0.7"><span class="val">0.70</span></div>
+      <div class="row"><label>IOR base</label><input type="range" id="iorBase" min="1.4" max="3.0" step="0.005" value="2.417"><span class="val">2.417</span></div>
+      <div class="row"><label>Dispersión</label><input type="range" id="dispersion" min="0" max="0.1" step="0.001" value="0.05"><span class="val">0.050</span></div>
+    </div>
+
+    <h2>Post-procesado</h2>
+    <div class="section">
+      <div class="row"><label>Exp. global</label><input type="range" id="exposure" min="0.1" max="3" step="0.05" value="0.7"><span class="val">0.70</span></div>
+      <div class="row"><label>Bloom fuerza</label><input type="range" id="bloomStrength" min="0" max="3" step="0.05" value="0"><span class="val">0.00</span></div>
+      <div class="row"><label>Bloom radio</label><input type="range" id="bloomRadius" min="0" max="1" step="0.01" value="0.46"><span class="val">0.46</span></div>
+      <div class="row"><label>Bloom umbral</label><input type="range" id="bloomThreshold" min="0" max="1" step="0.01" value="1.0"><span class="val">1.00</span></div>
+    </div>
+
+    <div class="actions">
+      <button id="copyBtn">Copiar Config</button>
+      <button id="showBtn" class="secondary">Mostrar JSON</button>
+    </div>
+    <pre id="output" class="config-output"></pre>
+  </div>
+</div>
+
+<script type="module">
+  import { LabViewer } from './lab-viewer.js';
+
+  const canvas = document.getElementById('cv');
+  const viewer = new LabViewer(canvas);
+  window._viewer = viewer; // útil para inspección desde la consola
+
+  // Carga inicial: loadModel internamente espera a _readyPromise (renderer + HDR).
+  viewer.loadModel('anillo1.glb');
+
+  document.getElementById('model').addEventListener('change', e => viewer.loadModel(e.target.value));
+
+  // Binding genérico de sliders → viewer.set(name, value)
+  const sliders = [
+    'ambientIntensity', 'dirIntensity', 'dirX', 'dirY', 'dirZ', 'envIntensity',
+    'metalness', 'roughness', 'envMapIntensity', 'clearcoat', 'clearcoatRoughness',
+    'diamondExposure', 'iorBase', 'dispersion',
+    'exposure', 'bloomStrength', 'bloomRadius', 'bloomThreshold',
+  ];
+  for (const id of sliders) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    const valSpan = el.parentElement.querySelector('.val');
+    const fmt = (v) => {
+      if (id === 'iorBase' || id === 'dispersion') return (+v).toFixed(3);
+      return (+v).toFixed(2);
+    };
+    valSpan.textContent = fmt(el.value);
+    el.addEventListener('input', () => {
+      const v = parseFloat(el.value);
+      valSpan.textContent = fmt(v);
+      viewer.set(id, v);
+    });
+  }
+
+  // Color picker
+  const colorInput = document.getElementById('metalColor');
+  const colorVal = colorInput.parentElement.querySelector('.val');
+  colorInput.addEventListener('input', () => {
+    const hex = parseInt(colorInput.value.slice(1), 16);
+    colorVal.textContent = colorInput.value;
+    viewer.set('metalColor', hex);
+  });
+
+  // Auto-rotate
+  document.getElementById('autoRotate').addEventListener('change', e => {
+    viewer.set('autoRotate', e.target.checked);
+  });
+
+  // Copiar / Mostrar config
+  const out = document.getElementById('output');
+  document.getElementById('copyBtn').addEventListener('click', async () => {
+    const cfg = viewer.getConfig();
+    const json = JSON.stringify(cfg, null, 2);
+    try {
+      await navigator.clipboard.writeText(json);
+      const btn = document.getElementById('copyBtn');
+      const orig = btn.textContent;
+      btn.textContent = '¡Copiado!';
+      setTimeout(() => btn.textContent = orig, 1200);
+    } catch (e) {
+      out.textContent = json;
+      out.classList.add('visible');
+    }
+  });
+  document.getElementById('showBtn').addEventListener('click', () => {
+    out.textContent = JSON.stringify(viewer.getConfig(), null, 2);
+    out.classList.toggle('visible');
+  });
+</script>
+
+</body>
+</html>
