@@ -29,6 +29,14 @@
         <div class="threshold-container" id="text-container">
             <div id="the-light" class="light-container">
                 <div class="light-rays"></div>
+                <div id="arrow-halos-container">
+                    <div class="arrow-halo-rod" style="--rod-angle: 0deg; --rod-len: 103px;"></div>
+                    <div class="arrow-halo-rod" style="--rod-angle: 72deg; --rod-len: 54px;"></div>
+                    <div class="arrow-halo-rod" style="--rod-angle: 144deg; --rod-len: 87px;"></div>
+                    <div class="arrow-halo-rod" style="--rod-angle: 216deg; --rod-len: 25px;"></div>
+                    <div class="arrow-halo-rod" style="--rod-angle: 288deg; --rod-len: 98px;"></div>
+                </div>
+                <div class="halo-ripple"></div>
                 <div class="halo-ripple"></div>
                 <div class="halo-ripple"></div>
                 <div class="halo-ripple"></div>
@@ -39,62 +47,67 @@
 
     <section id="light-realm" class="hidden">
         <header class="clean-header">
-            <div class="logo">J.A. Bespoke</div>
+            <div class="logo">J.A.</div>
         </header>
 
         <main class="luminous-content">
             <div class="text-presentation">
-                <img id="ring-bg" src="1.png" alt="Ring sketch background" class="ring-bg">
-                <a href="#contact" class="btn-gold">Request a Commission <span style="font-size: 1.2em; margin-left: 5px;">&#9826;</span></a>
+                
+                <div class="ring-bg-wrapper">
+                    <img id="ring-bg" src="1.png" alt="Ring sketch background" class="ring-bg">
+                    
+                    <div class="mobile-ui-overlay">
+                        <div class="mobile-controls">
+                            <button class="carousel-arrow left-arrow prev-btn-mob">&#10094;</button>
+                            <div class="carousel-nav nav-mob">
+                                <span class="dot active" data-idx="0"></span>
+                                <span class="dot" data-idx="1"></span>
+                                <span class="dot" data-idx="2"></span>
+                                <span class="dot" data-idx="3"></span>
+                            </div>
+                            <button class="carousel-arrow right-arrow next-btn-mob">&#10095;</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="carousel-arrow left-arrow desktop-ui-overlay prev-btn">&#10094;</button>
+                <button class="carousel-arrow right-arrow desktop-ui-overlay next-btn">&#10095;</button>
+
+                <div class="image-text-overlay" id="image-text-overlay">
+                    <h1 id="ring-title" class="elegant-title">True Beauty Awaits</h1>
+                    <p id="ring-desc" class="elegant-desc">You have crossed the threshold. Now, let us forge something eternal, unique, and unconditionally yours.</p>
+                </div>
+
+                <a href="#contact" class="btn-gold desktop-btn">Request a Commission <span style="font-size: 1.2em; margin-left: 5px;">&#9826;</span></a>
             </div>
             
             <div class="carousel-wrapper spectacular-ring">
                 
-                <button id="prev-btn" class="carousel-arrow left-arrow">&#10094;</button>
-                <button id="next-btn" class="carousel-arrow right-arrow">&#10095;</button>
+                <div class="carousel-nav desktop-ui-overlay nav-desk">
+                    <span class="dot active" data-idx="0"></span>
+                    <span class="dot" data-idx="1"></span>
+                    <span class="dot" data-idx="2"></span>
+                    <span class="dot" data-idx="3"></span>
+                </div>
 
                 <div class="carousel-track" id="ring-carousel">
-                    
                     <div class="carousel-slide">
-                        <diamond-viewer
-                            src="anillo1.glb"
-                            camera-orbit="0deg 70deg auto"
-                            floor-offset="0">
-                        </diamond-viewer>
+                        <diamond-viewer src="anillo1.glb" camera-orbit="0deg 70deg auto" floor-offset="0"></diamond-viewer>
                     </div>
-
-                    <div class="carousel-slide">
-                        <diamond-viewer
-                            src="anillo2.glb"
-                            camera-orbit="0deg 70deg auto"
-                            floor-offset="0">
-                        </diamond-viewer>
+                    <div class="carousel-slide desktop-only-slide">
+                        <diamond-viewer src="anillo2.glb" camera-orbit="0deg 70deg auto" floor-offset="0"></diamond-viewer>
                     </div>
-
-                    <div class="carousel-slide">
-                        <diamond-viewer
-                            src="anillo3.glb"
-                            camera-orbit="0deg 70deg auto"
-                            floor-offset="0">
-                        </diamond-viewer>
+                    <div class="carousel-slide desktop-only-slide">
+                        <diamond-viewer src="anillo3.glb" camera-orbit="0deg 70deg auto" floor-offset="0"></diamond-viewer>
                     </div>
-
-                    <div class="carousel-slide">
-                        <diamond-viewer
-                            src="anillo4.glb"
-                            camera-orbit="0deg 70deg auto"
-                            floor-offset="0">
-                        </diamond-viewer>
+                    <div class="carousel-slide desktop-only-slide">
+                        <diamond-viewer src="anillo4.glb" camera-orbit="0deg 70deg auto" floor-offset="0" gem-color="#b8001f"></diamond-viewer>
                     </div>
-
                 </div>
-                
-                <div class="carousel-nav">
-                    <span class="dot active"></span>
-                    <span class="dot"></span>
-                    <span class="dot"></span>
-                    <span class="dot"></span>
-                </div>
+            </div>
+            
+            <div class="mobile-btn-container">
+                <a href="#contact" class="btn-gold">Request a Commission <span style="font-size: 1.2em; margin-left: 5px;">&#9826;</span></a>
             </div>
         </main>
 
@@ -102,31 +115,31 @@
             <h2 class="section-title scroll-anim">The Art of Creation</h2>
             <div class="process-grid">
                 <div class="process-step scroll-anim">
-                    <div class="process-image"><img src="image_558c62.png" alt="Concept"></div>
+                    <div class="process-image"><img src="11.png" alt="Concept"></div>
                     <span class="step-number">01</span>
                     <h3>Conceptualization</h3>
                     <p>Sketching the soul of your jewelry, transforming your story and ideas into the first elegant physical concepts.</p>
                 </div>
                 <div class="process-step scroll-anim">
-                    <div class="process-image"><img src="image_558c62.png" alt="CAD"></div>
+                    <div class="process-image"><img src="12.jpeg" alt="CAD"></div>
                     <span class="step-number">02</span>
                     <h3>3D CAD Design</h3>
                     <p>Precision digital sculpting, ensuring every fraction of a millimeter is perfectly proportioned before manufacturing.</p>
                 </div>
                 <div class="process-step scroll-anim">
-                    <div class="process-image"><img src="image_558c62.png" alt="Wax"></div>
+                    <div class="process-image"><img src="13.png" alt="Wax"></div>
                     <span class="step-number">03</span>
                     <h3>Wax Printing</h3>
                     <p>Materializing the digital file into a high-resolution 3D resin or wax prototype, ready for the casting process.</p>
                 </div>
                 <div class="process-step scroll-anim">
-                    <div class="process-image"><img src="image_558c62.png" alt="Casting"></div>
+                    <div class="process-image"><img src="14.png" alt="Casting"></div>
                     <span class="step-number">04</span>
                     <h3>Casting</h3>
                     <p>Using the traditional lost-wax method to seamlessly transform the fragile prototype into solid, precious metal.</p>
                 </div>
                 <div class="process-step scroll-anim">
-                    <div class="process-image"><img src="image_558c62.png" alt="Finishing"></div>
+                    <div class="process-image"><img src="15.png" alt="Finishing"></div>
                     <span class="step-number">05</span>
                     <h3>Final Finishing</h3>
                     <p>Meticulous hand polishing, precise gem setting, and the ultimate quality review of your bespoke masterpiece.</p>
@@ -136,7 +149,7 @@
 
         <section class="about-section" id="about">
             <div class="about-container">
-                <div class="about-image scroll-anim"><img src="image_558c62.png" alt="Designer"></div>
+                <div class="about-image scroll-anim"><img src="16.png" alt="Designer"></div>
                 <div class="about-text scroll-anim">
                     <h2 class="section-title left-align">Meet the Designer</h2>
                     <p>With a profound dedication to the craft, I believe that high jewelry is more than mere adornment; it is a physical manifestation of emotion, history, and art. Every bespoke piece I forge is meticulously designed to reflect the unique essence of its wearer.</p>
@@ -146,7 +159,6 @@
         </section>
 
         <section class="contact-section" id="contact">
-            <img src="1.png" alt="Watermark" class="contact-watermark">
             <div class="contact-container scroll-anim">
                 <h2 class="section-title">Begin Your Journey</h2>
                 <p class="contact-subtitle">Share your vision with me. Let us create something truly extraordinary.</p>
