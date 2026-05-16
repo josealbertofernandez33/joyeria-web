@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
     
-    // --- 1. LÓGICA DEL DESTELLO (Estrellas de fondo eliminadas) ---
     const theLight = document.getElementById('the-light');
     const darkRealm = document.getElementById('dark-realm');
     const lightRealm = document.getElementById('light-realm');
@@ -25,36 +24,81 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- 2. LÓGICA DEL CARRUSEL Y FLECHAS ---
+    const starfield = document.getElementById('starfield');
+    if (starfield) {
+        starfield.style.zIndex = '3'; 
+        starfield.innerHTML = ''; 
+        
+        const totalStars = 30;
+        const sizeBase = 1;
+
+        for (let i = 0; i < totalStars; i++) {
+            const star = document.createElement('div');
+            star.style.position = 'absolute';
+            star.style.borderRadius = '50%';
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.top = `${Math.random() * 100}%`;
+
+            const size = Math.random() < 0.90 ? (Math.random() * sizeBase * 0.6 + 0.5) : (Math.random() * sizeBase + sizeBase/2);
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+
+            const colors = ['#ffffff', '#e0f7fa', '#fff3e0', '#ffd700'];
+            star.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            star.style.boxShadow = `0 0 ${size}px ${size/2}px ${star.style.backgroundColor}`;
+            
+            star.style.animation = 'none';
+            star.style.opacity = (Math.random() * 0.6 + 0.4).toString(); 
+
+            starfield.appendChild(star);
+        }
+    }
+
+    const rods = document.querySelectorAll('.arrow-halo-rod');
+    const maxRodLen = 110;
+    const minRodLen = 30;
+
+    function randomizeRod(rod) {
+        const newAngle = Math.random() * 360;
+        const newLen = Math.floor(Math.random() * (maxRodLen - minRodLen + 1)) + minRodLen;
+        rod.style.setProperty('--rod-angle', `${newAngle}deg`);
+        rod.style.setProperty('--rod-len', `${newLen}px`);
+    }
+
+    rods.forEach(randomizeRod);
+
+    rods.forEach(rod => {
+        rod.addEventListener('animationiteration', () => {
+            randomizeRod(rod);
+        });
+    });
+
     const track = document.getElementById('ring-carousel');
-    const dots = document.querySelectorAll('.dot');
-    const prevBtn = document.getElementById('prev-btn');
-    const nextBtn = document.getElementById('next-btn');
-    
+    const ringBg = document.getElementById('ring-bg');
+    const textOverlay = document.getElementById('image-text-overlay');
     const ringTitle = document.getElementById('ring-title');
     const ringDesc = document.getElementById('ring-desc');
-    const ringBg = document.getElementById('ring-bg');
     
     const ringData = [
-        {
+        { 
             title: "True Beauty Awaits",
             desc: "You have crossed the threshold. Now, let us forge something eternal, unique, and unconditionally yours.",
-            img: "1.png"
+            img: "1.png" 
         },
-        {
+        { 
             title: "The Celestial Cut",
             desc: "A masterpiece born from stardust. Its immaculate facets reflect the light of a thousand galaxies, crafted for the bold.",
-            img: "2.png"
+            img: "2.png" 
         },
-        {
+        { 
             title: "Eternal Heritage",
             desc: "Where classic elegance meets modern bespoke design. A timeless silhouette that carries the weight of a lifelong promise.",
-            img: "3.png"
+            img: "3.png" 
         },
-        {
+        { 
             title: "Obsidian Echo",
             desc: "A harmonious blend of rare metals and brilliant stones. This piece captures the quiet power and enduring grace of true craftsmanship.",
-            img: "4.png"
+            img: "4.png" 
         }
     ];
 
@@ -63,63 +107,71 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateCarousel() {
         if (!track) return;
-        track.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
-        track.style.transform = `translateX(-${currentIndex * 100}%)`;
         
-        dots.forEach(dot => dot.classList.remove('active'));
-        if (dots[currentIndex]) {
-            dots[currentIndex].classList.add('active');
+        if (window.innerWidth > 1024) {
+            track.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            track.style.transform = `translateX(-${currentIndex * 100}%)`;
+        } else {
+            track.style.transform = 'none';
         }
+        
+        document.querySelectorAll('.dot').forEach(dot => dot.classList.remove('active'));
+        document.querySelectorAll('.nav-desk .dot')[currentIndex]?.classList.add('active');
+        document.querySelectorAll('.nav-mob .dot')[currentIndex]?.classList.add('active');
 
-        if (ringTitle) ringTitle.classList.add('text-fade-hide');
-        if (ringDesc) ringDesc.classList.add('text-fade-hide');
-        if (ringBg) ringBg.classList.add('text-fade-hide'); 
+        if (textOverlay) textOverlay.classList.add('text-fade-hide');
+        if (ringBg) ringBg.classList.add('text-fade-hide');
         
         setTimeout(() => {
             if (ringTitle) ringTitle.innerText = ringData[currentIndex].title;
             if (ringDesc) ringDesc.innerText = ringData[currentIndex].desc;
             if (ringBg) ringBg.src = ringData[currentIndex].img; 
             
-            if (ringTitle) ringTitle.classList.remove('text-fade-hide');
-            if (ringDesc) ringDesc.classList.remove('text-fade-hide');
-            if (ringBg) ringBg.classList.remove('text-fade-hide'); 
+            if (textOverlay) textOverlay.classList.remove('text-fade-hide');
+            if (ringBg) ringBg.classList.remove('text-fade-hide');
         }, 300); 
     }
 
-    // Funciones de las flechas
-    if (prevBtn) {
-        prevBtn.addEventListener('click', () => {
-            if (currentIndex > 0) {
-                currentIndex--;
-            } else {
-                currentIndex = totalSlides - 1; 
-            }
-            updateCarousel();
-        });
+    function goPrev() {
+        if (currentIndex > 0) currentIndex--;
+        else currentIndex = totalSlides - 1; 
+        updateCarousel();
+    }
+    
+    function goNext() {
+        if (currentIndex < totalSlides - 1) currentIndex++;
+        else currentIndex = 0; 
+        updateCarousel();
     }
 
-    if (nextBtn) {
-        nextBtn.addEventListener('click', () => {
-            if (currentIndex < totalSlides - 1) {
-                currentIndex++;
-            } else {
-                currentIndex = 0; 
-            }
-            updateCarousel();
-        });
-    }
+    const prevBtnDesk = document.querySelector('.prev-btn');
+    const nextBtnDesk = document.querySelector('.next-btn');
+    if (prevBtnDesk) prevBtnDesk.addEventListener('click', goPrev);
+    if (nextBtnDesk) nextBtnDesk.addEventListener('click', goNext);
 
-    // Botones de puntos inferiores
-    dots.forEach((dot, idx) => {
-        dot.addEventListener('click', () => {
-            if (currentIndex !== idx) {
+    const prevBtnMob = document.querySelector('.prev-btn-mob');
+    const nextBtnMob = document.querySelector('.next-btn-mob');
+    if (prevBtnMob) prevBtnMob.addEventListener('click', goPrev);
+    if (nextBtnMob) nextBtnMob.addEventListener('click', goNext);
+
+    document.querySelectorAll('.dot').forEach(dot => {
+        dot.addEventListener('click', (e) => {
+            const idx = parseInt(e.target.getAttribute('data-idx'));
+            if (!isNaN(idx) && currentIndex !== idx) {
                 currentIndex = idx;
                 updateCarousel();
             }
         });
     });
 
-    // --- 3. ANIMACIÓN AL SCROLL ---
+    window.addEventListener('resize', () => {
+        if (window.innerWidth <= 1024 && track) {
+            track.style.transform = 'none';
+        } else if (track) {
+            track.style.transform = `translateX(-${currentIndex * 100}%)`;
+        }
+    });
+
     const animElements = document.querySelectorAll('.scroll-anim');
     const scrollObserver = new IntersectionObserver((entries, observer) => {
         entries.forEach(entry => {
@@ -135,7 +187,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     animElements.forEach(el => scrollObserver.observe(el));
 
-    // --- 4. INPUT DE ARCHIVOS ---
     const fileInput = document.getElementById('attachments');
     const fileLabel = document.getElementById('file-label');
 
