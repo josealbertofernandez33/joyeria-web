@@ -96,7 +96,9 @@ ${shaderStructs}
 ${shaderIntersectFunction}
 
 #define PI 3.14159265359
-#define MAX_BOUNCES 10 
+
+// OPTIMIZACIÓN DE RENDIMIENTO: 6 Rebotes (Calidad extrema sin matar la GPU)
+#define MAX_BOUNCES 6 
 
 uniform BVH bvh;
 uniform sampler2D envMap;
@@ -105,7 +107,8 @@ uniform mat4 uInvModelMatrix;
 uniform mat4 uModelMatrix;
 uniform vec3 uCameraPos;
 uniform float uExposure;
-uniform float uEpsilon; 
+uniform float uEpsilon;
+uniform vec3 uColor; 
 
 in vec3 vWorldPos;
 in vec3 vWorldNormal;
@@ -174,22 +177,30 @@ void main() {
   float g = traceChannel(lro, lrG, iorG, 1);
   float b = traceChannel(lro, lrB, iorB, 2);
 
-  vec3 col = mix(vec3(r, g, b), reflectSample, Fext) * uExposure;
+  vec3 col = mix(vec3(r, g, b) * uColor, reflectSample, Fext) * uExposure;
   fragColor = vec4(col, 1.0);
 }
 `;
 
 const hdrCache = new Map();
 async function loadHDR(url, renderer) {
-  if (hdrCache.has(url)) return hdrCache.get(url);
-  const hdr = await new Promise((res, rej) => new RGBELoader().load(url, res, undefined, rej));
-  hdr.mapping = THREE.EquirectangularReflectionMapping;
+  // OPTIMIZACIÓN DE MEMORIA: Solo se cachean los datos crudos del HDR.
+  // Evita colisiones de texturas entre diferentes anillos cargados.
+  let rawHDR;
+  if (hdrCache.has(url)) {
+    rawHDR = hdrCache.get(url);
+  } else {
+    rawHDR = await new Promise((res, rej) => new RGBELoader().load(url, res, undefined, rej));
+    rawHDR.mapping = THREE.EquirectangularReflectionMapping;
+    hdrCache.set(url, rawHDR);
+  }
+  
   const pmrem = new THREE.PMREMGenerator(renderer);
-  const env = pmrem.fromEquirectangular(hdr).texture;
+  pmrem.compileEquirectangularShader();
+  const env = pmrem.fromEquirectangular(rawHDR).texture;
   pmrem.dispose();
-  const entry = { rawHDR: hdr, pmremEnv: env };
-  hdrCache.set(url, entry);
-  return entry;
+  
+  return { rawHDR, pmremEnv: env };
 }
 
 class DiamondViewer extends HTMLElement {
@@ -209,11 +220,19 @@ class DiamondViewer extends HTMLElement {
   }
 
   connectedCallback() {
-    if (this._inited) return;
-    this._inited = true;
-    this._init().catch(err => {
-        console.error('❌ ERROR FATAL AL INICIAR 3D:', err);
-    });
+    if (this._initStarted) return;
+    
+    // OPTIMIZACIÓN CRÍTICA: CARGA DIFERIDA (LAZY LOAD)
+    // El visor no hace absolutamente NADA (cero consumo de RAM o GPU)
+    // hasta que el usuario hace scroll o swipe cerca de este anillo.
+    this._lazyObs = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        this._lazyObs.disconnect();
+        this._initStarted = true;
+        this._init().catch(err => console.error('Error 3D:', err));
+      }
+    }, { rootMargin: '300px' }); // Despierta 300px antes de aparecer
+    this._lazyObs.observe(this);
   }
 
   attributeChangedCallback(name, oldV, newV) {
@@ -222,13 +241,20 @@ class DiamondViewer extends HTMLElement {
   }
 
   async _init() {
-    const renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: false });
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    // Rendimiento: Priorizar performance y quitar Alpha para un canvas sólido
+    const renderer = new THREE.WebGLRenderer({ 
+        canvas: this.canvas, 
+        antialias: true, 
+        alpha: false,
+        powerPreference: "high-performance"
+    });
+    
+    // Rendimiento: Limitar la densidad de píxeles máxima a 1.5
+    // Salva a los iPhones y pantallas de alta densidad de cálculos innecesarios.
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.setClearColor(0xffffff, 1);
 
     renderer.shadowMap.enabled = false;
-    
-    // El ToneMapping se delega al ShaderPass
     renderer.toneMapping = THREE.NoToneMapping;
     renderer.outputColorSpace = THREE.LinearSRGBColorSpace; 
     this.renderer = renderer;
@@ -237,20 +263,17 @@ class DiamondViewer extends HTMLElement {
     this.scene.background = null; 
     this.camera = new THREE.PerspectiveCamera(35, 1, 0.01, 1000); 
 
-    // --- CONFIGURACIÓN EXACTA DE LA HABITACIÓN DE PRUEBAS ---
-    
     const renderScene = new RenderPass(this.scene, this.camera);
     renderScene.clearColor = new THREE.Color(0x000000);
     renderScene.clearAlpha = 0;
 
-    // Bloom: Strength 0.1, Radius 1, Threshold 0.28
+    // Configuración exacta del laboratorio
     this.bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.10, 1.00, 0.28);
 
-    // MixPass: Composición sobre blanco puro con Exposición Post 0.50
     const mixMaterial = new THREE.ShaderMaterial({
       uniforms: {
         tDiffuse:  { value: null },
-        uExposure: { value: 0.50 }, // Exposición global del Post-Procesado
+        uExposure: { value: 0.50 },
       },
       vertexShader: `
         varying vec2 vUv;
@@ -296,16 +319,14 @@ class DiamondViewer extends HTMLElement {
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
     this.controls.autoRotate = true; 
-    this.controls.autoRotateSpeed = 0.3; // Rotación lenta y elegante
+    this.controls.autoRotateSpeed = 0.3; 
     this.controls.minDistance = 0.1;
     this.controls.maxDistance = 10;
     this.controls.enableZoom = false; 
     this.controls.target.set(0, 0, 0);
 
-    // Iluminación: Ambient 5.0
     this.scene.add(new THREE.AmbientLight(0xffffff, 5.0));
     
-    // Iluminación: Direccional 10.0, Pos: 0.4, 1.1, 0.1
     const dirLight = new THREE.DirectionalLight(0xffffff, 10.0);
     dirLight.position.set(0.4, 1.1, 0.1);
     this.scene.add(dirLight);
@@ -386,10 +407,13 @@ class DiamondViewer extends HTMLElement {
           const localSize = geo.boundingBox.getSize(new THREE.Vector3()).length();
           const calculatedEpsilon = localSize * 0.0005; 
 
+          const gemTint = (obj.material && obj.material.color)
+            ? obj.material.color.clone()
+            : new THREE.Color(0xffffff);
+
           const bvh = new MeshBVH(geo);
           geo.boundsTree = bvh;
 
-          // Diamante Config: IOR Base 2.415, Dispersion 0.009
           const baseIOR = 2.415;
           const disp = 0.009;
 
@@ -404,8 +428,9 @@ class DiamondViewer extends HTMLElement {
               uInvModelMatrix: { value: new THREE.Matrix4() },
               uModelMatrix: { value: new THREE.Matrix4() },
               uCameraPos: { value: new THREE.Vector3() },
-              uExposure: { value: 1.25 }, // Diamante Exposure: 1.25
-              uEpsilon: { value: calculatedEpsilon }
+              uExposure: { value: 1.25 },
+              uEpsilon: { value: calculatedEpsilon },
+              uColor: { value: gemTint },
             },
             vertexShader: DIAMOND_VERT,
             fragmentShader: buildFrag(),
@@ -413,12 +438,12 @@ class DiamondViewer extends HTMLElement {
           });
           mat.uniforms.bvh.value.updateFrom(bvh);
           obj.material = mat;
-          obj.geometry = geo; 
+          obj.geometry = geo;
+          obj.userData._gemSize = localSize;
           this.diamondMeshes.push(obj);
         } catch(e) { }
       } else {
           if (obj.material) {
-              // Metal Config: Roughness 0, Clearcoat 0.7, CC Roughness 1.0, envMapIntensity 1.71 (1.9 * 0.9)
               const newMetalMat = new THREE.MeshPhysicalMaterial({
                   color: 0xffffff,
                   metalness: 1.0,
@@ -434,14 +459,29 @@ class DiamondViewer extends HTMLElement {
       }
     });
 
+    const gemColorAttr = this.getAttribute('gem-color');
+    if (gemColorAttr && this.diamondMeshes.length > 0) {
+      let largest = this.diamondMeshes[0];
+      for (const m of this.diamondMeshes) {
+        if ((m.userData._gemSize || 0) > (largest.userData._gemSize || 0)) largest = m;
+      }
+      const c = largest.material.uniforms.uColor.value;
+      const distFromWhite = Math.abs(c.r - 1) + Math.abs(c.g - 1) + Math.abs(c.b - 1);
+      if (distFromWhite < 0.15) {
+        largest.material.uniforms.uColor.value.set(gemColorAttr);
+      }
+    }
+
     this._applyOrbit(this.getAttribute('camera-orbit') || '0deg 70deg auto');
     this._resize();
     this._ready = true;
 
+    // OPTIMIZACIÓN 4: Pausado agresivo de gráficas fuera de pantalla.
+    // Solo actualiza el 3D si la caja está altamente visible.
     this._visObs = new IntersectionObserver((entries) => {
       this._visible = entries[0].isIntersecting;
       if (this._visible && !this._rafActive) this._loop();
-    }, { threshold: 0.01 });
+    }, { threshold: 0.05 });
     this._visObs.observe(this);
     this._visible = true;
 

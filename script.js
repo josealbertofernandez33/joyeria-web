@@ -1,32 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     
-    // --- 1. GENERAR ESPACIO VIVO ---
-    const starfield = document.getElementById('starfield');
-    const totalStars = 200; 
-
-    for (let i = 0; i < totalStars; i++) {
-        const star = document.createElement('div');
-        star.className = 'star';
-        star.style.left = `${Math.random() * 100}%`;
-        star.style.top = `${Math.random() * 100}%`;
-
-        const size = Math.random() < 0.95 ? (Math.random() * 1.5 + 0.5) : (Math.random() * 3 + 1.5);
-        star.style.width = `${size}px`;
-        star.style.height = `${size}px`;
-
-        const colors = ['#ffffff', '#e0f7fa', '#fff3e0'];
-        star.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-
-        const duration = 1.5 + Math.random() * 4;
-        const delay = -(Math.random() * 5); 
-        star.style.animation = `twinkle-js ${duration}s infinite alternate ${delay}s ease-in-out`;
-
-        if (starfield) {
-            starfield.appendChild(star);
-        }
-    }
-
-    // --- 2. LÓGICA DEL DESTELLO ---
+    // --- 1. LÓGICA DEL DESTELLO (Estrellas de fondo eliminadas) ---
     const theLight = document.getElementById('the-light');
     const darkRealm = document.getElementById('dark-realm');
     const lightRealm = document.getElementById('light-realm');
@@ -51,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- 3. LÓGICA DEL CARRUSEL Y FLECHAS ---
+    // --- 2. LÓGICA DEL CARRUSEL Y FLECHAS ---
     const track = document.getElementById('ring-carousel');
     const dots = document.querySelectorAll('.dot');
     const prevBtn = document.getElementById('prev-btn');
@@ -118,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentIndex > 0) {
                 currentIndex--;
             } else {
-                currentIndex = totalSlides - 1; // Vuelve al final
+                currentIndex = totalSlides - 1; 
             }
             updateCarousel();
         });
@@ -129,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentIndex < totalSlides - 1) {
                 currentIndex++;
             } else {
-                currentIndex = 0; // Vuelve al principio
+                currentIndex = 0; 
             }
             updateCarousel();
         });
@@ -145,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- 4. ANIMACIÓN AL SCROLL ---
+    // --- 3. ANIMACIÓN AL SCROLL ---
     const animElements = document.querySelectorAll('.scroll-anim');
     const scrollObserver = new IntersectionObserver((entries, observer) => {
         entries.forEach(entry => {
@@ -161,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     animElements.forEach(el => scrollObserver.observe(el));
 
-    // --- 5. INPUT DE ARCHIVOS ---
+    // --- 4. INPUT DE ARCHIVOS ---
     const fileInput = document.getElementById('attachments');
     const fileLabel = document.getElementById('file-label');
 
