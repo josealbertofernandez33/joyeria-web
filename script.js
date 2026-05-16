@@ -79,6 +79,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const ringTitle = document.getElementById('ring-title');
     const ringDesc = document.getElementById('ring-desc');
     
+    // OPTIMIZACIÓN MÓVIL POR JAVASCRIPT
+    if (window.innerWidth <= 1024) {
+        const mobileViewer = document.getElementById('main-mobile-viewer');
+        if(mobileViewer) {
+            // Intento agresivo de forzar propiedades internas si el componente lo permite
+            mobileViewer.bloom = false;
+            mobileViewer.enableBloom = false;
+            mobileViewer.postProcessing = false;
+        }
+    }
+
     const ringData = [
         { 
             title: "True Beauty Awaits",
