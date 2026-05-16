@@ -156,19 +156,51 @@ diamond-viewer canvas {
     100% { filter: blur(0px); transform: scale(1); }
 }
 
+/* ============================================================== */
+/* ADAPTACIÓN MÓVIL (MANTENIENDO TU HTML INTACTO)                 */
+/* ============================================================== */
 @media (max-width: 1024px) {
-    .luminous-content { flex-direction: column; text-align: center; height: auto; min-height: 100vh; padding-top: 2rem; gap: 4%; }
-    .text-presentation { flex: auto; max-width: 100%; height: 40vh; padding: 2rem; align-items: center; justify-content: flex-end; }
-    .carousel-wrapper { flex: auto; width: 100%; max-width: 100%; height: 60vh; margin-top: 2rem; }
-    .ring-info-overlay { position: relative; top: 0; left: 0; right: 0; padding: 0 1rem 1rem 1rem; text-align: center; pointer-events: none; }
-    #ring-title { font-size: 2.2rem; }
-    #ring-desc { max-width: 100%; margin: 0 auto; }
+    .luminous-content { 
+        flex-direction: column; 
+        text-align: center; 
+        height: auto; 
+        min-height: 100vh; 
+        padding-top: 2rem; 
+        gap: 2rem; 
+    }
+    
+    /* El texto con el botón baja a la segunda posición */
+    .text-presentation { 
+        order: 2; 
+        flex: auto; 
+        max-width: 100%; 
+        width: 100%; 
+        height: 40vh; 
+        padding: 2rem; 
+        align-items: center; 
+        justify-content: flex-end; 
+    }
+    
+    /* El visor 3D sube a la primera posición */
+    .carousel-wrapper { 
+        order: 1; 
+        flex: auto; 
+        width: 100%; 
+        max-width: 100%; 
+        height: 50vh; 
+        margin-top: 0; 
+    }
+    
     diamond-viewer { transform: translateY(0%); }
-    .process-section { margin-top: 5vh; }
+    .process-section { margin-top: 5vh; padding: 4rem 5%; }
     .process-step { flex: 0 1 calc(50% - 1.5rem); }
     .about-container { flex-direction: column; text-align: center; }
     .section-title.left-align { text-align: center; }
 }
+
 @media (max-width: 768px) {
     .process-step { flex: 0 1 100%; }
+    .text-presentation { height: 35vh; }
+    .carousel-wrapper { height: 45vh; }
+    .carousel-arrow { width: 35px; height: 35px; font-size: 14px; }
 }
