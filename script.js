@@ -79,11 +79,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const ringTitle = document.getElementById('ring-title');
     const ringDesc = document.getElementById('ring-desc');
     
-    // OPTIMIZACIÓN MÓVIL POR JAVASCRIPT
     if (window.innerWidth <= 1024) {
         const mobileViewer = document.getElementById('main-mobile-viewer');
         if(mobileViewer) {
-            // Intento agresivo de forzar propiedades internas si el componente lo permite
             mobileViewer.bloom = false;
             mobileViewer.enableBloom = false;
             mobileViewer.postProcessing = false;
@@ -119,28 +117,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateCarousel() {
         if (!track) return;
         
-        if (window.innerWidth > 1024) {
-            track.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
-            track.style.transform = `translateX(-${currentIndex * 100}%)`;
-        } else {
-            track.style.transform = 'none';
-        }
+        // Transición y deslizamiento del carrusel anulados (cambio directo)
+        track.style.transition = 'none';
+        track.style.transform = `translateX(-${currentIndex * 100}%)`;
         
         document.querySelectorAll('.dot').forEach(dot => dot.classList.remove('active'));
         document.querySelectorAll('.nav-desk .dot')[currentIndex]?.classList.add('active');
         document.querySelectorAll('.nav-mob .dot')[currentIndex]?.classList.add('active');
 
-        if (textOverlay) textOverlay.classList.add('text-fade-hide');
-        if (ringBg) ringBg.classList.add('text-fade-hide');
-        
-        setTimeout(() => {
-            if (ringTitle) ringTitle.innerText = ringData[currentIndex].title;
-            if (ringDesc) ringDesc.innerText = ringData[currentIndex].desc;
-            if (ringBg) ringBg.src = ringData[currentIndex].img; 
-            
-            if (textOverlay) textOverlay.classList.remove('text-fade-hide');
-            if (ringBg) ringBg.classList.remove('text-fade-hide');
-        }, 300); 
+        // Textos y fondos se actualizan instantáneamente sin setTimeout ni animaciones
+        if (ringTitle) ringTitle.innerText = ringData[currentIndex].title;
+        if (ringDesc) ringDesc.innerText = ringData[currentIndex].desc;
+        if (ringBg) ringBg.src = ringData[currentIndex].img; 
     }
 
     function goPrev() {
@@ -179,6 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.innerWidth <= 1024 && track) {
             track.style.transform = 'none';
         } else if (track) {
+            track.style.transition = 'none';
             track.style.transform = `translateX(-${currentIndex * 100}%)`;
         }
     });
