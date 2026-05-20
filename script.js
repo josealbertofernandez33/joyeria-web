@@ -1,7 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    const DESIGNER_EMAIL = 'josealbertofernandez33@gmail.com';
-
     // =========================================================
     // REFS
     // =========================================================
@@ -10,7 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const lightRealm = document.getElementById('light-realm');
     const flashOverlay = document.getElementById('flash-overlay');
     const thankYou = document.getElementById('thank-you-popup');
-    const thankYouText = document.getElementById('thank-you-text');
 
     // =========================================================
     // TRANSICION DARK -> LIGHT REALM
@@ -170,66 +167,10 @@ document.addEventListener('DOMContentLoaded', () => {
     animElements.forEach(el => scrollObserver.observe(el));
 
     // =========================================================
-    // GESTOR DE ARCHIVOS (solo lista visual - se adjuntan en el mail app)
-    // =========================================================
-    const MAX_FILES = 5;
-    const fileInput = document.getElementById('attachments');
-    const fileList = document.getElementById('file-list');
-    const formError = document.getElementById('form-error');
-    let selectedFiles = [];
-
-    function fmtSize(bytes) {
-        if (bytes < 1024) return bytes + ' B';
-        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-        return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
-    }
-    function showError(msg) { if (formError) formError.textContent = msg; }
-    function clearError() { if (formError) formError.textContent = ''; }
-
-    function renderFileList() {
-        if (!fileList) return;
-        fileList.innerHTML = '';
-        selectedFiles.forEach((file) => {
-            const item = document.createElement('div');
-            item.className = 'file-item';
-            item.innerHTML =
-                '<span class="file-name" title="' + file.name + '">' + file.name + ' <em>(' + fmtSize(file.size) + ')</em></span>' +
-                '<span class="remove-file" data-name="' + file.name + '">&#10005;</span>';
-            fileList.appendChild(item);
-        });
-        fileList.querySelectorAll('.remove-file').forEach(btn => {
-            btn.addEventListener('click', (ev) => {
-                const name = ev.currentTarget.getAttribute('data-name');
-                selectedFiles = selectedFiles.filter(f => f.name !== name);
-                renderFileList();
-                clearError();
-            });
-        });
-    }
-
-    if (fileInput) {
-        fileInput.addEventListener('change', (e) => {
-            const incoming = Array.from(e.target.files);
-            e.target.value = '';
-            clearError();
-            for (const f of incoming) {
-                if (selectedFiles.length >= MAX_FILES) {
-                    showError('Maximum ' + MAX_FILES + ' files.');
-                    break;
-                }
-                if (selectedFiles.some(x => x.name === f.name && x.size === f.size)) continue;
-                selectedFiles.push(f);
-            }
-            renderFileList();
-        });
-    }
-
-    // =========================================================
     // POPUP DE AGRADECIMIENTO
     // =========================================================
-    function showThankYou(customText) {
+    function showThankYou() {
         if (!thankYou) return;
-        if (customText && thankYouText) thankYouText.innerHTML = customText;
         thankYou.classList.add('is-visible');
         thankYou.setAttribute('aria-hidden', 'false');
         const closeHandler = () => {
@@ -250,63 +191,76 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================================
-    // ENVIO POR mailto: (sin dependencias externas, 100% fiable)
+    // ENVIO DEL FORMULARIO (AJAX -> Web3Forms)
     // =========================================================
     const form = document.getElementById('bespoke-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const submitLabel = submitBtn ? submitBtn.querySelector('.submit-label') : null;
+    const formError = document.getElementById('form-error');
+
+    function showError(msg) { if (formError) formError.textContent = msg; }
+    function clearError() { if (formError) formError.textContent = ''; }
+
+    function setSubmitting(isSubmitting) {
+        if (!submitBtn) return;
+        submitBtn.disabled = isSubmitting;
+        submitBtn.classList.toggle('is-loading', isSubmitting);
+        if (submitLabel) submitLabel.textContent = isSubmitting ? 'Sending...' : 'Send Request';
+    }
+
     if (form) {
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
             clearError();
 
             const emailField = document.getElementById('email');
             const messageField = document.getElementById('message');
-            const clientEmail = emailField.value.trim();
-            const clientMessage = messageField.value.trim();
+            const emailVal = emailField.value.trim();
+            const messageVal = messageField.value.trim();
 
-            if (!clientEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientEmail)) {
+            if (!emailVal || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
                 showError('Please enter a valid email address.');
                 emailField.focus();
                 return;
             }
-            if (!clientMessage) {
+            if (!messageVal) {
                 showError('Please tell me about your idea.');
                 messageField.focus();
                 return;
             }
 
-            // Construir cuerpo del email
-            const subject = 'Beyond Fear - Commission request';
-            let body = clientMessage + '\r\n\r\n';
-            body += '------------------------------\r\n';
-            body += 'Reply to: ' + clientEmail + '\r\n';
+            const fd = new FormData();
+            fd.append('access_key', form.querySelector('[name="access_key"]').value);
+            fd.append('subject', form.querySelector('[name="subject"]').value);
+            fd.append('from_name', form.querySelector('[name="from_name"]').value);
+            fd.append('email', emailVal);
+            fd.append('message', messageVal);
+            fd.append('botcheck', form.querySelector('[name="botcheck"]').checked ? 'true' : '');
 
-            if (selectedFiles.length > 0) {
-                body += '\r\nFiles to attach (please drag them into this email):\r\n';
-                selectedFiles.forEach((f, i) => {
-                    body += '  ' + (i + 1) + '. ' + f.name + ' (' + fmtSize(f.size) + ')\r\n';
+            setSubmitting(true);
+
+            try {
+                const res = await fetch('https://api.web3forms.com/submit', {
+                    method: 'POST',
+                    body: fd
                 });
-            }
 
-            const mailtoUrl = 'mailto:' + encodeURIComponent(DESIGNER_EMAIL)
-                + '?subject=' + encodeURIComponent(subject)
-                + '&body=' + encodeURIComponent(body);
+                let data = null;
+                try { data = await res.json(); } catch (_) {}
 
-            // Abrir cliente de correo
-            window.location.href = mailtoUrl;
-
-            // Mostrar popup tras una pequena pausa
-            setTimeout(() => {
-                let popupText;
-                if (selectedFiles.length > 0) {
-                    popupText = 'Your email is ready in your mail app. <strong>Attach your ' + selectedFiles.length + ' file' + (selectedFiles.length === 1 ? '' : 's') + '</strong> and press Send.';
+                if (res.ok && data && data.success) {
+                    form.reset();
+                    showThankYou();
                 } else {
-                    popupText = 'Your email is ready in your mail app. Please review it and press <strong>Send</strong>.';
+                    const msg = (data && (data.message || data.error)) || ('Submission failed (HTTP ' + res.status + ').');
+                    showError(msg);
                 }
-                showThankYou(popupText);
-                form.reset();
-                selectedFiles = [];
-                renderFileList();
-            }, 500);
+            } catch (err) {
+                console.error('[contact form] submit error:', err);
+                showError('Network error. Please check your connection and try again.');
+            } finally {
+                setSubmitting(false);
+            }
         });
     }
 

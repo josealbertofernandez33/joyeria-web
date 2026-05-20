@@ -183,22 +183,20 @@
                 <p class="contact-subtitle">Share your vision with me. Let us create something truly extraordinary.</p>
 
                 <form class="bespoke-form" id="bespoke-form" novalidate>
+                    <input type="hidden" name="access_key" value="71ef059a-ca0a-41e9-aea4-9030fd2e5869">
+                    <input type="hidden" name="subject" value="Beyond Fear - Nueva solicitud de comision">
+                    <input type="hidden" name="from_name" value="Beyond Fear (Web)">
+                    <input type="checkbox" name="botcheck" style="display:none" tabindex="-1" autocomplete="off">
+
                     <div class="form-group">
                         <input type="email" name="email" id="email" required placeholder=" "><label for="email">Your Email Address</label>
                     </div>
                     <div class="form-group">
-                        <textarea name="message" id="message" rows="5" required placeholder=" "></textarea><label for="message">Tell me about your idea...</label>
-                    </div>
-                    <div class="form-group file-group">
-                        <input type="file" name="attachment" id="attachments" multiple class="hidden-file-input">
-                        <label for="attachments" class="file-upload-btn" id="file-label">
-                            <span class="upload-icon">+</span> Select files (optional)
-                            <small class="upload-hint">Any image or PDF</small>
-                        </label>
-                        <div id="file-list" class="file-list"></div>
+                        <textarea name="message" id="message" rows="6" required placeholder=" "></textarea><label for="message">Tell me about your idea...</label>
                     </div>
                     <button type="submit" class="btn-gold submit-btn" id="submit-btn">
                         <span class="submit-label">Send Request</span>
+                        <span class="submit-spinner" aria-hidden="true"></span>
                     </button>
                     <p class="form-error" id="form-error" role="alert"></p>
                 </form>
@@ -208,8 +206,8 @@
 
     <div id="thank-you-popup" class="thank-you-overlay" aria-hidden="true">
         <div class="thank-you-box">
-            <h2>Almost there</h2>
-            <p id="thank-you-text">Your email is ready in your mail app. Please review it and press Send.</p>
+            <h2>Thank You</h2>
+            <p>Your request has been beautifully received. I will be in touch with you shortly.</p>
             <span class="tap-to-close">Tap anywhere to close</span>
         </div>
     </div>
