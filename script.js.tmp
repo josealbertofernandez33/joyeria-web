@@ -37,16 +37,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const star = document.createElement('div');
             star.style.position = 'absolute';
             star.style.borderRadius = '50%';
-            star.style.left = (Math.random() * 100) + '%';
-            star.style.top = (Math.random() * 100) + '%';
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.top = `${Math.random() * 100}%`;
             const size = Math.random() < 0.90
                 ? (Math.random() * sizeBase * 0.6 + 0.5)
                 : (Math.random() * sizeBase + sizeBase / 2);
-            star.style.width = size + 'px';
-            star.style.height = size + 'px';
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
             const colors = ['#ffffff', '#e0f7fa', '#fff3e0', '#ffd700'];
             star.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-            star.style.boxShadow = '0 0 ' + size + 'px ' + (size/2) + 'px ' + star.style.backgroundColor;
+            star.style.boxShadow = `0 0 ${size}px ${size / 2}px ${star.style.backgroundColor}`;
             star.style.animation = 'none';
             star.style.opacity = (Math.random() * 0.6 + 0.4).toString();
             starfield.appendChild(star);
@@ -54,17 +54,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================================
-    // HALO RODS
+    // HALO RODS RANDOMIZATION
     // =========================================================
     const rods = document.querySelectorAll('.arrow-halo-rod');
     const maxRodLen = 110;
     const minRodLen = 30;
+
     function randomizeRod(rod) {
         const newAngle = Math.random() * 360;
         const newLen = Math.floor(Math.random() * (maxRodLen - minRodLen + 1)) + minRodLen;
-        rod.style.setProperty('--rod-angle', newAngle + 'deg');
-        rod.style.setProperty('--rod-len', newLen + 'px');
+        rod.style.setProperty('--rod-angle', `${newAngle}deg`);
+        rod.style.setProperty('--rod-len', `${newLen}px`);
     }
+
     rods.forEach(randomizeRod);
     rods.forEach(rod => {
         rod.addEventListener('animationiteration', () => randomizeRod(rod));
@@ -101,15 +103,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!track) return;
         if (window.innerWidth > 1024) {
             track.style.transition = 'none';
-            track.style.transform = 'translateX(-' + (currentIndex * 100) + '%)';
+            track.style.transform = `translateX(-${currentIndex * 100}%)`;
         } else {
             track.style.transform = 'none';
         }
         document.querySelectorAll('.dot').forEach(dot => dot.classList.remove('active'));
-        const dDot = document.querySelectorAll('.nav-desk .dot')[currentIndex];
-        const mDot = document.querySelectorAll('.nav-mob .dot')[currentIndex];
-        if (dDot) dDot.classList.add('active');
-        if (mDot) mDot.classList.add('active');
+        document.querySelectorAll('.nav-desk .dot')[currentIndex]?.classList.add('active');
+        document.querySelectorAll('.nav-mob .dot')[currentIndex]?.classList.add('active');
         if (ringTitle) ringTitle.innerText = ringData[currentIndex].title;
         if (ringDesc) ringDesc.innerText = ringData[currentIndex].desc;
         if (ringBg) ringBg.src = ringData[currentIndex].img;
@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
             track.style.transform = 'none';
         } else if (track) {
             track.style.transition = 'none';
-            track.style.transform = 'translateX(-' + (currentIndex * 100) + '%)';
+            track.style.transform = `translateX(-${currentIndex * 100}%)`;
         }
     });
 
@@ -176,18 +176,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }, { root: null, rootMargin: '0px', threshold: 0.2 });
 
     document.querySelectorAll('.process-step.scroll-anim').forEach((step, index) => {
-        step.style.transitionDelay = (index * 0.15) + 's';
+        step.style.transitionDelay = `${index * 0.15}s`;
     });
     animElements.forEach(el => scrollObserver.observe(el));
 
     // =========================================================
     // GESTOR DE ARCHIVOS (compresion ligera + cupo amplio)
-    // Los adjuntos se suben a catbox.moe y se envian como enlaces.
+    // Adjuntos se subiran a catbox.moe y se enviaran como enlaces.
     // =========================================================
     const MAX_FILES = 5;
-    const MAX_TOTAL_BYTES = 25 * 1024 * 1024;
-    const MAX_FILE_BYTES = 15 * 1024 * 1024;
-    const COMPRESS_TRIGGER = 6 * 1024 * 1024;
+    const MAX_TOTAL_BYTES = 25 * 1024 * 1024;  // 25 MB total (subida cliente -> catbox)
+    const MAX_FILE_BYTES = 15 * 1024 * 1024;   // 15 MB por archivo individual
+    const COMPRESS_TRIGGER = 6 * 1024 * 1024;  // imagenes > 6 MB se aligeran a JPEG
     const COMPRESS_STEPS = [
         { quality: 0.90, maxDim: 3000 },
         { quality: 0.85, maxDim: 2600 },
@@ -199,14 +199,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const formError = document.getElementById('form-error');
     let selectedFiles = [];
 
-    function totalBytes() { return selectedFiles.reduce((a, f) => a + f.file.size, 0); }
+    function totalBytes() {
+        return selectedFiles.reduce((acc, f) => acc + f.file.size, 0);
+    }
+
     function fmtSize(bytes) {
         if (bytes < 1024) return bytes + ' B';
         if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
         return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
     }
-    function showError(msg) { if (formError) formError.textContent = msg; }
-    function clearError() { if (formError) formError.textContent = ''; }
+
+    function showError(msg) { if (formError) { formError.textContent = msg; formError.classList.remove('is-info'); } }
+    function showInfo(msg) { if (formError) { formError.textContent = msg; formError.classList.add('is-info'); } }
+    function clearError() { if (formError) { formError.textContent = ''; formError.classList.remove('is-info'); } }
 
     function loadImage(file) {
         return new Promise((resolve, reject) => {
@@ -217,24 +222,27 @@ document.addEventListener('DOMContentLoaded', () => {
             img.src = url;
         });
     }
+
     function canvasToBlob(canvas, quality) {
         return new Promise(res => canvas.toBlob(res, 'image/jpeg', quality));
     }
+
     async function compressImage(file) {
         try {
             const img = await loadImage(file);
             let bestBlob = null;
             for (const step of COMPRESS_STEPS) {
-                let w = img.width, h = img.height;
-                const scale = Math.min(1, step.maxDim / Math.max(w, h));
-                w = Math.max(1, Math.round(w * scale));
-                h = Math.max(1, Math.round(h * scale));
+                let { width, height } = img;
+                const scale = Math.min(1, step.maxDim / Math.max(width, height));
+                width = Math.max(1, Math.round(width * scale));
+                height = Math.max(1, Math.round(height * scale));
                 const canvas = document.createElement('canvas');
-                canvas.width = w; canvas.height = h;
+                canvas.width = width;
+                canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, w, h);
-                ctx.drawImage(img, 0, 0, w, h);
+                ctx.fillRect(0, 0, width, height);
+                ctx.drawImage(img, 0, 0, width, height);
                 const blob = await canvasToBlob(canvas, step.quality);
                 if (!blob) continue;
                 if (!bestBlob || blob.size < bestBlob.size) bestBlob = blob;
@@ -257,10 +265,12 @@ document.addEventListener('DOMContentLoaded', () => {
             item.className = 'file-item';
             const sizeNow = fmtSize(entry.file.size);
             const meta = entry.compressed
-                ? '<em>(' + sizeNow + ' &middot; optimized from ' + fmtSize(entry.originalSize) + ')</em>'
-                : '<em>(' + sizeNow + ')</em>';
-            item.innerHTML = '<span class="file-name" title="' + entry.file.name + '">' + entry.file.name + ' ' + meta + '</span>' +
-                             '<span class="remove-file" data-name="' + entry.file.name + '">&#10005;</span>';
+                ? `<em>(${sizeNow} · optimized from ${fmtSize(entry.originalSize)})</em>`
+                : `<em>(${sizeNow})</em>`;
+            item.innerHTML = `
+                <span class="file-name" title="${entry.file.name}">${entry.file.name} ${meta}</span>
+                <span class="remove-file" data-name="${entry.file.name}">&#10005;</span>
+            `;
             fileList.appendChild(item);
         });
         fileList.querySelectorAll('.remove-file').forEach(btn => {
@@ -281,47 +291,63 @@ document.addEventListener('DOMContentLoaded', () => {
 
             for (const original of incoming) {
                 if (selectedFiles.length >= MAX_FILES) {
-                    showError('Maximum ' + MAX_FILES + ' files allowed.');
+                    showError(`Maximum ${MAX_FILES} files allowed.`);
                     break;
                 }
+
                 let fileToUse = original;
                 let wasCompressed = false;
+
                 const isImage = original.type.startsWith('image/') && original.type !== 'image/gif';
                 if (isImage && original.size > COMPRESS_TRIGGER) {
                     const compressed = await compressImage(original);
-                    if (compressed) { fileToUse = compressed; wasCompressed = true; }
+                    if (compressed) {
+                        fileToUse = compressed;
+                        wasCompressed = true;
+                    }
                 }
+
                 if (fileToUse.size > MAX_FILE_BYTES) {
-                    showError('"' + original.name + '" is larger than ' + fmtSize(MAX_FILE_BYTES) + ' per file.');
+                    showError(`"${original.name}" is larger than ${fmtSize(MAX_FILE_BYTES)} per file. Reduce it and try again.`);
                     continue;
                 }
+
                 if (selectedFiles.some(en => en.file.name === fileToUse.name)) continue;
+
                 if (totalBytes() + fileToUse.size > MAX_TOTAL_BYTES) {
-                    showError('Total upload size would exceed ' + fmtSize(MAX_TOTAL_BYTES) + '. Remove a file.');
+                    showError(`Total upload size would exceed ${fmtSize(MAX_TOTAL_BYTES)}. Remove a file or use a smaller one.`);
                     break;
                 }
-                selectedFiles.push({ file: fileToUse, originalSize: original.size, compressed: wasCompressed });
+
+                selectedFiles.push({
+                    file: fileToUse,
+                    originalSize: original.size,
+                    compressed: wasCompressed
+                });
             }
             renderFileList();
         });
     }
 
     // =========================================================
-    // SUBIDA A CATBOX.MOE
+    // SUBIDA DE ARCHIVOS A CATBOX.MOE (host gratuito sin clave)
     // =========================================================
     async function uploadToCatbox(file) {
         const fd = new FormData();
         fd.append('reqtype', 'fileupload');
         fd.append('fileToUpload', file, file.name);
-        const res = await fetch('https://catbox.moe/user/api.php', { method: 'POST', body: fd });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const res = await fetch('https://catbox.moe/user/api.php', {
+            method: 'POST',
+            body: fd
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const url = (await res.text()).trim();
-        if (!/^https?:\/\//i.test(url)) throw new Error('Unexpected response: ' + url);
+        if (!/^https?:\/\//i.test(url)) throw new Error('Respuesta inesperada: ' + url);
         return url;
     }
 
     // =========================================================
-    // ENVIO DEL FORMULARIO (Web3Forms FREE)
+    // ENVIO DEL FORMULARIO (Web3Forms FREE + adjuntos como enlaces)
     // =========================================================
     const form = document.getElementById('bespoke-form');
     const submitBtn = document.getElementById('submit-btn');
@@ -334,7 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.disabled = isSubmitting;
         submitBtn.classList.toggle('is-loading', isSubmitting);
         if (submitLabel) {
-            submitLabel.textContent = (isSubmitting && labelOverride) ? labelOverride : originalSubmitLabel;
+            submitLabel.textContent = isSubmitting && labelOverride ? labelOverride : originalSubmitLabel;
         }
     }
 
@@ -342,6 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!thankYou) return;
         thankYou.classList.add('is-visible');
         thankYou.setAttribute('aria-hidden', 'false');
+
         const closeHandler = () => {
             thankYou.classList.remove('is-visible');
             thankYou.setAttribute('aria-hidden', 'true');
@@ -363,7 +390,11 @@ document.addEventListener('DOMContentLoaded', () => {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             clearError();
-            if (!form.checkValidity()) { form.reportValidity(); return; }
+
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
 
             const emailVal = form.querySelector('#email').value.trim();
             const userMessage = form.querySelector('#message').value.trim();
@@ -373,23 +404,29 @@ document.addEventListener('DOMContentLoaded', () => {
             setSubmitting(true, 'Sending...');
 
             try {
+                // 1) Subir cada archivo a catbox.moe en serie (para feedback claro)
                 if (selectedFiles.length > 0) {
                     for (let i = 0; i < selectedFiles.length; i++) {
-                        setSubmitting(true, 'Uploading ' + (i + 1) + '/' + selectedFiles.length + '...');
+                        setSubmitting(true, `Uploading ${i + 1}/${selectedFiles.length}...`);
                         try {
                             const url = await uploadToCatbox(selectedFiles[i].file);
-                            uploadedLinks.push({ name: selectedFiles[i].file.name, url: url });
+                            uploadedLinks.push({ name: selectedFiles[i].file.name, url });
                         } catch (err) {
                             console.error('[catbox] error:', err);
-                            showError('Could not upload "' + selectedFiles[i].file.name + '". Please try again.');
+                            showError(`Could not upload "${selectedFiles[i].file.name}". Please try again.`);
                             setSubmitting(false);
                             return;
                         }
                     }
-                    const block = uploadedLinks.map((u, idx) => (idx + 1) + '. ' + u.name + '\n   ' + u.url).join('\n\n');
-                    finalMessage += '\n\n--- Attached files (' + uploadedLinks.length + ') ---\n' + block;
+
+                    // 2) Construir bloque de enlaces para el email
+                    const block = uploadedLinks
+                        .map((u, idx) => `${idx + 1}. ${u.name}\n   ${u.url}`)
+                        .join('\n\n');
+                    finalMessage += `\n\n--- Attached files (${uploadedLinks.length}) ---\n${block}`;
                 }
 
+                // 3) Enviar a Web3Forms (sin adjuntos, todo en el mensaje)
                 setSubmitting(true, 'Sending...');
                 const fd = new FormData();
                 fd.append('access_key', form.querySelector('[name="access_key"]').value);
@@ -399,7 +436,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 fd.append('message', finalMessage);
                 fd.append('botcheck', form.querySelector('[name="botcheck"]').checked ? 'true' : '');
 
-                const res = await fetch('https://api.web3forms.com/submit', { method: 'POST', body: fd });
+                const res = await fetch('https://api.web3forms.com/submit', {
+                    method: 'POST',
+                    body: fd
+                });
+
                 let data = null;
                 try { data = await res.json(); } catch (_) {}
 
@@ -409,16 +450,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     renderFileList();
                     showThankYou();
                 } else {
-                    const msg = (data && (data.message || data.error)) || ('Submission failed (HTTP ' + res.status + ').');
+                    const msg = (data && (data.message || data.error)) || `Submission failed (HTTP ${res.status}). Please try again.`;
                     showError(msg);
                 }
             } catch (err) {
                 console.error('[contact form] submit error:', err);
-                showError('Network error. Please check your connection and try again.');
-            } finally {
-                setSubmitting(false);
-            }
-        });
-    }
-
-});
+                showError('Network error. Pl
