@@ -45,8 +45,19 @@
     </section>
 
     <section id="light-realm" class="hidden">
-        <header class="clean-header">
-            <div class="logo">J.A.</div>
+        
+        <header class="clean-header" id="main-header">
+            <div class="logo">
+                <a href="#light-realm"><img src="logo1v1.png" alt="J.A. Logo"></a>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="#light-realm">Collection</a></li>
+                    <li><a href="#process">Process</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </nav>
         </header>
 
         <main class="luminous-content">
@@ -148,7 +159,6 @@
 
         <section class="about-section" id="about">
             <div class="about-container">
-                <div class="about-image scroll-anim"><img src="16.png" alt="Designer"></div>
                 <div class="about-text scroll-anim">
                     <h2 class="section-title left-align">Meet the Designer</h2>
                     <p>When a client struggles to visualize what they want, I help them bring their ideas to life through the digital previsualization and rendering process.</p>
@@ -159,6 +169,10 @@
                     <p>Without a doubt, what I enjoy most professionally is working in the field of FASHION.</p>
                     <p>People incorporate objects into their daily routine that hold meaning, a meaning so profound that they feel the need to share it with the world.</p>
                     <p>When someone incorporates a design we created together into their everyday look, I experience that feeling of triumph that motivates me every day to keep designing.</p>
+                    
+                    <div style="text-align: center; margin-top: 3rem;">
+                        <a href="https://www.linkedin.com/in/josé-alberto-ascanio-fernández" target="_blank" rel="noopener noreferrer" class="btn-gold">View Professional Profile</a>
+                    </div>
                 </div>
             </div>
         </section>
@@ -168,8 +182,9 @@
                 <h2 class="section-title">Begin Your Journey</h2>
                 <p class="contact-subtitle">Share your vision with me. Let us create something truly extraordinary.</p>
                 
-                <form action="https://formsubmit.co/josealbertofernandez33@gmail.com" method="POST" enctype="multipart/form-data" class="bespoke-form">
-                    <input type="hidden" name="_next" value="https://tu-dominio.com/#contact"> 
+                <form action="https://formsubmit.co/josealbertofernandez33@gmail.com" method="POST" enctype="multipart/form-data" class="bespoke-form" id="bespoke-form">
+                    <input type="hidden" name="_captcha" value="false"> 
+                    
                     <div class="form-group">
                         <input type="email" name="email" id="email" required placeholder=" "><label for="email">Your Email Address</label>
                     </div>
@@ -180,11 +195,19 @@
                         <input type="file" name="attachment" id="attachments" multiple accept="image/*,.pdf" class="hidden-file-input">
                         <label for="attachments" class="file-upload-btn" id="file-label"><span class="upload-icon">+</span> Attach Images</label>
                     </div>
-                    <button type="submit" class="btn-gold submit-btn">Send Request</button>
+                    <button type="submit" class="btn-gold submit-btn" id="submit-btn">Send Request</button>
                 </form>
             </div>
         </section>
     </section>
+
+    <div id="thank-you-popup" class="thank-you-overlay">
+        <div class="thank-you-box">
+            <h2>Thank You</h2>
+            <p>Your request has been beautifully received. I will be in touch with you shortly.</p>
+            <span class="tap-to-close">Tap anywhere to close</span>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>
