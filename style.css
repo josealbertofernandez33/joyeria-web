@@ -254,29 +254,20 @@ diamond-viewer canvas { width: 100% !important; height: 100% !important; outline
 .file-upload-btn:hover .upload-hint { color: var(--gold); opacity: 0.85; }
 
 .submit-btn { width: 100%; margin-top: 1rem; padding: 1.2rem; cursor: pointer; font-size: 1.1rem; position: relative; }
-.submit-btn .submit-spinner { display: none; width: 18px; height: 18px; border: 2px solid rgba(212,175,55,0.35); border-top-color: var(--gold); border-radius: 50%; margin-left: 12px; animation: spin 0.8s linear infinite; }
-.submit-btn.is-loading { pointer-events: none; opacity: 0.85; }
-.submit-btn.is-loading .submit-label { opacity: 0.6; }
-.submit-btn.is-loading .submit-spinner { display: inline-block; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
 .form-error { min-height: 1.2em; color: #b8001f; font-size: 0.95rem; margin-top: -0.5rem; text-align: center; }
 
 .file-list { margin-top: 15px; display: flex; flex-direction: column; gap: 8px; }
 .file-item {
     display: flex; justify-content: space-between; align-items: center;
     background: #f4f4f4; padding: 8px 12px; font-size: 0.9rem; border-radius: 4px;
-    border: 1px solid #ddd;
-    gap: 12px;
+    border: 1px solid #ddd; gap: 12px;
 }
 .file-item .file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
 .file-item .file-name em { color: #999; font-style: normal; margin-left: 6px; font-size: 0.85em; }
 .remove-file { color: #d4af37; cursor: pointer; font-weight: bold; padding: 0 5px; font-size: 1.2rem; flex-shrink: 0; }
 .remove-file:hover { color: red; }
 
-/* =========================================================
-   POPUP DE AGRADECIMIENTO
-   ========================================================= */
+/* POPUP */
 .thank-you-overlay {
     position: fixed; inset: 0; z-index: 10000;
     background: rgba(10, 10, 10, 0.78);
@@ -284,16 +275,14 @@ diamond-viewer canvas { width: 100% !important; height: 100% !important; outline
     display: flex; align-items: center; justify-content: center;
     opacity: 0; visibility: hidden;
     transition: opacity 0.5s ease, visibility 0s linear 0.5s;
-    cursor: pointer;
-    padding: 2rem;
+    cursor: pointer; padding: 2rem;
 }
 .thank-you-overlay.is-visible {
     opacity: 1; visibility: visible;
     transition: opacity 0.5s ease, visibility 0s linear 0s;
 }
 .thank-you-box {
-    max-width: 540px; width: 100%;
-    text-align: center;
+    max-width: 540px; width: 100%; text-align: center;
     padding: 3.5rem 2.5rem;
     background: linear-gradient(160deg, #fdfdfd 0%, #f3f0e6 100%);
     border: 1px solid var(--gold);
@@ -304,27 +293,18 @@ diamond-viewer canvas { width: 100% !important; height: 100% !important; outline
 .thank-you-overlay.is-visible .thank-you-box { transform: translateY(0) scale(1); }
 .thank-you-box h2 {
     font-family: var(--font-title);
-    font-size: 2.4rem;
-    letter-spacing: 4px;
+    font-size: 2.4rem; letter-spacing: 4px;
     color: var(--gold);
-    margin-bottom: 1.2rem;
-    text-transform: uppercase;
+    margin-bottom: 1.2rem; text-transform: uppercase;
 }
 .thank-you-box p {
     font-family: var(--font-text);
-    font-size: 1.2rem;
-    color: #333;
-    line-height: 1.65;
-    margin-bottom: 2rem;
+    font-size: 1.2rem; color: #333; line-height: 1.65; margin-bottom: 2rem;
 }
 .thank-you-box .tap-to-close {
     display: inline-block;
-    font-size: 0.85rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: #888;
-    border-top: 1px solid rgba(212,175,55,0.4);
-    padding-top: 1rem;
+    font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase; color: #888;
+    border-top: 1px solid rgba(212,175,55,0.4); padding-top: 1rem;
 }
 
 @keyframes blur-rays { 0% { filter: blur(2px); } 100% { filter: blur(5px); } }
@@ -332,9 +312,7 @@ diamond-viewer canvas { width: 100% !important; height: 100% !important; outline
 @keyframes pulse-core-sync { 0% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 8px 2px rgba(255, 255, 255, 0.8), 0 0 25px 8px rgba(255, 255, 255, 0.3); } 15% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 8px 2px rgba(255, 255, 255, 1), 0 0 25px 8px rgba(255, 255, 255, 0.7); } 100% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 8px 2px rgba(255, 255, 255, 1), 0 0 25px 8px rgba(255, 255, 255, 0.7); } }
 @keyframes rotate-rays { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
 
-/* ============================================================== */
-/* CONFIGURACIÓN ADAPTATIVA MÓVIL                                 */
-/* ============================================================== */
+/* MOBILE */
 .mobile-ui-overlay { display: none; }
 .mobile-btn-container { display: none; }
 .desktop-ui-overlay { display: block; }
@@ -343,14 +321,11 @@ diamond-viewer canvas { width: 100% !important; height: 100% !important; outline
     .clean-header { flex-direction: column; gap: 1rem; padding: 1rem 5%; }
     .main-nav ul { gap: 1.5rem; flex-wrap: wrap; justify-content: center; }
     .main-nav a { font-size: 0.9rem; }
-
     .logo img { height: 60px; filter: invert(35%); }
 
     .luminous-content { flex-direction: column; text-align: center; height: auto; min-height: 100vh; padding-top: 0; gap: 0; }
-
     .text-presentation { order: 1; flex: auto; max-width: 100%; width: 100%; height: auto; padding: 0; display: flex; flex-direction: column; }
     .desktop-btn { display: none !important; }
-
     .ring-bg-wrapper { position: relative; width: 100%; height: 50vh; overflow: hidden; pointer-events: auto; }
 
     .mobile-ui-overlay {
@@ -359,7 +334,6 @@ diamond-viewer canvas { width: 100% !important; height: 100% !important; outline
         padding: 2rem 1rem; z-index: 10; pointer-events: none;
         background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.6) 100%);
     }
-
     .mobile-controls { display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 1rem; pointer-events: auto; position: static; }
     .mobile-controls .carousel-arrow { position: absolute; top: 50%; transform: translateY(-50%); width: auto; height: auto; background: transparent; border: none; color: rgba(255, 255, 255, 0.5); font-size: 28px; }
     .prev-btn-mob { left: 10px; }

@@ -1,48 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    const DESIGNER_EMAIL = 'josealbertofernandez33@gmail.com';
+
     // =========================================================
-    // REFS GLOBALES
+    // REFS
     // =========================================================
     const theLight = document.getElementById('the-light');
     const darkRealm = document.getElementById('dark-realm');
     const lightRealm = document.getElementById('light-realm');
     const flashOverlay = document.getElementById('flash-overlay');
     const thankYou = document.getElementById('thank-you-popup');
-
-    // =========================================================
-    // DETECCION DE RETORNO TRAS ENVIO (?sent=1) -> POPUP DIRECTO
-    // =========================================================
-    const params = new URLSearchParams(window.location.search);
-    const cameFromSubmit = params.get('sent') === '1';
-
-    function showThankYou() {
-        if (!thankYou) return;
-        thankYou.classList.add('is-visible');
-        thankYou.setAttribute('aria-hidden', 'false');
-        const closeHandler = () => {
-            thankYou.classList.remove('is-visible');
-            thankYou.setAttribute('aria-hidden', 'true');
-            document.removeEventListener('click', closeHandler, true);
-            document.removeEventListener('touchstart', closeHandler, true);
-            document.removeEventListener('keydown', keyHandler, true);
-        };
-        const keyHandler = (ev) => {
-            if (ev.key === 'Escape' || ev.key === 'Enter' || ev.key === ' ') closeHandler();
-        };
-        setTimeout(() => {
-            document.addEventListener('click', closeHandler, true);
-            document.addEventListener('touchstart', closeHandler, true);
-            document.addEventListener('keydown', keyHandler, true);
-        }, 50);
-    }
-
-    if (cameFromSubmit) {
-        if (darkRealm) darkRealm.classList.add('hidden');
-        if (lightRealm) lightRealm.classList.remove('hidden');
-        document.body.style.overflow = 'auto';
-        history.replaceState({}, '', window.location.pathname + '#contact');
-        setTimeout(showThankYou, 300);
-    }
+    const thankYouText = document.getElementById('thank-you-text');
 
     // =========================================================
     // TRANSICION DARK -> LIGHT REALM
@@ -81,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
             star.style.height = size + 'px';
             const colors = ['#ffffff', '#e0f7fa', '#fff3e0', '#ffd700'];
             star.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-            star.style.boxShadow = '0 0 ' + size + 'px ' + (size/2) + 'px ' + star.style.backgroundColor;
+            star.style.boxShadow = '0 0 ' + size + 'px ' + (size / 2) + 'px ' + star.style.backgroundColor;
             star.style.animation = 'none';
             star.style.opacity = (Math.random() * 0.6 + 0.4).toString();
             starfield.appendChild(star);
@@ -202,28 +170,14 @@ document.addEventListener('DOMContentLoaded', () => {
     animElements.forEach(el => scrollObserver.observe(el));
 
     // =========================================================
-    // CONFIGURAR _next DINAMICAMENTE (vuelve a esta misma URL)
-    // =========================================================
-    const nextInput = document.getElementById('next-input');
-    if (nextInput) {
-        const base = window.location.origin + window.location.pathname;
-        nextInput.value = base + '?sent=1#contact';
-    }
-
-    // =========================================================
-    // GESTOR DE ARCHIVOS (lista visible + eliminar)
-    // FormSubmit acepta cualquier formato. Limite practico Gmail ~25 MB.
+    // GESTOR DE ARCHIVOS (solo lista visual - se adjuntan en el mail app)
     // =========================================================
     const MAX_FILES = 5;
-    const MAX_TOTAL_BYTES = 20 * 1024 * 1024;
-
     const fileInput = document.getElementById('attachments');
     const fileList = document.getElementById('file-list');
     const formError = document.getElementById('form-error');
-    const submitBtn = document.getElementById('submit-btn');
     let selectedFiles = [];
 
-    function totalBytes() { return selectedFiles.reduce((a, f) => a + f.size, 0); }
     function fmtSize(bytes) {
         if (bytes < 1024) return bytes + ' B';
         if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
@@ -231,13 +185,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function showError(msg) { if (formError) formError.textContent = msg; }
     function clearError() { if (formError) formError.textContent = ''; }
-
-    function syncInputFiles() {
-        if (!fileInput) return;
-        const dt = new DataTransfer();
-        selectedFiles.forEach(f => dt.items.add(f));
-        fileInput.files = dt.files;
-    }
 
     function renderFileList() {
         if (!fileList) return;
@@ -255,7 +202,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const name = ev.currentTarget.getAttribute('data-name');
                 selectedFiles = selectedFiles.filter(f => f.name !== name);
                 renderFileList();
-                syncInputFiles();
                 clearError();
             });
         });
@@ -264,40 +210,103 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fileInput) {
         fileInput.addEventListener('change', (e) => {
             const incoming = Array.from(e.target.files);
+            e.target.value = '';
             clearError();
             for (const f of incoming) {
-                if (selectedFiles.length >= MAX_FILES) { showError('Maximum ' + MAX_FILES + ' files allowed.'); break; }
-                if (selectedFiles.some(x => x.name === f.name && x.size === f.size)) continue;
-                if (totalBytes() + f.size > MAX_TOTAL_BYTES) {
-                    showError('Total size must stay under ' + fmtSize(MAX_TOTAL_BYTES) + '. Remove a file or use a smaller one.');
+                if (selectedFiles.length >= MAX_FILES) {
+                    showError('Maximum ' + MAX_FILES + ' files.');
                     break;
                 }
+                if (selectedFiles.some(x => x.name === f.name && x.size === f.size)) continue;
                 selectedFiles.push(f);
             }
             renderFileList();
-            syncInputFiles();
         });
     }
 
     // =========================================================
-    // FEEDBACK VISUAL DURANTE EL ENVIO
+    // POPUP DE AGRADECIMIENTO
+    // =========================================================
+    function showThankYou(customText) {
+        if (!thankYou) return;
+        if (customText && thankYouText) thankYouText.innerHTML = customText;
+        thankYou.classList.add('is-visible');
+        thankYou.setAttribute('aria-hidden', 'false');
+        const closeHandler = () => {
+            thankYou.classList.remove('is-visible');
+            thankYou.setAttribute('aria-hidden', 'true');
+            document.removeEventListener('click', closeHandler, true);
+            document.removeEventListener('touchstart', closeHandler, true);
+            document.removeEventListener('keydown', keyHandler, true);
+        };
+        const keyHandler = (ev) => {
+            if (ev.key === 'Escape' || ev.key === 'Enter' || ev.key === ' ') closeHandler();
+        };
+        setTimeout(() => {
+            document.addEventListener('click', closeHandler, true);
+            document.addEventListener('touchstart', closeHandler, true);
+            document.addEventListener('keydown', keyHandler, true);
+        }, 50);
+    }
+
+    // =========================================================
+    // ENVIO POR mailto: (sin dependencias externas, 100% fiable)
     // =========================================================
     const form = document.getElementById('bespoke-form');
     if (form) {
         form.addEventListener('submit', (e) => {
-            if (!form.checkValidity()) return; // que el navegador muestre los errores nativos
-            if (totalBytes() > MAX_TOTAL_BYTES) {
-                e.preventDefault();
-                showError('Total size must stay under ' + fmtSize(MAX_TOTAL_BYTES) + '.');
+            e.preventDefault();
+            clearError();
+
+            const emailField = document.getElementById('email');
+            const messageField = document.getElementById('message');
+            const clientEmail = emailField.value.trim();
+            const clientMessage = messageField.value.trim();
+
+            if (!clientEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientEmail)) {
+                showError('Please enter a valid email address.');
+                emailField.focus();
                 return;
             }
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.classList.add('is-loading');
-                const lbl = submitBtn.querySelector('.submit-label');
-                if (lbl) lbl.textContent = 'Sending...';
+            if (!clientMessage) {
+                showError('Please tell me about your idea.');
+                messageField.focus();
+                return;
             }
-            // El form se envia nativamente a FormSubmit y vuelve via _next
+
+            // Construir cuerpo del email
+            const subject = 'Beyond Fear - Commission request';
+            let body = clientMessage + '\r\n\r\n';
+            body += '------------------------------\r\n';
+            body += 'Reply to: ' + clientEmail + '\r\n';
+
+            if (selectedFiles.length > 0) {
+                body += '\r\nFiles to attach (please drag them into this email):\r\n';
+                selectedFiles.forEach((f, i) => {
+                    body += '  ' + (i + 1) + '. ' + f.name + ' (' + fmtSize(f.size) + ')\r\n';
+                });
+            }
+
+            const mailtoUrl = 'mailto:' + encodeURIComponent(DESIGNER_EMAIL)
+                + '?subject=' + encodeURIComponent(subject)
+                + '&body=' + encodeURIComponent(body);
+
+            // Abrir cliente de correo
+            window.location.href = mailtoUrl;
+
+            // Mostrar popup tras una pequena pausa
+            setTimeout(() => {
+                let popupText;
+                if (selectedFiles.length > 0) {
+                    popupText = 'Your email is ready in your mail app. <strong>Attach your ' + selectedFiles.length + ' file' + (selectedFiles.length === 1 ? '' : 's') + '</strong> and press Send.';
+                } else {
+                    popupText = 'Your email is ready in your mail app. Please review it and press <strong>Send</strong>.';
+                }
+                showThankYou(popupText);
+                form.reset();
+                selectedFiles = [];
+                renderFileList();
+            }, 500);
         });
     }
 

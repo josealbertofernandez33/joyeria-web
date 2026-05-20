@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>José Alberto | Beyond Fear</title>
+    <title>Jose Alberto | Beyond Fear</title>
     <link rel="stylesheet" href="style.css">
 
     <script type="importmap">
@@ -171,7 +171,7 @@
                     <p>When someone incorporates a design we created together into their everyday look, I experience that feeling of triumph that motivates me every day to keep designing.</p>
 
                     <div style="text-align: center; margin-top: 3rem;">
-                        <a href="https://www.linkedin.com/in/josé-alberto-ascanio-fernández" target="_blank" rel="noopener noreferrer" class="btn-gold">View Professional Profile</a>
+                        <a href="https://www.linkedin.com/in/jos%C3%A9-alberto-ascanio-fern%C3%A1ndez" target="_blank" rel="noopener noreferrer" class="btn-gold">View Professional Profile</a>
                     </div>
                 </div>
             </div>
@@ -182,13 +182,7 @@
                 <h2 class="section-title">Begin Your Journey</h2>
                 <p class="contact-subtitle">Share your vision with me. Let us create something truly extraordinary.</p>
 
-                <form action="https://formsubmit.co/josealbertofernandez33@gmail.com" method="POST" enctype="multipart/form-data" class="bespoke-form" id="bespoke-form">
-                    <input type="hidden" name="_subject" value="Nueva solicitud de comisión - Beyond Fear">
-                    <input type="hidden" name="_template" value="table">
-                    <input type="hidden" name="_captcha" value="false">
-                    <input type="hidden" name="_next" id="next-input" value="https://example.com/?sent=1">
-                    <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
-
+                <form class="bespoke-form" id="bespoke-form" novalidate>
                     <div class="form-group">
                         <input type="email" name="email" id="email" required placeholder=" "><label for="email">Your Email Address</label>
                     </div>
@@ -198,14 +192,13 @@
                     <div class="form-group file-group">
                         <input type="file" name="attachment" id="attachments" multiple class="hidden-file-input">
                         <label for="attachments" class="file-upload-btn" id="file-label">
-                            <span class="upload-icon">+</span> Select up to 5 files
+                            <span class="upload-icon">+</span> Select files (optional)
                             <small class="upload-hint">Any image or PDF</small>
                         </label>
                         <div id="file-list" class="file-list"></div>
                     </div>
                     <button type="submit" class="btn-gold submit-btn" id="submit-btn">
                         <span class="submit-label">Send Request</span>
-                        <span class="submit-spinner" aria-hidden="true"></span>
                     </button>
                     <p class="form-error" id="form-error" role="alert"></p>
                 </form>
@@ -215,8 +208,8 @@
 
     <div id="thank-you-popup" class="thank-you-overlay" aria-hidden="true">
         <div class="thank-you-box">
-            <h2>Thank You</h2>
-            <p>Your request has been beautifully received. I will be in touch with you shortly.</p>
+            <h2>Almost there</h2>
+            <p id="thank-you-text">Your email is ready in your mail app. Please review it and press Send.</p>
             <span class="tap-to-close">Tap anywhere to close</span>
         </div>
     </div>
