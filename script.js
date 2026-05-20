@@ -88,26 +88,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const ringData = [
-        {
-            title: "True Beauty Awaits",
-            desc: "You have crossed the threshold. Now, let us forge something eternal, unique, and unconditionally yours.",
-            img: "1.png"
-        },
-        {
-            title: "The Celestial Cut",
-            desc: "A masterpiece born from stardust. Its immaculate facets reflect the light of a thousand galaxies, crafted for the bold.",
-            img: "2.png"
-        },
-        {
-            title: "Eternal Heritage",
-            desc: "Where classic elegance meets modern bespoke design. A timeless silhouette that carries the weight of a lifelong promise.",
-            img: "3.png"
-        },
-        {
-            title: "Obsidian Echo",
-            desc: "A harmonious blend of rare metals and brilliant stones. This piece captures the quiet power and enduring grace of true craftsmanship.",
-            img: "4.png"
-        }
+        { title: "True Beauty Awaits", desc: "You have crossed the threshold. Now, let us forge something eternal, unique, and unconditionally yours.", img: "1.png" },
+        { title: "The Celestial Cut", desc: "A masterpiece born from stardust. Its immaculate facets reflect the light of a thousand galaxies, crafted for the bold.", img: "2.png" },
+        { title: "Eternal Heritage", desc: "Where classic elegance meets modern bespoke design. A timeless silhouette that carries the weight of a lifelong promise.", img: "3.png" },
+        { title: "Obsidian Echo", desc: "A harmonious blend of rare metals and brilliant stones. This piece captures the quiet power and enduring grace of true craftsmanship.", img: "4.png" }
     ];
 
     let currentIndex = 0;
@@ -132,17 +116,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (ringBg) ringBg.src = ringData[currentIndex].img;
     }
 
-    function goPrev() {
-        if (currentIndex > 0) currentIndex--;
-        else currentIndex = totalSlides - 1;
-        updateCarousel();
-    }
-
-    function goNext() {
-        if (currentIndex < totalSlides - 1) currentIndex++;
-        else currentIndex = 0;
-        updateCarousel();
-    }
+    function goPrev() { currentIndex = (currentIndex > 0) ? currentIndex - 1 : totalSlides - 1; updateCarousel(); }
+    function goNext() { currentIndex = (currentIndex < totalSlides - 1) ? currentIndex + 1 : 0; updateCarousel(); }
 
     const prevBtnDesk = document.querySelector('.prev-btn');
     const nextBtnDesk = document.querySelector('.next-btn');
@@ -177,13 +152,10 @@ document.addEventListener('DOMContentLoaded', () => {
         anchor.addEventListener('click', function (e) {
             const targetId = this.getAttribute('href');
             if (targetId === '#') return;
-
             const targetElement = document.querySelector(targetId);
             if (targetElement) {
                 e.preventDefault();
-                targetElement.scrollIntoView({
-                    behavior: 'smooth'
-                });
+                targetElement.scrollIntoView({ behavior: 'smooth' });
             }
         });
     });
@@ -204,17 +176,29 @@ document.addEventListener('DOMContentLoaded', () => {
     animElements.forEach(el => scrollObserver.observe(el));
 
     // =========================================================
-    // GESTOR DE ARCHIVOS (selección y validación)
+    // GESTOR DE ARCHIVOS + COMPRESIÓN DE IMÁGENES EN CLIENTE
     // =========================================================
     const MAX_FILES = 5;
-    const MAX_TOTAL_BYTES = 9 * 1024 * 1024; // 9 MB de margen, Web3Forms tope 10 MB
+    const MAX_TOTAL_BYTES = 4.5 * 1024 * 1024;      // 4.5 MB tras compresión (límite real Cloudflare/Web3Forms ~5 MB)
+    const MIN_FILE_BUDGET = 200 * 1024;             // presupuesto mínimo por archivo: 200 KB
+    // Pasos de compresión adaptativa (calidad, dim máx). Se prueban en orden hasta caber en el presupuesto.
+    const COMPRESS_STEPS = [
+        { quality: 0.88, maxDim: 2400 },
+        { quality: 0.82, maxDim: 2200 },
+        { quality: 0.75, maxDim: 1900 },
+        { quality: 0.68, maxDim: 1600 },
+        { quality: 0.60, maxDim: 1400 },
+        { quality: 0.52, maxDim: 1200 },
+        { quality: 0.45, maxDim: 1000 }
+    ];
+
     const fileInput = document.getElementById('attachments');
     const fileList = document.getElementById('file-list');
     const formError = document.getElementById('form-error');
-    let selectedFiles = [];
+    let selectedFiles = [];   // { file, originalSize, compressed }
 
     function totalBytes() {
-        return selectedFiles.reduce((acc, f) => acc + f.size, 0);
+        return selectedFiles.reduce((acc, f) => acc + f.file.size, 0);
     }
 
     function fmtSize(bytes) {
@@ -223,62 +207,140 @@ document.addEventListener('DOMContentLoaded', () => {
         return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
     }
 
+    function showError(msg) { if (formError) formError.textContent = msg; }
+    function clearError() { if (formError) formError.textContent = ''; }
+
+    // Carga un File como HTMLImageElement
+    function loadImage(file) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            const url = URL.createObjectURL(file);
+            img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+            img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+            img.src = url;
+        });
+    }
+
+    // Codifica el canvas a JPEG con calidad dada → Blob
+    function canvasToBlob(canvas, quality) {
+        return new Promise(res => canvas.toBlob(res, 'image/jpeg', quality));
+    }
+
+    // Comprime una imagen para que quepa en targetBytes. Recorre COMPRESS_STEPS hasta lograrlo.
+    // Si ni el paso más agresivo cabe, devuelve el resultado más pequeño obtenido.
+    async function compressImage(file, targetBytes) {
+        try {
+            const img = await loadImage(file);
+            let bestBlob = null;
+
+            for (const step of COMPRESS_STEPS) {
+                let { width, height } = img;
+                const scale = Math.min(1, step.maxDim / Math.max(width, height));
+                width = Math.max(1, Math.round(width * scale));
+                height = Math.max(1, Math.round(height * scale));
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#ffffff'; // fondo blanco por si el PNG tenía transparencia
+                ctx.fillRect(0, 0, width, height);
+                ctx.drawImage(img, 0, 0, width, height);
+
+                const blob = await canvasToBlob(canvas, step.quality);
+                if (!blob) continue;
+
+                if (!bestBlob || blob.size < bestBlob.size) bestBlob = blob;
+                if (blob.size <= targetBytes) { bestBlob = blob; break; }
+            }
+
+            if (!bestBlob) return null;
+            // Si no mejora respecto al original (caso raro: JPEG ya muy optimizado), devolvemos null
+            if (bestBlob.size >= file.size) return null;
+
+            const baseName = file.name.replace(/\.[^.]+$/, '');
+            return new File([bestBlob], baseName + '.jpg', { type: 'image/jpeg', lastModified: Date.now() });
+        } catch (err) {
+            console.warn('[compress] falló, se usa original:', file.name, err);
+            return null;
+        }
+    }
+
     function renderFileList() {
         if (!fileList) return;
         fileList.innerHTML = '';
-        selectedFiles.forEach((file) => {
+        selectedFiles.forEach((entry) => {
             const item = document.createElement('div');
             item.className = 'file-item';
+            const sizeNow = fmtSize(entry.file.size);
+            const meta = entry.compressed
+                ? `<em>(${sizeNow} · optimized from ${fmtSize(entry.originalSize)})</em>`
+                : `<em>(${sizeNow})</em>`;
             item.innerHTML = `
-                <span class="file-name" title="${file.name}">${file.name} <em>(${fmtSize(file.size)})</em></span>
-                <span class="remove-file" data-name="${file.name}">&#10005;</span>
+                <span class="file-name" title="${entry.file.name}">${entry.file.name} ${meta}</span>
+                <span class="remove-file" data-name="${entry.file.name}">&#10005;</span>
             `;
             fileList.appendChild(item);
         });
         fileList.querySelectorAll('.remove-file').forEach(btn => {
             btn.addEventListener('click', (ev) => {
                 const name = ev.currentTarget.getAttribute('data-name');
-                selectedFiles = selectedFiles.filter(f => f.name !== name);
+                selectedFiles = selectedFiles.filter(e => e.file.name !== name);
                 renderFileList();
-                syncFiles();
                 clearError();
             });
         });
     }
 
-    function syncFiles() {
-        if (!fileInput) return;
-        const dt = new DataTransfer();
-        selectedFiles.forEach(f => dt.items.add(f));
-        fileInput.files = dt.files;
-    }
-
-    function showError(msg) {
-        if (formError) formError.textContent = msg;
-    }
-    function clearError() {
-        if (formError) formError.textContent = '';
-    }
-
     if (fileInput) {
-        fileInput.addEventListener('change', (e) => {
+        fileInput.addEventListener('change', async (e) => {
             const incoming = Array.from(e.target.files);
+            e.target.value = ''; // reset para permitir re-seleccionar el mismo archivo si se eliminó
             clearError();
 
-            for (const f of incoming) {
-                if (selectedFiles.some(x => x.name === f.name && x.size === f.size)) continue;
+            for (const original of incoming) {
                 if (selectedFiles.length >= MAX_FILES) {
                     showError(`Maximum ${MAX_FILES} files allowed.`);
                     break;
                 }
-                if (totalBytes() + f.size > MAX_TOTAL_BYTES) {
-                    showError(`Total attachment size must stay under ${fmtSize(MAX_TOTAL_BYTES)}.`);
+
+                // Presupuesto dinámico para este archivo: lo que queda repartido entre slots libres
+                const remainingBudget = MAX_TOTAL_BYTES - totalBytes();
+                const remainingSlots = MAX_FILES - selectedFiles.length;
+                const fileBudget = Math.max(MIN_FILE_BUDGET, Math.floor(remainingBudget / remainingSlots));
+
+                let fileToUse = original;
+                let wasCompressed = false;
+
+                const isImage = original.type.startsWith('image/') && original.type !== 'image/gif';
+                if (isImage) {
+                    // Comprimir si el archivo supera su presupuesto O si es claramente grande
+                    if (original.size > fileBudget || original.size > 400 * 1024) {
+                        const compressed = await compressImage(original, fileBudget);
+                        if (compressed) {
+                            fileToUse = compressed;
+                            wasCompressed = true;
+                        }
+                    }
+                }
+
+                // Evitar duplicados por nombre
+                const baseName = fileToUse.name;
+                if (selectedFiles.some(en => en.file.name === baseName)) continue;
+
+                if (totalBytes() + fileToUse.size > MAX_TOTAL_BYTES) {
+                    const overflow = (totalBytes() + fileToUse.size) - MAX_TOTAL_BYTES;
+                    showError(`"${original.name}" still exceeds the available space by ${fmtSize(overflow)}. Try removing another file or use a smaller image.`);
                     break;
                 }
-                selectedFiles.push(f);
+
+                selectedFiles.push({
+                    file: fileToUse,
+                    originalSize: original.size,
+                    compressed: wasCompressed
+                });
             }
             renderFileList();
-            syncFiles();
         });
     }
 
@@ -300,7 +362,6 @@ document.addEventListener('DOMContentLoaded', () => {
         thankYou.classList.add('is-visible');
         thankYou.setAttribute('aria-hidden', 'false');
 
-        // Cierre al tocar/click en cualquier punto de la pantalla
         const closeHandler = () => {
             thankYou.classList.remove('is-visible');
             thankYou.setAttribute('aria-hidden', 'true');
@@ -311,7 +372,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const keyHandler = (ev) => {
             if (ev.key === 'Escape' || ev.key === 'Enter' || ev.key === ' ') closeHandler();
         };
-        // Capturamos para que cualquier click cierre sin disparar otras acciones
         setTimeout(() => {
             document.addEventListener('click', closeHandler, true);
             document.addEventListener('touchstart', closeHandler, true);
@@ -324,19 +384,16 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             clearError();
 
-            // Validación nativa
             if (!form.checkValidity()) {
                 form.reportValidity();
                 return;
             }
 
-            // Verificación rápida de tamaño total
             if (totalBytes() > MAX_TOTAL_BYTES) {
                 showError(`Total attachment size must stay under ${fmtSize(MAX_TOTAL_BYTES)}.`);
                 return;
             }
 
-            // Construir FormData manualmente para controlar el campo de archivos
             const fd = new FormData();
             fd.append('access_key', form.querySelector('[name="access_key"]').value);
             fd.append('subject', form.querySelector('[name="subject"]').value);
@@ -345,9 +402,8 @@ document.addEventListener('DOMContentLoaded', () => {
             fd.append('message', form.querySelector('#message').value.trim());
             fd.append('botcheck', form.querySelector('[name="botcheck"]').checked ? 'true' : '');
 
-            // Adjuntos: Web3Forms acepta múltiples archivos en el mismo campo "attachment"
-            selectedFiles.forEach((file) => {
-                fd.append('attachment', file, file.name);
+            selectedFiles.forEach((entry) => {
+                fd.append('attachment', entry.file, entry.file.name);
             });
 
             setSubmitting(true);
@@ -359,13 +415,114 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 let data = null;
-                try { data = await res.json(); } catch (_) { /* respuesta no-JSON */ }
+                try { data = await res.json(); } catch (_) {}
 
                 if (res.ok && data && data.success) {
                     form.reset();
                     selectedFiles = [];
                     renderFileList();
-                    syncFiles();
+                    showThankYou();
+                } else {
+                    const msg = (data && (data.message || data.error)) || `Submission failed (HTTP ${res.status}). Please try again.`;
+                    showError(msg);
+                }
+            } catch (err) {
+                showError('Network error. Please check your connection and try again.');
+                console.error('[contact form] submit error:', err);
+            } finally {
+                setSubmitting(false);
+            }
+        });
+    }
+
+});
+            document.addEventListener('touchstart', closeHandler, true);
+            document.addEventListener('keydown', keyHandler, true);
+        }, 50);
+    }
+
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearError();
+
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            if (totalBytes() > MAX_TOTAL_BYTES) {
+                showError(`Total attachment size must stay under ${fmtSize(MAX_TOTAL_BYTES)}.`);
+                return;
+            }
+
+            const fd = new FormData();
+            fd.append('access_key', form.querySelector('[name="access_key"]').value);
+            fd.append('subject', form.querySelector('[name="subject"]').value);
+            fd.append('from_name', form.querySelector('[name="from_name"]').value);
+            fd.append('email', form.querySelector('#email').value.trim());
+            fd.append('message', form.querySelector('#message').value.trim());
+            fd.append('botcheck', form.querySelector('[name="botcheck"]').checked ? 'true' : '');
+
+            selectedFiles.forEach((entry) => {
+                fd.append('attachment', entry.file, entry.file.name);
+            });
+
+            setSubmitting(true);
+
+            try {
+                const res = await fetch('https://api.web3forms.com/submit', {
+                    method: 'POST',
+                    body: fd
+                });
+
+                let data = null;
+                try { data = await res.json(); } catch (_) {}
+
+                if (res.ok && data && data.success) {
+                    form.reset();
+                    selectedFiles = [];
+                    renderFileList();
+                    showThankYou();
+                } else {
+                    const msg = (data && (data.message || data.error)) || `Submission failed (HTTP ${res.status}). Please try again.`;
+                    showError(msg);
+                }
+            } catch (err) {
+                showError('Network error. Please check your connection and try again.');
+                console.error('[contact form] submit error:', err);
+            } finally {
+                setSubmitting(false);
+            }
+        });
+    }
+
+});
+            fd.append('subject', form.querySelector('[name="subject"]').value);
+            fd.append('from_name', form.querySelector('[name="from_name"]').value);
+            fd.append('email', form.querySelector('#email').value.trim());
+            fd.append('message', form.querySelector('#message').value.trim());
+            fd.append('botcheck', form.querySelector('[name="botcheck"]').checked ? 'true' : '');
+
+            selectedFiles.forEach((entry) => {
+                fd.append('attachment', entry.file, entry.file.name);
+            });
+
+            setSubmitting(true);
+
+            try {
+                const res = await fetch('https://api.web3forms.com/submit', {
+                    method: 'POST',
+                    body: fd
+                });
+
+                let data = null;
+                try { data = await res.json(); } catch (_) {}
+
+                if (res.ok && data && data.success) {
+                    form.reset();
+                    selectedFiles = [];
+                    renderFileList();
                     showThankYou();
                 } else {
                     const msg = (data && (data.message || data.error)) || `Submission failed (HTTP ${res.status}). Please try again.`;
