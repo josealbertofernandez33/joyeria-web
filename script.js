@@ -1,5 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    // =========================================================
+    // TRANSICIÓN DARK -> LIGHT REALM
+    // =========================================================
     const theLight = document.getElementById('the-light');
     const darkRealm = document.getElementById('dark-realm');
     const lightRealm = document.getElementById('light-realm');
@@ -24,36 +27,38 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // =========================================================
+    // STARFIELD
+    // =========================================================
     const starfield = document.getElementById('starfield');
     if (starfield) {
         starfield.style.zIndex = '3';
         starfield.innerHTML = '';
-
         const totalStars = 30;
         const sizeBase = 1;
-
         for (let i = 0; i < totalStars; i++) {
             const star = document.createElement('div');
             star.style.position = 'absolute';
             star.style.borderRadius = '50%';
             star.style.left = `${Math.random() * 100}%`;
             star.style.top = `${Math.random() * 100}%`;
-
-            const size = Math.random() < 0.90 ? (Math.random() * sizeBase * 0.6 + 0.5) : (Math.random() * sizeBase + sizeBase/2);
+            const size = Math.random() < 0.90
+                ? (Math.random() * sizeBase * 0.6 + 0.5)
+                : (Math.random() * sizeBase + sizeBase / 2);
             star.style.width = `${size}px`;
             star.style.height = `${size}px`;
-
             const colors = ['#ffffff', '#e0f7fa', '#fff3e0', '#ffd700'];
             star.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-            star.style.boxShadow = `0 0 ${size}px ${size/2}px ${star.style.backgroundColor}`;
-
+            star.style.boxShadow = `0 0 ${size}px ${size / 2}px ${star.style.backgroundColor}`;
             star.style.animation = 'none';
             star.style.opacity = (Math.random() * 0.6 + 0.4).toString();
-
             starfield.appendChild(star);
         }
     }
 
+    // =========================================================
+    // HALO RODS RANDOMIZATION
+    // =========================================================
     const rods = document.querySelectorAll('.arrow-halo-rod');
     const maxRodLen = 110;
     const minRodLen = 30;
@@ -66,13 +71,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     rods.forEach(randomizeRod);
-
     rods.forEach(rod => {
-        rod.addEventListener('animationiteration', () => {
-            randomizeRod(rod);
-        });
+        rod.addEventListener('animationiteration', () => randomizeRod(rod));
     });
 
+    // =========================================================
+    // CARRUSEL DE ANILLOS
+    // =========================================================
     const track = document.getElementById('ring-carousel');
     const ringBg = document.getElementById('ring-bg');
     const ringTitle = document.getElementById('ring-title');
@@ -80,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (window.innerWidth <= 1024) {
         const mobileViewer = document.getElementById('main-mobile-viewer');
-        if(mobileViewer) {
+        if (mobileViewer) {
             mobileViewer.bloom = false;
             mobileViewer.enableBloom = false;
             mobileViewer.postProcessing = false;
@@ -99,18 +104,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateCarousel() {
         if (!track) return;
-
         if (window.innerWidth > 1024) {
             track.style.transition = 'none';
             track.style.transform = `translateX(-${currentIndex * 100}%)`;
         } else {
             track.style.transform = 'none';
         }
-
         document.querySelectorAll('.dot').forEach(dot => dot.classList.remove('active'));
         document.querySelectorAll('.nav-desk .dot')[currentIndex]?.classList.add('active');
         document.querySelectorAll('.nav-mob .dot')[currentIndex]?.classList.add('active');
-
         if (ringTitle) ringTitle.innerText = ringData[currentIndex].title;
         if (ringDesc) ringDesc.innerText = ringData[currentIndex].desc;
         if (ringBg) ringBg.src = ringData[currentIndex].img;
@@ -148,6 +150,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // =========================================================
+    // SMOOTH SCROLL EN ANCLAS
+    // =========================================================
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             const targetId = this.getAttribute('href');
@@ -160,6 +165,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // =========================================================
+    // SCROLL ANIMATIONS
+    // =========================================================
     const animElements = document.querySelectorAll('.scroll-anim');
     const scrollObserver = new IntersectionObserver((entries, observer) => {
         entries.forEach(entry => {
@@ -176,12 +184,11 @@ document.addEventListener('DOMContentLoaded', () => {
     animElements.forEach(el => scrollObserver.observe(el));
 
     // =========================================================
-    // GESTOR DE ARCHIVOS + COMPRESIÓN DE IMÁGENES EN CLIENTE
+    // GESTOR DE ARCHIVOS + COMPRESIÓN ADAPTATIVA POR PRESUPUESTO
     // =========================================================
     const MAX_FILES = 5;
-    const MAX_TOTAL_BYTES = 4.5 * 1024 * 1024;      // 4.5 MB tras compresión (límite real Cloudflare/Web3Forms ~5 MB)
-    const MIN_FILE_BUDGET = 200 * 1024;             // presupuesto mínimo por archivo: 200 KB
-    // Pasos de compresión adaptativa (calidad, dim máx). Se prueban en orden hasta caber en el presupuesto.
+    const MAX_TOTAL_BYTES = 4.5 * 1024 * 1024;
+    const MIN_FILE_BUDGET = 200 * 1024;
     const COMPRESS_STEPS = [
         { quality: 0.88, maxDim: 2400 },
         { quality: 0.82, maxDim: 2200 },
@@ -195,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileInput = document.getElementById('attachments');
     const fileList = document.getElementById('file-list');
     const formError = document.getElementById('form-error');
-    let selectedFiles = [];   // { file, originalSize, compressed }
+    let selectedFiles = [];
 
     function totalBytes() {
         return selectedFiles.reduce((acc, f) => acc + f.file.size, 0);
@@ -210,7 +217,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function showError(msg) { if (formError) formError.textContent = msg; }
     function clearError() { if (formError) formError.textContent = ''; }
 
-    // Carga un File como HTMLImageElement
     function loadImage(file) {
         return new Promise((resolve, reject) => {
             const img = new Image();
@@ -221,43 +227,33 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Codifica el canvas a JPEG con calidad dada → Blob
     function canvasToBlob(canvas, quality) {
         return new Promise(res => canvas.toBlob(res, 'image/jpeg', quality));
     }
 
-    // Comprime una imagen para que quepa en targetBytes. Recorre COMPRESS_STEPS hasta lograrlo.
-    // Si ni el paso más agresivo cabe, devuelve el resultado más pequeño obtenido.
     async function compressImage(file, targetBytes) {
         try {
             const img = await loadImage(file);
             let bestBlob = null;
-
             for (const step of COMPRESS_STEPS) {
                 let { width, height } = img;
                 const scale = Math.min(1, step.maxDim / Math.max(width, height));
                 width = Math.max(1, Math.round(width * scale));
                 height = Math.max(1, Math.round(height * scale));
-
                 const canvas = document.createElement('canvas');
                 canvas.width = width;
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
-                ctx.fillStyle = '#ffffff'; // fondo blanco por si el PNG tenía transparencia
+                ctx.fillStyle = '#ffffff';
                 ctx.fillRect(0, 0, width, height);
                 ctx.drawImage(img, 0, 0, width, height);
-
                 const blob = await canvasToBlob(canvas, step.quality);
                 if (!blob) continue;
-
                 if (!bestBlob || blob.size < bestBlob.size) bestBlob = blob;
                 if (blob.size <= targetBytes) { bestBlob = blob; break; }
             }
-
             if (!bestBlob) return null;
-            // Si no mejora respecto al original (caso raro: JPEG ya muy optimizado), devolvemos null
             if (bestBlob.size >= file.size) return null;
-
             const baseName = file.name.replace(/\.[^.]+$/, '');
             return new File([bestBlob], baseName + '.jpg', { type: 'image/jpeg', lastModified: Date.now() });
         } catch (err) {
@@ -295,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fileInput) {
         fileInput.addEventListener('change', async (e) => {
             const incoming = Array.from(e.target.files);
-            e.target.value = ''; // reset para permitir re-seleccionar el mismo archivo si se eliminó
+            e.target.value = '';
             clearError();
 
             for (const original of incoming) {
@@ -304,7 +300,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     break;
                 }
 
-                // Presupuesto dinámico para este archivo: lo que queda repartido entre slots libres
                 const remainingBudget = MAX_TOTAL_BYTES - totalBytes();
                 const remainingSlots = MAX_FILES - selectedFiles.length;
                 const fileBudget = Math.max(MIN_FILE_BUDGET, Math.floor(remainingBudget / remainingSlots));
@@ -314,7 +309,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const isImage = original.type.startsWith('image/') && original.type !== 'image/gif';
                 if (isImage) {
-                    // Comprimir si el archivo supera su presupuesto O si es claramente grande
                     if (original.size > fileBudget || original.size > 400 * 1024) {
                         const compressed = await compressImage(original, fileBudget);
                         if (compressed) {
@@ -324,7 +318,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                // Evitar duplicados por nombre
                 const baseName = fileToUse.name;
                 if (selectedFiles.some(en => en.file.name === baseName)) continue;
 
@@ -396,108 +389,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const fd = new FormData();
             fd.append('access_key', form.querySelector('[name="access_key"]').value);
-            fd.append('subject', form.querySelector('[name="subject"]').value);
-            fd.append('from_name', form.querySelector('[name="from_name"]').value);
-            fd.append('email', form.querySelector('#email').value.trim());
-            fd.append('message', form.querySelector('#message').value.trim());
-            fd.append('botcheck', form.querySelector('[name="botcheck"]').checked ? 'true' : '');
-
-            selectedFiles.forEach((entry) => {
-                fd.append('attachment', entry.file, entry.file.name);
-            });
-
-            setSubmitting(true);
-
-            try {
-                const res = await fetch('https://api.web3forms.com/submit', {
-                    method: 'POST',
-                    body: fd
-                });
-
-                let data = null;
-                try { data = await res.json(); } catch (_) {}
-
-                if (res.ok && data && data.success) {
-                    form.reset();
-                    selectedFiles = [];
-                    renderFileList();
-                    showThankYou();
-                } else {
-                    const msg = (data && (data.message || data.error)) || `Submission failed (HTTP ${res.status}). Please try again.`;
-                    showError(msg);
-                }
-            } catch (err) {
-                showError('Network error. Please check your connection and try again.');
-                console.error('[contact form] submit error:', err);
-            } finally {
-                setSubmitting(false);
-            }
-        });
-    }
-
-});
-            document.addEventListener('touchstart', closeHandler, true);
-            document.addEventListener('keydown', keyHandler, true);
-        }, 50);
-    }
-
-    if (form) {
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            clearError();
-
-            if (!form.checkValidity()) {
-                form.reportValidity();
-                return;
-            }
-
-            if (totalBytes() > MAX_TOTAL_BYTES) {
-                showError(`Total attachment size must stay under ${fmtSize(MAX_TOTAL_BYTES)}.`);
-                return;
-            }
-
-            const fd = new FormData();
-            fd.append('access_key', form.querySelector('[name="access_key"]').value);
-            fd.append('subject', form.querySelector('[name="subject"]').value);
-            fd.append('from_name', form.querySelector('[name="from_name"]').value);
-            fd.append('email', form.querySelector('#email').value.trim());
-            fd.append('message', form.querySelector('#message').value.trim());
-            fd.append('botcheck', form.querySelector('[name="botcheck"]').checked ? 'true' : '');
-
-            selectedFiles.forEach((entry) => {
-                fd.append('attachment', entry.file, entry.file.name);
-            });
-
-            setSubmitting(true);
-
-            try {
-                const res = await fetch('https://api.web3forms.com/submit', {
-                    method: 'POST',
-                    body: fd
-                });
-
-                let data = null;
-                try { data = await res.json(); } catch (_) {}
-
-                if (res.ok && data && data.success) {
-                    form.reset();
-                    selectedFiles = [];
-                    renderFileList();
-                    showThankYou();
-                } else {
-                    const msg = (data && (data.message || data.error)) || `Submission failed (HTTP ${res.status}). Please try again.`;
-                    showError(msg);
-                }
-            } catch (err) {
-                showError('Network error. Please check your connection and try again.');
-                console.error('[contact form] submit error:', err);
-            } finally {
-                setSubmitting(false);
-            }
-        });
-    }
-
-});
             fd.append('subject', form.querySelector('[name="subject"]').value);
             fd.append('from_name', form.querySelector('[name="from_name"]').value);
             fd.append('email', form.querySelector('#email').value.trim());
