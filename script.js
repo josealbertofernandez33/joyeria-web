@@ -174,7 +174,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // SCROLL SUAVE PARA LOS ENLACES DE NAVEGACIÓN
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             const targetId = this.getAttribute('href');
@@ -205,73 +204,49 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     animElements.forEach(el => scrollObserver.observe(el));
 
+    // --- NUEVO SISTEMA DE ARCHIVOS ROBUSTO SIN AJAX ---
     const fileInput = document.getElementById('attachments');
-    const fileLabel = document.getElementById('file-label');
+    const fileList = document.getElementById('file-list');
+    let selectedFiles = [];
 
     if (fileInput) {
         fileInput.addEventListener('change', (e) => {
-            const numFiles = e.target.files.length;
-            if (numFiles === 1) {
-                fileLabel.innerHTML = `<span class="upload-icon">✓</span> ${e.target.files[0].name}`;
-                fileLabel.style.borderColor = fileLabel.style.color = "var(--gold)";
-            } else if (numFiles > 1) {
-                fileLabel.innerHTML = `<span class="upload-icon">✓</span> ${numFiles} files selected`;
-                fileLabel.style.borderColor = fileLabel.style.color = "var(--gold)";
-            } else {
-                fileLabel.innerHTML = `<span class="upload-icon">+</span> Attach Images or PDFs`;
-                fileLabel.style.borderColor = "#ccc";
-                fileLabel.style.color = "#666";
-            }
-        });
-    }
-
-    const form = document.getElementById('bespoke-form');
-    const thankYouPopup = document.getElementById('thank-you-popup');
-    const submitBtn = document.getElementById('submit-btn');
-
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault(); 
+            const files = Array.from(e.target.files);
             
-            const originalBtnText = submitBtn.innerText;
-            submitBtn.innerText = 'Sending Request...';
-            submitBtn.disabled = true;
+            if (selectedFiles.length + files.length > 5) {
+                alert("Maximum 5 files allowed.");
+                syncFiles(); 
+                return;
+            }
 
-            const formData = new FormData(form);
-
-            fetch('https://formsubmit.co/ajax/josealbertofernandez33@gmail.com', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'Accept': 'application/json'
+            files.forEach(file => {
+                if (!selectedFiles.some(f => f.name === file.name)) {
+                    selectedFiles.push(file);
+                    
+                    const item = document.createElement('div');
+                    item.className = 'file-item';
+                    item.innerHTML = `
+                        <span>${file.name}</span>
+                        <span class="remove-file" onclick="removeFile(this, '${file.name}')">✕</span>
+                    `;
+                    fileList.appendChild(item);
                 }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if(thankYouPopup) {
-                    thankYouPopup.classList.add('show-popup');
-                }
-                form.reset();
-                if(fileLabel) {
-                    fileLabel.innerHTML = `<span class="upload-icon">+</span> Attach Images`;
-                    fileLabel.style.borderColor = "#ccc";
-                    fileLabel.style.color = "#666";
-                }
-                submitBtn.innerText = originalBtnText;
-                submitBtn.disabled = false;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Oops! There was a problem submitting your request. Please try again.');
-                submitBtn.innerText = originalBtnText;
-                submitBtn.disabled = false;
             });
+            
+            syncFiles();
         });
     }
 
-    if (thankYouPopup) {
-        thankYouPopup.addEventListener('click', () => {
-            thankYouPopup.classList.remove('show-popup');
-        });
+    function syncFiles() {
+        const dataTransfer = new DataTransfer();
+        selectedFiles.forEach(file => dataTransfer.items.add(file));
+        if(fileInput) fileInput.files = dataTransfer.files;
     }
+
+    window.removeFile = (element, fileName) => {
+        selectedFiles = selectedFiles.filter(f => f.name !== fileName);
+        element.parentElement.remove();
+        syncFiles();
+    };
+
 });
