@@ -191,44 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================================
-    // GESTIÓN DE ARCHIVOS
-    // =========================================================
-    const fileInput = document.getElementById('attachments');
-    const fileList = document.getElementById('file-list');
-    let selectedFiles = [];
-
-    if (fileInput) {
-        fileInput.addEventListener('change', (e) => {
-            const files = Array.from(e.target.files);
-            if (selectedFiles.length + files.length > 5) {
-                alert("Maximum 5 files allowed.");
-                return;
-            }
-            files.forEach(file => {
-                selectedFiles.push(file);
-                const item = document.createElement('div');
-                item.className = 'file-item';
-                item.innerHTML = `<span>${file.name}</span><span class="remove-file" onclick="removeFile(this, '${file.name}')">✕</span>`;
-                fileList.appendChild(item);
-            });
-            syncFiles();
-        });
-    }
-
-    window.removeFile = (element, fileName) => {
-        selectedFiles = selectedFiles.filter(f => f.name !== fileName);
-        element.parentElement.remove();
-        syncFiles();
-    };
-
-    function syncFiles() {
-        const dataTransfer = new DataTransfer();
-        selectedFiles.forEach(file => dataTransfer.items.add(file));
-        if (fileInput) fileInput.files = dataTransfer.files;
-    }
-
-    // =========================================================
-    // ENVIO DEL FORMULARIO (TRADICIONAL WEB3FORMS / FORMSUBMIT)
+    // ENVIO DEL FORMULARIO (AJAX -> Web3Forms)
     // =========================================================
     const form = document.getElementById('bespoke-form');
     const submitBtn = document.getElementById('submit-btn');
@@ -273,13 +236,6 @@ document.addEventListener('DOMContentLoaded', () => {
             fd.append('email', emailVal);
             fd.append('message', messageVal);
             fd.append('botcheck', form.querySelector('[name="botcheck"]').checked ? 'true' : '');
-            
-            // Añadir archivos a la carga
-            if (fileInput && fileInput.files.length > 0) {
-                Array.from(fileInput.files).forEach(file => {
-                    fd.append('attachment', file);
-                });
-            }
 
             setSubmitting(true);
 
@@ -294,8 +250,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (res.ok && data && data.success) {
                     form.reset();
-                    selectedFiles = []; // Limpiar lista
-                    if(fileList) fileList.innerHTML = '';
                     showThankYou();
                 } else {
                     const msg = (data && (data.message || data.error)) || ('Submission failed (HTTP ' + res.status + ').');
