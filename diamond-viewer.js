@@ -243,7 +243,8 @@ class DiamondViewer extends HTMLElement {
   async _init() {
     // ============================================================
     // DETECCION DE MOVIL: Una sola decision al inicio.
-    // En movil: SIN path tracing, SIN bloom, SIN PMREM, SIN antialias.
+    // En movil: SIN path tracing, SIN bloom. Si conserva antialias,
+    // pixelRatio 1.25, material fisico con iridiscencia (efecto arcoiris).
     // En PC: todo identico a la version original (intacta).
     // ============================================================
     const IS_MOBILE = window.innerWidth <= 1024
@@ -253,14 +254,13 @@ class DiamondViewer extends HTMLElement {
     // Rendimiento: Priorizar performance y quitar Alpha para un canvas sólido
     const renderer = new THREE.WebGLRenderer({
         canvas: this.canvas,
-        antialias: !IS_MOBILE,
+        antialias: true, // tambien en movil: bordes limpios, coste asumible
         alpha: false,
         powerPreference: IS_MOBILE ? "low-power" : "high-performance"
     });
 
-    // pixelRatio: 1.0 fijo en movil (la mitad de pixeles que en alta densidad);
-    // PC mantiene su 1.5 original.
-    renderer.setPixelRatio(IS_MOBILE ? 1.0 : Math.min(window.devicePixelRatio, 1.5));
+    // pixelRatio: en movil 1.25 (compromiso nitidez/coste); PC mantiene su 1.5 original.
+    renderer.setPixelRatio(IS_MOBILE ? Math.min(window.devicePixelRatio, 1.25) : Math.min(window.devicePixelRatio, 1.5));
     renderer.setClearColor(0xffffff, 1);
 
     renderer.shadowMap.enabled = false;
@@ -420,8 +420,10 @@ class DiamondViewer extends HTMLElement {
           : new THREE.Color(0xffffff);
 
         if (IS_MOBILE) {
-          // === DIAMANTE EN MOVIL: material fisico con transmision. ===
-          // Sin BVH, sin raytracing, sin DoubleSide. Brillante y barato.
+          // === DIAMANTE EN MOVIL: physical material + iridiscencia. ===
+          // No es raytracing, pero la iridiscencia + clearcoat dan reflejos
+          // coloreados que recuerdan a la dispersion del diamante real.
+          // Sin BVH, sin DoubleSide. Coste GPU muy bajo.
           obj.geometry.computeBoundingBox();
           const localSize = obj.geometry.boundingBox.getSize(new THREE.Vector3()).length();
           const mat = new THREE.MeshPhysicalMaterial({
@@ -429,16 +431,23 @@ class DiamondViewer extends HTMLElement {
             metalness: 0.0,
             roughness: 0.02,
             transmission: 1.0,
-            thickness: 0.45,
-            ior: 2.0,
+            thickness: 0.55,
+            ior: 2.33,                       // mas cerca del diamante real (2.42)
+            attenuationColor: new THREE.Color(0xffffff),
+            attenuationDistance: 1.5,
             envMap: this.envRaw,
-            envMapIntensity: 1.6,
+            envMapIntensity: 1.8,            // reflejos del entorno mas intensos
+            specularIntensity: 1.0,
+            specularColor: new THREE.Color(0xffffff),
             clearcoat: 1.0,
-            clearcoatRoughness: 0.05
+            clearcoatRoughness: 0.03,
+            // Iridiscencia: efecto arcoiris fino, gratis en coste comparado al RT.
+            iridescence: 0.65,
+            iridescenceIOR: 1.45,
+            iridescenceThicknessRange: [120, 480]
           });
           obj.material = mat;
           obj.userData._gemSize = localSize;
-          // Lo guardamos para que la logica de gem-color funcione tambien en movil
           this.diamondMeshes.push(obj);
         } else {
           // === DIAMANTE EN PC: path tracer original intacto. ===
