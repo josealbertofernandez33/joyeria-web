@@ -278,6 +278,7 @@ diamond-viewer canvas { width: 100% !important; height: 100% !important; outline
 /* MOBILE */
 .mobile-ui-overlay { display: none; }
 .mobile-btn-container { display: none; }
+.mobile-only-notice { display: none; }
 .desktop-ui-overlay { display: block; }
 
 @media (max-width: 1024px) {
@@ -326,6 +327,22 @@ diamond-viewer canvas { width: 100% !important; height: 100% !important; outline
     .thank-you-box { padding: 2.5rem 1.5rem; }
     .thank-you-box h2 { font-size: 1.9rem; letter-spacing: 3px; }
     .thank-you-box p { font-size: 1.05rem; }
+
+    /* Aviso bajo el visor 3D: solo en movil */
+    .mobile-only-notice {
+        order: 2;
+        display: block;
+        width: 100%;
+        text-align: center;
+        font-family: var(--font-text);
+        font-size: 0.85rem;
+        color: #777;
+        letter-spacing: 1px;
+        padding: 0.5rem 1.5rem 0;
+        margin: 0;
+        font-style: italic;
+        line-height: 1.4;
+    }
 }
 
 @media (max-width: 768px) {
