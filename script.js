@@ -3,17 +3,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================================
     // REFS
     // =========================================================
-    const theLight = document.getElementById('the-light');
     const darkRealm = document.getElementById('dark-realm');
     const lightRealm = document.getElementById('light-realm');
     const flashOverlay = document.getElementById('flash-overlay');
     const thankYou = document.getElementById('thank-you-popup');
 
     // =========================================================
-    // TRANSICION DARK -> LIGHT REALM
+    // TRANSICION DARK -> LIGHT REALM (CLICK EN CUALQUIER PARTE)
     // =========================================================
-    if (theLight) {
-        theLight.addEventListener('click', () => {
+    if (darkRealm) {
+        darkRealm.addEventListener('click', () => {
             if (flashOverlay) flashOverlay.classList.add('flash-in');
             setTimeout(() => {
                 if (darkRealm) darkRealm.classList.add('hidden');
@@ -65,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
     rods.forEach(rod => rod.addEventListener('animationiteration', () => randomizeRod(rod)));
 
     // =========================================================
-    // CARRUSEL
+    // CARRUSEL 3D
     // =========================================================
     const track = document.getElementById('ring-carousel');
     const ringBg = document.getElementById('ring-bg');
@@ -135,7 +134,121 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // =========================================================
-    // SMOOTH SCROLL
+    // OCULTAR INDICADOR INTERACTIVO 3D AL INTERACTUAR
+    // =========================================================
+    const interactionHint = document.getElementById('interaction-hint');
+    if (interactionHint && track) {
+        const hideHint = () => {
+            interactionHint.classList.add('hidden-hint');
+            track.removeEventListener('mousedown', hideHint);
+            track.removeEventListener('touchstart', hideHint);
+        };
+        track.addEventListener('mousedown', hideHint, { once: true });
+        track.addEventListener('touchstart', hideHint, { once: true });
+    }
+
+    // =========================================================
+    // CONTROLES CARRUSEL "WORKS" Y "PROCESS"
+    // =========================================================
+    const worksCarouselTrack = document.getElementById('works-carousel-track');
+    const worksPrev = document.querySelector('.works-prev');
+    const worksNext = document.querySelector('.works-next');
+    
+    if (worksPrev && worksNext && worksCarouselTrack) {
+        worksPrev.addEventListener('click', () => {
+            worksCarouselTrack.scrollBy({ left: -350, behavior: 'smooth' });
+        });
+        worksNext.addEventListener('click', () => {
+            worksCarouselTrack.scrollBy({ left: 350, behavior: 'smooth' });
+        });
+    }
+
+    const processCarouselTrack = document.getElementById('process-carousel-track');
+    const processPrev = document.querySelector('.process-prev');
+    const processNext = document.querySelector('.process-next');
+    
+    if (processPrev && processNext && processCarouselTrack) {
+        processPrev.addEventListener('click', () => {
+            processCarouselTrack.scrollBy({ left: -350, behavior: 'smooth' });
+        });
+        processNext.addEventListener('click', () => {
+            processCarouselTrack.scrollBy({ left: 350, behavior: 'smooth' });
+        });
+    }
+
+    // =========================================================
+    // LÓGICA DE AUTO-CARGA HÍBRIDA (IMÁGENES Y VÍDEOS) [WORKS - OCULTO]
+    // =========================================================
+    /*
+    function loadWorksMedia(index) {
+        if (!worksCarouselTrack) return;
+        
+        const extensions = [
+            { ext: '.jpg', type: 'image' },
+            { ext: '.jpeg', type: 'image' },
+            { ext: '.png', type: 'image' },
+            { ext: '.webp', type: 'image' },
+            { ext: '.mp4', type: 'video' },
+            { ext: '.mov', type: 'video' },
+            { ext: '.webm', type: 'video' }
+        ];
+        
+        let extIndex = 0;
+
+        function checkNextExt() {
+            if (extIndex >= extensions.length) {
+                return;
+            }
+
+            const current = extensions[extIndex];
+            const src = `C${index}${current.ext}`;
+
+            if (current.type === 'image') {
+                const img = new Image();
+                img.onload = () => {
+                    appendMedia(img);
+                    loadWorksMedia(index + 1); 
+                };
+                img.onerror = () => {
+                    extIndex++;
+                    checkNextExt();
+                };
+                img.src = src;
+            } else {
+                const vid = document.createElement('video');
+                vid.autoplay = true;
+                vid.loop = true;
+                vid.muted = true;
+                vid.playsInline = true;
+
+                vid.onloadeddata = () => {
+                    vid.onloadeddata = null; 
+                    appendMedia(vid);
+                    loadWorksMedia(index + 1);
+                };
+                vid.onerror = () => {
+                    extIndex++;
+                    checkNextExt();
+                };
+                vid.src = src;
+            }
+        }
+
+        function appendMedia(element) {
+            const slide = document.createElement('div');
+            slide.className = 'work-slide';
+            slide.appendChild(element);
+            worksCarouselTrack.appendChild(slide);
+        }
+
+        checkNextExt();
+    }
+    
+    loadWorksMedia(1);
+    */
+
+    // =========================================================
+    // SMOOTH SCROLL PARA EL MENÚ DE NAVEGACIÓN
     // =========================================================
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
@@ -161,13 +274,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }, { root: null, rootMargin: '0px', threshold: 0.2 });
-    document.querySelectorAll('.process-step.scroll-anim').forEach((step, idx) => {
+    
+    document.querySelectorAll('.process-slide.scroll-anim').forEach((step, idx) => {
         step.style.transitionDelay = (idx * 0.15) + 's';
     });
     animElements.forEach(el => scrollObserver.observe(el));
 
     // =========================================================
-    // POPUP DE AGRADECIMIENTO
+    // POPUP DE AGRADECIMIENTO DEL FORMULARIO
     // =========================================================
     function showThankYou() {
         if (!thankYou) return;
@@ -191,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================================
-    // ENVIO DEL FORMULARIO (AJAX -> Web3Forms)
+    // ENVIO DEL FORMULARIO (Web3Forms) SIN ADJUNTOS
     // =========================================================
     const form = document.getElementById('bespoke-form');
     const submitBtn = document.getElementById('submit-btn');

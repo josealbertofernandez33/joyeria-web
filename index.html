@@ -100,7 +100,8 @@
             </div>
             <nav class="main-nav">
                 <ul>
-                    <li><a href="#light-realm">Collection</a></li>
+                    <!-- Enlace Works oculto por el momento -->
+                    <!-- <li><a href="#works">Works</a></li> -->
                     <li><a href="#process">Process</a></li>
                     <li><a href="#about">About</a></li>
                     <li><a href="#contact">Contact</a></li>
@@ -140,6 +141,15 @@
             </div>
 
             <div class="carousel-wrapper spectacular-ring">
+                
+                <!-- INDICADOR INTERACTIVO 3D -->
+                <div class="interaction-hint" id="interaction-hint">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 2v6h-6"></path>
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                    </svg>
+                    <span>Drag to rotate</span>
+                </div>
 
                 <div class="carousel-nav desktop-ui-overlay nav-desk">
                     <span class="dot active" data-idx="0"></span>
@@ -171,46 +181,68 @@
             </div>
         </main>
 
+        <!-- SECCIÓN WORKS OCULTA POR EL MOMENTO 
+        <section class="works-section" id="works">
+            <h2 class="section-title scroll-anim">Works</h2>
+            <div class="works-carousel-container scroll-anim">
+                <button class="carousel-arrow left-arrow works-prev">&#10094;</button>
+                <div class="works-carousel-track" id="works-carousel-track">
+                </div>
+                <button class="carousel-arrow right-arrow works-next">&#10095;</button>
+            </div>
+        </section>
+        -->
+
         <section class="process-section" id="process">
-            <h2 class="section-title scroll-anim">The Art of Creation</h2>
-            <div class="process-grid">
-                <div class="process-step scroll-anim">
-                    <div class="process-image"><img src="11.png" alt="Jewelry Conceptualization"></div>
-                    <span class="step-number">01</span>
-                    <h3>Conceptualization</h3>
-                    <p>First, we conceptualize your jewelry. No matter what you want, together, we shape your ideas.</p>
+            <h2 class="section-title scroll-anim">Process</h2>
+            <div class="process-carousel-container scroll-anim">
+                <button class="carousel-arrow left-arrow process-prev">&#10094;</button>
+                <div class="process-carousel-track" id="process-carousel-track">
+                    
+                    <div class="process-slide">
+                        <div class="process-image"><img src="11.png" alt="Jewelry Conceptualization"></div>
+                        <span class="step-number">01</span>
+                        <h3>Conceptualization</h3>
+                        <p>First, we conceptualize your jewelry. No matter what you want, together, we shape your ideas.</p>
+                    </div>
+                    
+                    <div class="process-slide">
+                        <div class="process-image"><img src="12.jpeg" alt="3D CAD Jewelry Design"></div>
+                        <span class="step-number">02</span>
+                        <h3>3D CAD Design</h3>
+                        <p>With precision, we give volume and dimensions to the previous concept, digitizing your idea.</p>
+                    </div>
+                    
+                    <div class="process-slide">
+                        <div class="process-image"><img src="13.png" alt="Wax Printing for Jewelry"></div>
+                        <span class="step-number">03</span>
+                        <h3>Wax Printing</h3>
+                        <p>Once we have the final 3D design, we print it in special wax so we can then transfer it to the metal of your choice.</p>
+                    </div>
+                    
+                    <div class="process-slide">
+                        <div class="process-image"><img src="14.png" alt="Jewelry Casting Process"></div>
+                        <span class="step-number">04</span>
+                        <h3>Casting</h3>
+                        <p>Using the traditional lost-wax method to seamlessly transform the fragile prototype into solid, precious metal.</p>
+                    </div>
+                    
+                    <div class="process-slide">
+                        <div class="process-image"><img src="15.png" alt="Final Jewelry Finishing"></div>
+                        <span class="step-number">05</span>
+                        <h3>Final Finishing</h3>
+                        <p>Meticulous hand polishing, precise gem setting, and the ultimate quality review of your bespoke masterpiece.</p>
+                    </div>
+                    
                 </div>
-                <div class="process-step scroll-anim">
-                    <div class="process-image"><img src="12.jpeg" alt="3D CAD Jewelry Design"></div>
-                    <span class="step-number">02</span>
-                    <h3>3D CAD Design</h3>
-                    <p>With precision, we give volume and dimensions to the previous concept, digitizing your idea.</p>
-                </div>
-                <div class="process-step scroll-anim">
-                    <div class="process-image"><img src="13.png" alt="Wax Printing for Jewelry"></div>
-                    <span class="step-number">03</span>
-                    <h3>Wax Printing</h3>
-                    <p>Once we have the final 3D design, we print it in special wax so we can then transfer it to the metal of your choice.</p>
-                </div>
-                <div class="process-step scroll-anim">
-                    <div class="process-image"><img src="14.png" alt="Jewelry Casting Process"></div>
-                    <span class="step-number">04</span>
-                    <h3>Casting</h3>
-                    <p>Using the traditional lost-wax method to seamlessly transform the fragile prototype into solid, precious metal.</p>
-                </div>
-                <div class="process-step scroll-anim">
-                    <div class="process-image"><img src="15.png" alt="Final Jewelry Finishing"></div>
-                    <span class="step-number">05</span>
-                    <h3>Final Finishing</h3>
-                    <p>Meticulous hand polishing, precise gem setting, and the ultimate quality review of your bespoke masterpiece.</p>
-                </div>
+                <button class="carousel-arrow right-arrow process-next">&#10095;</button>
             </div>
         </section>
 
         <section class="about-section" id="about">
             <div class="about-container">
                 <div class="about-text scroll-anim">
-                    <h2 class="section-title">Meet the Designer</h2>
+                    <h2 class="section-title">About</h2>
                     <p>When a client struggles to visualize what they want, I help them bring their ideas to life through the digital previsualization and rendering process.</p>
                     <p>This is how ideas begin to materialize.</p>
                     <p>I love being part of the entire process, from the initial concept on a screen to being able to hold it in my own hands.</p>
@@ -229,7 +261,7 @@
 
         <section class="contact-section" id="contact">
             <div class="contact-container scroll-anim">
-                <h2 class="section-title">Begin Your Journey</h2>
+                <h2 class="section-title">Contact</h2>
                 <p class="contact-subtitle">Share your vision with me. Let us create something truly extraordinary.</p>
 
                 <form class="bespoke-form" id="bespoke-form" novalidate>
