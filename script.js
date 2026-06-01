@@ -1,16 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // =========================================================
-    // REFS
-    // =========================================================
     const darkRealm = document.getElementById('dark-realm');
     const lightRealm = document.getElementById('light-realm');
     const flashOverlay = document.getElementById('flash-overlay');
     const thankYou = document.getElementById('thank-you-popup');
 
-    // =========================================================
-    // TRANSICION DARK -> LIGHT REALM (CLICK EN CUALQUIER PARTE)
-    // =========================================================
     if (darkRealm) {
         darkRealm.addEventListener('click', () => {
             if (flashOverlay) flashOverlay.classList.add('flash-in');
@@ -27,9 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // =========================================================
-    // STARFIELD
-    // =========================================================
     const starfield = document.getElementById('starfield');
     if (starfield) {
         starfield.style.zIndex = '3';
@@ -52,9 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // =========================================================
-    // HALO RODS
-    // =========================================================
     const rods = document.querySelectorAll('.arrow-halo-rod');
     function randomizeRod(rod) {
         rod.style.setProperty('--rod-angle', (Math.random() * 360) + 'deg');
@@ -63,103 +51,55 @@ document.addEventListener('DOMContentLoaded', () => {
     rods.forEach(randomizeRod);
     rods.forEach(rod => rod.addEventListener('animationiteration', () => randomizeRod(rod)));
 
-    // =========================================================
-    // CARRUSEL 3D
-    // =========================================================
-    const track = document.getElementById('ring-carousel');
-    const ringBg = document.getElementById('ring-bg');
-    const ringTitle = document.getElementById('ring-title');
-    const ringDesc = document.getElementById('ring-desc');
-
-    if (window.innerWidth <= 1024) {
-        const mv = document.getElementById('main-mobile-viewer');
-        if (mv) { mv.bloom = false; mv.enableBloom = false; mv.postProcessing = false; }
-    }
-
-    const ringData = [
-        { title: "True Beauty Awaits", desc: "You have crossed the threshold. Now, let us forge something eternal, unique, and unconditionally yours.", img: "1.png" },
-        { title: "The Celestial Cut", desc: "A masterpiece born from stardust. Its immaculate facets reflect the light of a thousand galaxies, crafted for the bold.", img: "2.png" },
-        { title: "Eternal Heritage", desc: "Where classic elegance meets modern bespoke design. A timeless silhouette that carries the weight of a lifelong promise.", img: "3.png" },
-        { title: "Obsidian Echo", desc: "A harmonious blend of rare metals and brilliant stones. This piece captures the quiet power and enduring grace of true craftsmanship.", img: "4.png" }
-    ];
-
-    let currentIndex = 0;
-    const totalSlides = 4;
-
-    function updateCarousel() {
-        if (!track) return;
-        if (window.innerWidth > 1024) {
-            track.style.transition = 'none';
-            track.style.transform = 'translateX(-' + (currentIndex * 100) + '%)';
-        } else {
-            track.style.transform = 'none';
-        }
-        document.querySelectorAll('.dot').forEach(d => d.classList.remove('active'));
-        const dDot = document.querySelectorAll('.nav-desk .dot')[currentIndex];
-        const mDot = document.querySelectorAll('.nav-mob .dot')[currentIndex];
-        if (dDot) dDot.classList.add('active');
-        if (mDot) mDot.classList.add('active');
-        if (ringTitle) ringTitle.innerText = ringData[currentIndex].title;
-        if (ringDesc) ringDesc.innerText = ringData[currentIndex].desc;
-        if (ringBg) ringBg.src = ringData[currentIndex].img;
-    }
-
-    const goPrev = () => { currentIndex = (currentIndex > 0) ? currentIndex - 1 : totalSlides - 1; updateCarousel(); };
-    const goNext = () => { currentIndex = (currentIndex < totalSlides - 1) ? currentIndex + 1 : 0; updateCarousel(); };
-
-    const pD = document.querySelector('.prev-btn');
-    const nD = document.querySelector('.next-btn');
-    if (pD) pD.addEventListener('click', goPrev);
-    if (nD) nD.addEventListener('click', goNext);
-
-    const pM = document.querySelector('.prev-btn-mob');
-    const nM = document.querySelector('.next-btn-mob');
-    if (pM) pM.addEventListener('click', goPrev);
-    if (nM) nM.addEventListener('click', goNext);
-
-    document.querySelectorAll('.dot').forEach(dot => {
-        dot.addEventListener('click', (e) => {
-            const idx = parseInt(e.target.getAttribute('data-idx'));
-            if (!isNaN(idx) && currentIndex !== idx) { currentIndex = idx; updateCarousel(); }
-        });
-    });
-
-    window.addEventListener('resize', () => {
-        if (window.innerWidth <= 1024 && track) {
-            track.style.transform = 'none';
-        } else if (track) {
-            track.style.transition = 'none';
-            track.style.transform = 'translateX(-' + (currentIndex * 100) + '%)';
-        }
-    });
-
-    // =========================================================
-    // OCULTAR INDICADOR INTERACTIVO 3D AL INTERACTUAR
-    // =========================================================
-    const interactionHint = document.getElementById('interaction-hint');
-    if (interactionHint && track) {
-        const hideHint = () => {
-            interactionHint.classList.add('hidden-hint');
-            track.removeEventListener('mousedown', hideHint);
-            track.removeEventListener('touchstart', hideHint);
-        };
-        track.addEventListener('mousedown', hideHint, { once: true });
-        track.addEventListener('touchstart', hideHint, { once: true });
-    }
-
-    // =========================================================
-    // CONTROLES CARRUSEL "WORKS" Y "PROCESS"
-    // =========================================================
-    const worksCarouselTrack = document.getElementById('works-carousel-track');
-    const worksPrev = document.querySelector('.works-prev');
-    const worksNext = document.querySelector('.works-next');
+    const heroViewer = document.getElementById('main-hero-viewer');
+    const swatches = document.querySelectorAll('.swatch');
     
-    if (worksPrev && worksNext && worksCarouselTrack) {
-        worksPrev.addEventListener('click', () => {
-            worksCarouselTrack.scrollBy({ left: -350, behavior: 'smooth' });
+    if(heroViewer) {
+        swatches.forEach(swatch => {
+            swatch.addEventListener('click', (e) => {
+                const type = swatch.getAttribute('data-type');
+                const color = swatch.getAttribute('data-color');
+                
+                document.querySelectorAll(`.swatch[data-type="${type}"]`).forEach(s => s.classList.remove('active'));
+                swatch.classList.add('active');
+
+                if(type === 'metal') heroViewer.setAttribute('metal-color', color);
+                if(type === 'stone') heroViewer.setAttribute('stone-color', color);
+            });
         });
-        worksNext.addEventListener('click', () => {
-            worksCarouselTrack.scrollBy({ left: 350, behavior: 'smooth' });
+    }
+
+    const materialBtns = document.querySelectorAll('.material-btn');
+    const explodeBtn = document.querySelector('.action-btn[data-action="explode"]');
+    const renderBtn = document.querySelector('.action-btn[data-action="render"]');
+    const renderOverlay = document.getElementById('render-overlay');
+
+    if (materialBtns.length > 0 && heroViewer) {
+        materialBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                materialBtns.forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                const matMode = e.target.getAttribute('data-mat');
+                heroViewer.setAttribute('material-mode', matMode);
+            });
+        });
+    }
+
+    if (explodeBtn && heroViewer) {
+        explodeBtn.addEventListener('click', (e) => {
+            const isExploded = explodeBtn.classList.toggle('active');
+            heroViewer.setAttribute('explode-mode', isExploded ? 'true' : 'false');
+        });
+    }
+
+    if (renderBtn && renderOverlay) {
+        renderBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            renderOverlay.classList.add('active');
+        });
+
+        renderOverlay.addEventListener('click', () => {
+            renderOverlay.classList.remove('active');
         });
     }
 
@@ -176,80 +116,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // =========================================================
-    // LÓGICA DE AUTO-CARGA HÍBRIDA (IMÁGENES Y VÍDEOS) [WORKS - OCULTO]
-    // =========================================================
-    /*
-    function loadWorksMedia(index) {
-        if (!worksCarouselTrack) return;
-        
-        const extensions = [
-            { ext: '.jpg', type: 'image' },
-            { ext: '.jpeg', type: 'image' },
-            { ext: '.png', type: 'image' },
-            { ext: '.webp', type: 'image' },
-            { ext: '.mp4', type: 'video' },
-            { ext: '.mov', type: 'video' },
-            { ext: '.webm', type: 'video' }
-        ];
-        
-        let extIndex = 0;
-
-        function checkNextExt() {
-            if (extIndex >= extensions.length) {
-                return;
-            }
-
-            const current = extensions[extIndex];
-            const src = `C${index}${current.ext}`;
-
-            if (current.type === 'image') {
-                const img = new Image();
-                img.onload = () => {
-                    appendMedia(img);
-                    loadWorksMedia(index + 1); 
-                };
-                img.onerror = () => {
-                    extIndex++;
-                    checkNextExt();
-                };
-                img.src = src;
-            } else {
-                const vid = document.createElement('video');
-                vid.autoplay = true;
-                vid.loop = true;
-                vid.muted = true;
-                vid.playsInline = true;
-
-                vid.onloadeddata = () => {
-                    vid.onloadeddata = null; 
-                    appendMedia(vid);
-                    loadWorksMedia(index + 1);
-                };
-                vid.onerror = () => {
-                    extIndex++;
-                    checkNextExt();
-                };
-                vid.src = src;
-            }
-        }
-
-        function appendMedia(element) {
-            const slide = document.createElement('div');
-            slide.className = 'work-slide';
-            slide.appendChild(element);
-            worksCarouselTrack.appendChild(slide);
-        }
-
-        checkNextExt();
-    }
-    
-    loadWorksMedia(1);
-    */
-
-    // =========================================================
-    // SMOOTH SCROLL PARA EL MENÚ DE NAVEGACIÓN
-    // =========================================================
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             const targetId = this.getAttribute('href');
@@ -262,9 +128,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // =========================================================
-    // SCROLL ANIMATIONS
-    // =========================================================
     const animElements = document.querySelectorAll('.scroll-anim');
     const scrollObserver = new IntersectionObserver((entries, observer) => {
         entries.forEach(entry => {
@@ -280,9 +143,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     animElements.forEach(el => scrollObserver.observe(el));
 
-    // =========================================================
-    // POPUP DE AGRADECIMIENTO DEL FORMULARIO
-    // =========================================================
     function showThankYou() {
         if (!thankYou) return;
         thankYou.classList.add('is-visible');
@@ -304,9 +164,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 50);
     }
 
-    // =========================================================
-    // ENVIO DEL FORMULARIO (Web3Forms) SIN ADJUNTOS
-    // =========================================================
     const form = document.getElementById('bespoke-form');
     const submitBtn = document.getElementById('submit-btn');
     const submitLabel = submitBtn ? submitBtn.querySelector('.submit-label') : null;
@@ -319,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!submitBtn) return;
         submitBtn.disabled = isSubmitting;
         submitBtn.classList.toggle('is-loading', isSubmitting);
-        if (submitLabel) submitLabel.textContent = isSubmitting ? 'Sending...' : 'Send Request';
+        if (submitLabel) submitLabel.textContent = isSubmitting ? 'Validating...' : 'REQUEST A QUOTE';
     }
 
     if (form) {
@@ -333,12 +190,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const messageVal = messageField.value.trim();
 
             if (!emailVal || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
-                showError('Please enter a valid email address.');
+                showError('Please enter a valid email.');
                 emailField.focus();
                 return;
             }
             if (!messageVal) {
-                showError('Please tell me about your idea.');
+                showError('Project details are required to evaluate viability.');
                 messageField.focus();
                 return;
             }
@@ -366,16 +223,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     form.reset();
                     showThankYou();
                 } else {
-                    const msg = (data && (data.message || data.error)) || ('Submission failed (HTTP ' + res.status + ').');
+                    const msg = (data && (data.message || data.error)) || ('Server failure (HTTP ' + res.status + ').');
                     showError(msg);
                 }
             } catch (err) {
                 console.error('[contact form] submit error:', err);
-                showError('Network error. Please check your connection and try again.');
+                showError('Network error. Please check your connection.');
             } finally {
                 setSubmitting(false);
             }
         });
     }
-
 });
