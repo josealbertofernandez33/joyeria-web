@@ -29,13 +29,13 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* ANTI SCROLL HORIZONTAL ABSOLUTO - SIN VW */
 body, html {
     width: 100%; height: 100%; overflow-x: hidden;
     background-color: var(--light-bg); 
     font-family: var(--font-text);
     scroll-behavior: smooth;
     color: var(--text-dark);
-    max-width: 100vw;
 }
 
 .swatch, .tech-btn, .btn-gold, .main-nav a, .control-label, .carousel-arrow, .static-interaction-hint, .process-image {
@@ -47,7 +47,7 @@ body, html {
 .flash-in { opacity: 1 !important; transition: opacity 1s ease-in; }
 .flash-out { opacity: 0 !important; transition: opacity 2s ease-out; }
 
-#dark-realm { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; display: flex; justify-content: center; align-items: center; background-color: var(--dark-bg); z-index: 100; cursor: pointer; }
+#dark-realm { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background-color: var(--dark-bg); z-index: 100; cursor: pointer; }
 #starfield { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; }
 .shadows { position: absolute; width: 100%; height: 100%; background: radial-gradient(circle at center, transparent 0%, #000000 80%); z-index: 2; pointer-events: none; }
 .threshold-container { text-align: center; position: relative; z-index: 101; transition: opacity 0.4s ease, transform 1s ease; pointer-events: none; }
@@ -107,6 +107,10 @@ body, html {
 
 #light-realm { position: relative; width: 100%; min-height: 100vh; background-color: transparent; color: var(--text-dark); z-index: 200; opacity: 1; }
 .hidden { display: none !important; }
+
+/* ----------------------------------------------------------- */
+/* ESTRUCTURA ESCRITORIO (BASE) - PERFECTA Y SIN DESBORDAMIENTOS */
+/* ----------------------------------------------------------- */
 
 .clean-header {
     display: flex;
@@ -242,9 +246,16 @@ body, html {
 .btn-gold { position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center; padding: 1rem 2rem; background-color: var(--text-dark); border: none; color: #fff; font-weight: bold; text-decoration: none; font-family: var(--font-text); font-size: 1rem; letter-spacing: 2px; text-transform: uppercase; transition: all 0.3s ease; cursor: pointer; border-radius: 2px; }
 .btn-gold:hover { background-color: var(--gold); color: #fff; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(156, 122, 60, 0.3); }
 
+.desktop-btn { display: inline-flex !important; }
+.mobile-btn-container { display: none; }
+
 .carousel-wrapper { position: relative; overflow: hidden; z-index: 1; border-radius: 8px; }
 
-.static-interaction-hint { width: 100%; text-align: center; color: #6a6f73; font-family: var(--font-text); font-size: 0.9rem; letter-spacing: 2px; text-transform: uppercase; margin-top: 10px; margin-bottom: 20px; }
+.static-interaction-hint {
+    width: 100%; text-align: center; color: #6a6f73; font-family: var(--font-text);
+    font-size: 0.9rem; letter-spacing: 2px; text-transform: uppercase;
+    margin-top: 10px; margin-bottom: 20px;
+}
 .static-interaction-hint strong { color: var(--gold); font-weight: 800; font-size: 1.05rem; }
 
 .tech-btn {
@@ -262,15 +273,14 @@ diamond-viewer { display: block !important; width: 100% !important; height: 100%
 .scroll-anim { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease, transform 0.8s ease; }
 .scroll-anim.in-view { opacity: 1; transform: translateY(0); }
 
-/* --- ESTRUCTURA DE ESCRITORIO (BASE) --- */
-
+/* SECCIÓN PROCESS - ESCRITORIO */
 .process-section { margin-top: 0; padding: 8rem 5%; background-color: var(--light-bg); scroll-margin-top: 100px; position: relative; }
 .section-title { font-family: var(--font-title); font-size: 2.4rem; text-align: center; margin-bottom: 4rem; color: var(--text-dark); letter-spacing: 2px; text-transform: uppercase; font-weight: 600; }
 
 .process-carousel-container { position: relative; max-width: 1400px; margin: 0 auto; display: flex; align-items: stretch; justify-content: space-between; gap: 2vw; z-index: 10; }
 
 .process-overlay {
-    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(255,255,255,0.92); z-index: 5;
     opacity: 0; visibility: hidden; transition: opacity 0.4s ease; pointer-events: none;
 }
@@ -298,7 +308,7 @@ diamond-viewer { display: block !important; width: 100% !important; height: 100%
 .process-slide:nth-child(5) .process-inner { transform-origin: right center; }
 
 @media (min-width: 1025px) {
-    .process-slide:hover .process-inner { transform: scale(1.45); box-shadow: 0 40px 100px rgba(0,0,0,0.2); z-index: 1000; }
+    .process-slide:hover .process-inner { transform: scale(1.45); box-shadow: 0 40px 100px rgba(0,0,0,0.2); z-index: 1000; border-top: 4px solid var(--gold); }
 }
 
 .process-image { position: relative; width: 100%; height: 160px; margin-bottom: 2rem; display: flex; justify-content: center; align-items: center; overflow: visible; transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
@@ -371,7 +381,7 @@ diamond-viewer { display: block !important; width: 100% !important; height: 100%
 @keyframes rotate-rays { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
 
 /* ----------------------------------------------------------- */
-/* EXCLUSIVO PARA MÓVIL Y TABLET (SOBRESCRIBE ESCRITORIO)      */
+/* EXCLUSIVO PARA MÓVIL Y TABLET (RESPETA PC INTACTO)          */
 /* ----------------------------------------------------------- */
 
 @media (max-width: 1024px) {
@@ -403,15 +413,15 @@ diamond-viewer { display: block !important; width: 100% !important; height: 100%
 
     .full-center { order: 2; flex: auto; width: 100%; max-width: 100%; height: 40vh; margin-top: 10px; overflow: visible; border-radius: 0; }
 
-    /* PROCESS MÓVIL: Centrado y sin desbordamientos */
+    /* PROCESS MÓVIL: Centrado, Relativo y sin desbordamientos */
     .process-section { padding: 4rem 0; overflow: hidden; }
     .section-title { font-size: 1.8rem; margin-bottom: 2rem; padding: 0 5%; }
     .process-carousel-container { padding: 0; display: block; }
     .process-carousel-track { overflow-x: auto; scroll-snap-type: x mandatory; gap: 20px; flex: unset; padding: 0 7.5% 30px 7.5%; width: 100%; box-sizing: border-box; }
     .process-slide { flex: 0 0 85%; min-width: 85%; height: auto; scroll-snap-align: center; }
     
-    /* FIX ESTRUCTURAL MÓVIL: Anulamos el absolute de PC */
-    .process-inner { position: relative; height: auto; transform: none !important; padding: 25px 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-top: 2px solid var(--gold); }
+    /* FIX: Position relative devuelve el volumen al contenedor en móvil */
+    .process-inner { position: relative !important; height: auto; transform: none !important; padding: 25px 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-top: 2px solid var(--gold); }
     .process-image { transform: none !important; margin-bottom: 2rem !important; height: 180px; }
     .process-text-content { transform: none !important; }
 
