@@ -322,12 +322,6 @@ class DiamondViewer extends HTMLElement {
     dirLight.position.set(0.4, 1.1, 0.1);
     this.scene.add(dirLight);
 
-    const planeGeo = new THREE.PlaneGeometry(1, 1);
-    const planeMat = new THREE.MeshBasicMaterial({ map: makeContactShadowTexture(256), transparent: true, depthWrite: false, toneMapped: false });
-    this.shadowPlane = new THREE.Mesh(planeGeo, planeMat);
-    this.shadowPlane.rotation.x = -Math.PI / 2;
-    this.scene.add(this.shadowPlane);
-
     this._resizeObs = new ResizeObserver(() => this._resize());
     this._resizeObs.observe(this);
 
@@ -395,11 +389,6 @@ class DiamondViewer extends HTMLElement {
     this.controls.minDistance = baseDist * 0.40; 
     this.controls.maxDistance = baseDist * 3.5;
 
-    const planeSize = Math.max(finalSize.x, finalSize.z) * 2.2;
-    this.shadowPlane.scale.set(planeSize, planeSize, 1);
-    const floorOffset = parseFloat(this.getAttribute('floor-offset') || '0');
-    this.shadowPlane.position.set(0, floorOffset - 0.001, 0);
-
     this.diamondMeshes = [];
     this.metalMeshes = [];
     this.allMeshes = []; 
@@ -460,21 +449,20 @@ class DiamondViewer extends HTMLElement {
           obj.geometry.computeBoundingBox();
           const localSize = obj.geometry.boundingBox.getSize(new THREE.Vector3()).length();
           
-          // SOLUCIÓN RENDIMIENTO Y CALIDAD MÓVIL (Native Dispersion)
           const mat = new THREE.MeshPhysicalMaterial({
             color: gemTint, 
             metalness: 0.0, 
-            roughness: 0.05, 
+            roughness: 0.0, 
             transmission: 1.0, 
-            thickness: 0.5, 
+            thickness: 0.8, 
             ior: 2.415,
-            dispersion: 0.015,
+            dispersion: 0.04,
             attenuationColor: new THREE.Color(0xffffff), 
             attenuationDistance: 2.0,
             envMap: this.envRaw,
-            envMapIntensity: 2.5, 
+            envMapIntensity: 4.0, 
             clearcoat: 1.0, 
-            clearcoatRoughness: 0.05
+            clearcoatRoughness: 0.0
           });
           
           obj.material = mat;
