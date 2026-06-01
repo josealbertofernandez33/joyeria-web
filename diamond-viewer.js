@@ -262,9 +262,8 @@ class DiamondViewer extends HTMLElement {
     const IS_MOBILE = window.innerWidth <= 1024 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     this._isMobile = IS_MOBILE;
 
-    // Configuración universal de alta calidad para PC y Móvil
-    const renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    const renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: true, powerPreference: IS_MOBILE ? "low-power" : "high-performance" });
+    renderer.setPixelRatio(IS_MOBILE ? Math.min(window.devicePixelRatio, 1.25) : Math.min(window.devicePixelRatio, 1.5));
     renderer.setClearColor(0x000000, 0); 
     renderer.shadowMap.enabled = false;
     renderer.toneMapping = THREE.NoToneMapping;
@@ -275,37 +274,42 @@ class DiamondViewer extends HTMLElement {
     this.scene.background = null; 
     this.camera = new THREE.PerspectiveCamera(35, 1, 0.01, 1000); 
 
-    // Composer activado para todos los dispositivos
-    const renderScene = new RenderPass(this.scene, this.camera);
-    renderScene.clearColor = new THREE.Color(0x000000);
-    renderScene.clearAlpha = 0;
-    this.bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.10, 1.00, 0.28);
-    const mixMaterial = new THREE.ShaderMaterial({
-      uniforms: { tDiffuse:  { value: null }, uExposure: { value: 0.50 } },
-      vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-      fragmentShader: `
-        uniform sampler2D tDiffuse; uniform float uExposure; varying vec2 vUv;
-        vec3 ACESFilm(vec3 x) { const float a = 2.51; const float b = 0.03; const float c = 2.43; const float d = 0.59; const float e = 0.14; return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0); }
-        vec3 linearToSRGB(vec3 c) { return pow(max(c, vec3(0.0)), vec3(1.0 / 2.2)); }
-        void main() {
-          vec4 c = texture2D(tDiffuse, vUv);
-          vec3 cSRGB = linearToSRGB(ACESFilm(c.rgb * uExposure));
-          vec3 result = clamp(vec3(1.0) * (1.0 - c.a) + cSRGB, 0.0, 1.0);
-          gl_FragColor = vec4(result, c.a);
-        }
-      `,
-    });
-    this.mixPass = new ShaderPass(mixMaterial, 'tDiffuse');
-    this.composer = new EffectComposer(this.renderer);
-    this.composer.addPass(renderScene);
-    this.composer.addPass(this.bloomPass);
-    this.composer.addPass(this.mixPass);
+    if (!IS_MOBILE) {
+      const renderScene = new RenderPass(this.scene, this.camera);
+      renderScene.clearColor = new THREE.Color(0x000000);
+      renderScene.clearAlpha = 0;
+      this.bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.10, 1.00, 0.28);
+      const mixMaterial = new THREE.ShaderMaterial({
+        uniforms: { tDiffuse:  { value: null }, uExposure: { value: 0.50 } },
+        vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+        fragmentShader: `
+          uniform sampler2D tDiffuse; uniform float uExposure; varying vec2 vUv;
+          vec3 ACESFilm(vec3 x) { const float a = 2.51; const float b = 0.03; const float c = 2.43; const float d = 0.59; const float e = 0.14; return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0); }
+          vec3 linearToSRGB(vec3 c) { return pow(max(c, vec3(0.0)), vec3(1.0 / 2.2)); }
+          void main() {
+            vec4 c = texture2D(tDiffuse, vUv);
+            vec3 cSRGB = linearToSRGB(ACESFilm(c.rgb * uExposure));
+            vec3 result = clamp(vec3(1.0) * (1.0 - c.a) + cSRGB, 0.0, 1.0);
+            gl_FragColor = vec4(result, c.a);
+          }
+        `,
+      });
+      this.mixPass = new ShaderPass(mixMaterial, 'tDiffuse');
+      this.composer = new EffectComposer(this.renderer);
+      this.composer.addPass(renderScene);
+      this.composer.addPass(this.bloomPass);
+      this.composer.addPass(this.mixPass);
+    } else {
+      this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      this.renderer.toneMappingExposure = 0.85;
+      this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    }
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
     this.controls.autoRotate = true;
-    this.controls.autoRotateSpeed = IS_MOBILE ? 0.18 : 0.3; // Mantenemos suavidad móvil
+    this.controls.autoRotateSpeed = IS_MOBILE ? 0.18 : 0.3;
     this.controls.enableZoom = true; 
     this.controls.target.set(0, 0, 0);
 
@@ -452,35 +456,59 @@ class DiamondViewer extends HTMLElement {
 
         const gemTint = (obj.material && obj.material.color) ? obj.material.color.clone() : new THREE.Color(0xffffff);
         
-        // Calidad máxima de Materiales (Shader) unificada para PC y Móvil
-        try {
-          let geo = obj.geometry;
-          geo = geo.toNonIndexed();
-          geo.computeVertexNormals();
-          geo.computeBoundingBox();
-          const localSize = geo.boundingBox.getSize(new THREE.Vector3()).length();
-          const calculatedEpsilon = localSize * 0.0005;
-          const bvh = new MeshBVH(geo);
-          geo.boundsTree = bvh;
-          const baseIOR = 2.415;
-          const disp = 0.009;
-          const mat = new THREE.ShaderMaterial({
-            glslVersion: THREE.GLSL3,
-            uniforms: {
-              bvh: { value: new MeshBVHUniformStruct() }, envMap: { value: this.envRaw }, iorR: { value: baseIOR - (disp / 2) },
-              iorG: { value: baseIOR }, iorB: { value: baseIOR + (disp / 2) }, uInvModelMatrix: { value: new THREE.Matrix4() },
-              uModelMatrix: { value: new THREE.Matrix4() }, uCameraPos: { value: new THREE.Vector3() },
-              uExposure: { value: 1.25 }, uEpsilon: { value: calculatedEpsilon }, uColor: { value: gemTint },
-            },
-            vertexShader: DIAMOND_VERT, fragmentShader: buildFrag(), side: THREE.DoubleSide,
+        if (IS_MOBILE) {
+          obj.geometry.computeBoundingBox();
+          const localSize = obj.geometry.boundingBox.getSize(new THREE.Vector3()).length();
+          
+          // SOLUCIÓN RENDIMIENTO Y CALIDAD MÓVIL (Native Dispersion)
+          const mat = new THREE.MeshPhysicalMaterial({
+            color: gemTint, 
+            metalness: 0.0, 
+            roughness: 0.05, 
+            transmission: 1.0, 
+            thickness: 0.5, 
+            ior: 2.415,
+            dispersion: 0.015,
+            attenuationColor: new THREE.Color(0xffffff), 
+            attenuationDistance: 2.0,
+            envMap: this.envRaw,
+            envMapIntensity: 2.5, 
+            clearcoat: 1.0, 
+            clearcoatRoughness: 0.05
           });
-          mat.uniforms.bvh.value.updateFrom(bvh);
+          
           obj.material = mat;
-          obj.geometry = geo;
           obj.userData._gemSize = localSize;
           this.diamondMeshes.push(obj);
-        } catch(e) { console.error("Error shader:", e); }
-        
+        } else {
+          try {
+            let geo = obj.geometry;
+            geo = geo.toNonIndexed();
+            geo.computeVertexNormals();
+            geo.computeBoundingBox();
+            const localSize = geo.boundingBox.getSize(new THREE.Vector3()).length();
+            const calculatedEpsilon = localSize * 0.0005;
+            const bvh = new MeshBVH(geo);
+            geo.boundsTree = bvh;
+            const baseIOR = 2.415;
+            const disp = 0.009;
+            const mat = new THREE.ShaderMaterial({
+              glslVersion: THREE.GLSL3,
+              uniforms: {
+                bvh: { value: new MeshBVHUniformStruct() }, envMap: { value: this.envRaw }, iorR: { value: baseIOR - (disp / 2) },
+                iorG: { value: baseIOR }, iorB: { value: baseIOR + (disp / 2) }, uInvModelMatrix: { value: new THREE.Matrix4() },
+                uModelMatrix: { value: new THREE.Matrix4() }, uCameraPos: { value: new THREE.Vector3() },
+                uExposure: { value: 1.25 }, uEpsilon: { value: calculatedEpsilon }, uColor: { value: gemTint },
+              },
+              vertexShader: DIAMOND_VERT, fragmentShader: buildFrag(), side: THREE.DoubleSide,
+            });
+            mat.uniforms.bvh.value.updateFrom(bvh);
+            obj.material = mat;
+            obj.geometry = geo;
+            obj.userData._gemSize = localSize;
+            this.diamondMeshes.push(obj);
+          } catch(e) { }
+        }
       } else {
           obj.userData.isStone = false;
           obj.userData.groupId = obj.parent.uuid;
@@ -572,33 +600,55 @@ class DiamondViewer extends HTMLElement {
     this._visObs.observe(this);
     this._visible = true;
 
-    // Loop de alta calidad unificado
-    this._loop = () => {
-      if (!this._ready || !this._visible) { this._rafActive = false; return; }
-      this._rafActive = true;
-      requestAnimationFrame(this._loop);
-
-      if(!this.isIsolated) {
-          this.allMeshes.forEach(m => { if(m.userData.targetPos) m.position.lerp(m.userData.targetPos, 0.08); });
-
-          if (this.targetCamPos) {
-              this.camera.position.lerp(this.targetCamPos, 0.06);
-              if (this.camera.position.distanceTo(this.targetCamPos) < 0.02) this.targetCamPos = null;
-          }
-      }
-
-      if (this.controls) this.controls.update();
-      this.scene.updateMatrixWorld(true);
-      for (const m of this.diamondMeshes) {
-        if(m.material.uniforms && m.visible) { 
-          const u = m.material.uniforms;
-          u.uModelMatrix.value.copy(m.matrixWorld);
-          u.uInvModelMatrix.value.copy(m.matrixWorld).invert();
-          u.uCameraPos.value.copy(this.camera.position);
+    if (IS_MOBILE) {
+      let last = 0; const FRAME_MS = 1000 / 30;
+      this._loop = (t) => {
+        if (!this._ready || !this._visible) { this._rafActive = false; return; }
+        this._rafActive = true;
+        requestAnimationFrame(this._loop);
+        
+        if(!this.isIsolated) {
+            this.allMeshes.forEach(m => { if(m.userData.targetPos) m.position.lerp(m.userData.targetPos, 0.08); });
+            
+            if (this.targetCamPos) {
+                this.camera.position.lerp(this.targetCamPos, 0.06);
+                if (this.camera.position.distanceTo(this.targetCamPos) < 0.02) this.targetCamPos = null;
+            }
         }
-      }
-      this.composer.render();
-    };
+
+        if (t - last < FRAME_MS) return;
+        last = t;
+        if (this.controls) this.controls.update();
+        this.renderer.render(this.scene, this.camera);
+      };
+    } else {
+      this._loop = () => {
+        if (!this._ready || !this._visible) { this._rafActive = false; return; }
+        this._rafActive = true;
+        requestAnimationFrame(this._loop);
+
+        if(!this.isIsolated) {
+            this.allMeshes.forEach(m => { if(m.userData.targetPos) m.position.lerp(m.userData.targetPos, 0.08); });
+
+            if (this.targetCamPos) {
+                this.camera.position.lerp(this.targetCamPos, 0.06);
+                if (this.camera.position.distanceTo(this.targetCamPos) < 0.02) this.targetCamPos = null;
+            }
+        }
+
+        if (this.controls) this.controls.update();
+        this.scene.updateMatrixWorld(true);
+        for (const m of this.diamondMeshes) {
+          if(m.material.uniforms && m.visible) { 
+            const u = m.material.uniforms;
+            u.uModelMatrix.value.copy(m.matrixWorld);
+            u.uInvModelMatrix.value.copy(m.matrixWorld).invert();
+            u.uCameraPos.value.copy(this.camera.position);
+          }
+        }
+        this.composer.render();
+      };
+    }
     this._loop();
   }
 
@@ -650,10 +700,10 @@ class DiamondViewer extends HTMLElement {
       } else if(type === 'stone') {
           this.diamondMeshes.forEach(m => {
               if(m.userData.originalMaterial) {
-                  if (m.userData.originalMaterial.uniforms) {
-                      m.userData.originalMaterial.uniforms.uColor.value.setHex(hexColor);
-                  } else {
+                  if(this._isMobile) {
                       m.userData.originalMaterial.color.setHex(hexColor);
+                  } else if (m.userData.originalMaterial.uniforms) {
+                      m.userData.originalMaterial.uniforms.uColor.value.setHex(hexColor);
                   }
               }
           });
