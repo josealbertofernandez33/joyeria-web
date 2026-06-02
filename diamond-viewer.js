@@ -8,6 +8,26 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { MeshBVH, MeshBVHUniformStruct, shaderStructs, shaderIntersectFunction } from 'three-mesh-bvh';
 
+// =========================================================================
+// CONFIGURACIÓN EXACTA PARA MÓVIL Y TABLET (TWEAK AQUÍ)
+// =========================================================================
+const MOBILE_SETTINGS = {
+    gem: {
+        bounces: 3,         // Motor de cálculo: 3 rebotes
+        ior: 2.415,         // Índice de refracción
+        dispersion: 0.009,  // Fuego/Arcoíris
+        exposure: 1.0       // Exposición de luz (1x)
+    },
+    metal: {
+        metalness: 1.0,
+        roughness: 0.0,
+        envMapIntensity: 1.71, 
+        clearcoat: 0.7,
+        clearcoatRoughness: 1.0
+    }
+};
+// =========================================================================
+
 const DIAMOND_REGEX = /\b(piedra|piedras|diam|diamond|gem|gema|stone|cristal|crystal|brillante|jewel|001)\b/i;
 const METAL_REGEX = /\b(anillo|ring|aro|band|metal|gold|silver|oro|plata|platino|platinum|base|shank|montura|setting|prong|garra)\b/i;
 
@@ -46,26 +66,6 @@ function computeEffectiveFloorY(root) {
   return ys[0];
 }
 
-function makeContactShadowTexture(size = 256) {
-  const cnv = document.createElement('canvas');
-  cnv.width = size;
-  cnv.height = size;
-  const ctx = cnv.getContext('2d');
-  const c = size / 2;
-  const g = ctx.createRadialGradient(c, c, 0, c, c, c * 0.95);
-  g.addColorStop(0.00, 'rgba(0,0,0,0.30)');
-  g.addColorStop(0.25, 'rgba(0,0,0,0.18)');
-  g.addColorStop(0.55, 'rgba(0,0,0,0.06)');
-  g.addColorStop(1.00, 'rgba(0,0,0,0.00)');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, size, size);
-  const tex = new THREE.CanvasTexture(cnv);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 4;
-  tex.needsUpdate = true;
-  return tex;
-}
-
 const DIAMOND_VERT = `
 out vec3 vWorldPos;
 out vec3 vWorldNormal;
@@ -77,14 +77,15 @@ void main() {
 }
 `;
 
-const buildFrag = () => `
+// Inyección dinámica de rebotes (bounces) para independizar PC y Móvil
+const buildFrag = (bounces = 6) => `
 precision highp float;
 precision highp isampler2D;
 precision highp usampler2D;
 ${shaderStructs}
 ${shaderIntersectFunction}
 #define PI 3.14159265359
-#define MAX_BOUNCES 6 
+#define MAX_BOUNCES ${bounces}
 uniform BVH bvh;
 uniform sampler2D envMap;
 uniform float iorR, iorG, iorB;
@@ -335,6 +336,30 @@ class DiamondViewer extends HTMLElement {
       this.envRaw = dataTex;
     }
 
+    // Inicializamos el metal global
+    let mobileMetalMat = null;
+
+    if (this._isMobile) {
+        mobileMetalMat = new THREE.MeshPhysicalMaterial({
+            color: 0xffffff, 
+            metalness: MOBILE_SETTINGS.metal.metalness, 
+            roughness: MOBILE_SETTINGS.metal.roughness, 
+            envMap: this.envRaw,
+            envMapIntensity: MOBILE_SETTINGS.metal.envMapIntensity, 
+            clearcoat: MOBILE_SETTINGS.metal.clearcoat, 
+            clearcoatRoughness: MOBILE_SETTINGS.metal.clearcoatRoughness
+        });
+
+        window.metalMobileMaterial = mobileMetalMat;
+
+        console.log(
+            "%c[INGENIERÍA B2B] %cModo Móvil Activado. Ajusta parámetros en la consola:\n%c window.gemMobileMaterial.uniforms.uExposure.value = 1.5 \n window.metalMobileMaterial.envMapIntensity = 3.0", 
+            "color:#9c7a3c; font-weight:bold;", 
+            "color:inherit;", 
+            "color:#00aa00; font-family:monospace;"
+        );
+    }
+
     const srcAttr = this.getAttribute('src');
     const urls = srcAttr.split(',').map(s => s.trim());
     
@@ -445,58 +470,51 @@ class DiamondViewer extends HTMLElement {
 
         const gemTint = (obj.material && obj.material.color) ? obj.material.color.clone() : new THREE.Color(0xffffff);
         
-        if (IS_MOBILE) {
-          obj.geometry.computeBoundingBox();
-          const localSize = obj.geometry.boundingBox.getSize(new THREE.Vector3()).length();
+        try {
+          let geo = obj.geometry;
+          geo = geo.toNonIndexed();
+          geo.computeVertexNormals();
+          geo.computeBoundingBox();
+          const localSize = geo.boundingBox.getSize(new THREE.Vector3()).length();
+          const calculatedEpsilon = localSize * 0.0005;
+          const bvh = new MeshBVH(geo);
+          geo.boundsTree = bvh;
           
-          const mat = new THREE.MeshPhysicalMaterial({
-            color: gemTint, 
-            metalness: 0.0, 
-            roughness: 0.0, 
-            transmission: 1.0, 
-            thickness: 0.8, 
-            ior: 2.415,
-            dispersion: 0.04,
-            attenuationColor: new THREE.Color(0xffffff), 
-            attenuationDistance: 2.0,
-            envMap: this.envRaw,
-            envMapIntensity: 4.0, 
-            clearcoat: 1.0, 
-            clearcoatRoughness: 0.0
+          // Lógica de separación PC vs Móvil usando el shader customizado
+          const baseIOR = IS_MOBILE ? MOBILE_SETTINGS.gem.ior : 2.415;
+          const disp = IS_MOBILE ? MOBILE_SETTINGS.gem.dispersion : 0.009;
+          const exposure = IS_MOBILE ? MOBILE_SETTINGS.gem.exposure : 1.25;
+          const bounces = IS_MOBILE ? MOBILE_SETTINGS.gem.bounces : 6;
+
+          const mat = new THREE.ShaderMaterial({
+            glslVersion: THREE.GLSL3,
+            uniforms: {
+              bvh: { value: new MeshBVHUniformStruct() }, 
+              envMap: { value: this.envRaw }, 
+              iorR: { value: baseIOR - (disp / 2) },
+              iorG: { value: baseIOR }, 
+              iorB: { value: baseIOR + (disp / 2) }, 
+              uInvModelMatrix: { value: new THREE.Matrix4() },
+              uModelMatrix: { value: new THREE.Matrix4() }, 
+              uCameraPos: { value: new THREE.Vector3() },
+              uExposure: { value: exposure }, 
+              uEpsilon: { value: calculatedEpsilon }, 
+              uColor: { value: gemTint },
+            },
+            vertexShader: DIAMOND_VERT, 
+            fragmentShader: buildFrag(bounces), 
+            side: THREE.DoubleSide,
           });
-          
+          mat.uniforms.bvh.value.updateFrom(bvh);
           obj.material = mat;
+          obj.geometry = geo;
           obj.userData._gemSize = localSize;
           this.diamondMeshes.push(obj);
-        } else {
-          try {
-            let geo = obj.geometry;
-            geo = geo.toNonIndexed();
-            geo.computeVertexNormals();
-            geo.computeBoundingBox();
-            const localSize = geo.boundingBox.getSize(new THREE.Vector3()).length();
-            const calculatedEpsilon = localSize * 0.0005;
-            const bvh = new MeshBVH(geo);
-            geo.boundsTree = bvh;
-            const baseIOR = 2.415;
-            const disp = 0.009;
-            const mat = new THREE.ShaderMaterial({
-              glslVersion: THREE.GLSL3,
-              uniforms: {
-                bvh: { value: new MeshBVHUniformStruct() }, envMap: { value: this.envRaw }, iorR: { value: baseIOR - (disp / 2) },
-                iorG: { value: baseIOR }, iorB: { value: baseIOR + (disp / 2) }, uInvModelMatrix: { value: new THREE.Matrix4() },
-                uModelMatrix: { value: new THREE.Matrix4() }, uCameraPos: { value: new THREE.Vector3() },
-                uExposure: { value: 1.25 }, uEpsilon: { value: calculatedEpsilon }, uColor: { value: gemTint },
-              },
-              vertexShader: DIAMOND_VERT, fragmentShader: buildFrag(), side: THREE.DoubleSide,
-            });
-            mat.uniforms.bvh.value.updateFrom(bvh);
-            obj.material = mat;
-            obj.geometry = geo;
-            obj.userData._gemSize = localSize;
-            this.diamondMeshes.push(obj);
-          } catch(e) { }
-        }
+
+          if(IS_MOBILE) window.gemMobileMaterial = mat;
+
+        } catch(e) { console.error("Error BVH Shader:", e); }
+        
       } else {
           obj.userData.isStone = false;
           obj.userData.groupId = obj.parent.uuid;
@@ -511,7 +529,9 @@ class DiamondViewer extends HTMLElement {
           if(isProng) obj.userData.explodePos = obj.userData.basePos.clone().add(new THREE.Vector3(0, -3.0, 0));
           else obj.userData.explodePos = obj.userData.basePos.clone().add(new THREE.Vector3(0, -8.0, 0)); 
 
-          if (obj.material) {
+          if (IS_MOBILE) {
+              obj.material = mobileMetalMat;
+          } else {
               const newMetalMat = new THREE.MeshPhysicalMaterial({
                   color: 0xffffff, metalness: 1.0, roughness: 0.0, envMap: this.envRaw,
                   envMapIntensity: 1.71, clearcoat: 0.7, clearcoatRoughness: 1.0
@@ -607,6 +627,17 @@ class DiamondViewer extends HTMLElement {
         if (t - last < FRAME_MS) return;
         last = t;
         if (this.controls) this.controls.update();
+        
+        this.scene.updateMatrixWorld(true);
+        for (const m of this.diamondMeshes) {
+          if(m.material.uniforms && m.visible) { 
+            const u = m.material.uniforms;
+            u.uModelMatrix.value.copy(m.matrixWorld);
+            u.uInvModelMatrix.value.copy(m.matrixWorld).invert();
+            u.uCameraPos.value.copy(this.camera.position);
+          }
+        }
+        
         this.renderer.render(this.scene, this.camera);
       };
     } else {
@@ -688,10 +719,10 @@ class DiamondViewer extends HTMLElement {
       } else if(type === 'stone') {
           this.diamondMeshes.forEach(m => {
               if(m.userData.originalMaterial) {
-                  if(this._isMobile) {
-                      m.userData.originalMaterial.color.setHex(hexColor);
-                  } else if (m.userData.originalMaterial.uniforms) {
+                  if (m.userData.originalMaterial.uniforms) {
                       m.userData.originalMaterial.uniforms.uColor.value.setHex(hexColor);
+                  } else if (m.userData.originalMaterial.color) {
+                      m.userData.originalMaterial.color.setHex(hexColor);
                   }
               }
           });
