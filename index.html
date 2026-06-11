@@ -4,14 +4,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
+    <!-- SEO BÁSICO -->
     <title>José Alberto Ascanio | Senior 3D Jewelry Designer & Technical Director</title>
     <meta name="description" content="Specialist in organic digital sculpting and parametric modeling for fine jewelry. B2B solutions for production viability and WebGL visualization.">
     
+    <!-- ETIQUETAS OPEN GRAPH -->
     <meta property="og:title" content="José Alberto | 3D Jewelry Engineering">
     <meta property="og:description" content="Complete technical direction: from highly complex digital sculpting to flawless export for casting.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://www.ascaniojewelry.com/">
     <meta property="og:image" content="https://www.ascaniojewelry.com/6.png">
+    
+    <!-- MARCADO SCHEMA.ORG (El lenguaje directo para Google) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ProfessionalService",
+      "name": "José Alberto Custom Jewelry",
+      "description": "Exclusive custom jewelry design specializing in 3D CAD modeling and bespoke fine jewelry creation.",
+      "url": "https://www.ascaniojewelry.com/",
+      "logo": "https://www.ascaniojewelry.com/logo1v1.png",
+      "sameAs": [
+        "https://www.linkedin.com/in/josé-alberto-ascanio-fernández"
+      ]
+    }
+    </script>
+    
+    <!-- Google tag (gtag.js) - SOLUCIONADO -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-RYLFZYQXBR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-RYLFZYQXBR');
+    </script>
+
+    <!-- Microsoft Clarity - SOLUCIONADO -->
+    <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "vgpc99u6u1");
+    </script>
     
     <link rel="stylesheet" href="style.css">
 
@@ -258,11 +293,13 @@
         </section>
     </section>
 
+    <!-- MODAL PARA EL RENDER FINAL -->
     <div id="render-overlay" class="render-overlay" aria-hidden="true">
         <img src="1.png" alt="High Resolution Final Render">
         <span class="tap-to-close">Click anywhere to close</span>
     </div>
 
+    <!-- MODAL POPUP DE ÉXITO -->
     <div id="thank-you-popup" class="thank-you-overlay" aria-hidden="true">
         <div class="thank-you-box">
             <h2>Thank You</h2>
