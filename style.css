@@ -381,7 +381,7 @@ diamond-viewer { display: block !important; width: 100% !important; height: 100%
 @keyframes rotate-rays { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
 
 /* ----------------------------------------------------------- */
-/* EXCLUSIVO PARA MÓVIL Y TABLET (RESPETA PC INTACTO)          */
+/* EXCLUSIVO PARA MÓVIL Y TABLET (OPCIONES JUNTAS)             */
 /* ----------------------------------------------------------- */
 
 @media (max-width: 1024px) {
@@ -389,18 +389,49 @@ diamond-viewer { display: block !important; width: 100% !important; height: 100%
     .main-nav ul { gap: 1.2rem; flex-wrap: wrap; justify-content: center; width: 100%; }
     .main-nav a { font-size: 0.9rem; }
 
-    .auditor-layout { flex-direction: column; height: auto; min-height: 100vh; padding: 1rem 5% 3rem; gap: 20px; width: 100%; box-sizing: border-box; }
-    .center-stage { order: 1; flex: auto; max-width: 100%; width: 100%; height: auto; padding: 0; display: flex; flex-direction: column; box-sizing: border-box; }
+    /* Contenedor flexible principal convertido a row wrap para agrupar controles */
+    .auditor-layout { 
+        flex-direction: row; 
+        flex-wrap: wrap; 
+        justify-content: space-between; 
+        align-items: flex-start;
+        height: auto; 
+        min-height: 100vh; 
+        padding: 1rem 5% 3rem; 
+        gap: 20px 0; /* Gap vertical, el horizontal lo hace space-between */
+        width: 100%; 
+        box-sizing: border-box; 
+    }
+    
+    .center-stage { 
+        order: 1; 
+        flex: 0 0 100%; 
+        max-width: 100%; 
+        width: 100%; 
+        height: auto; 
+        padding: 0; 
+        display: flex; 
+        flex-direction: column; 
+        box-sizing: border-box; 
+    }
 
-    .side-controls { flex-direction: column; justify-content: center; align-items: center; width: 100%; box-sizing: border-box; }
-    .left-controls { order: 2; margin-top: 10px; margin-bottom: 10px; }
-    .right-controls { order: 3; margin-top: 10px; margin-bottom: 20px; }
+    /* Opciones de Piedra y Metal al 48% para colocarse lado a lado */
+    .side-controls { 
+        flex-direction: column; 
+        justify-content: flex-start; 
+        align-items: center; 
+        width: 48%; 
+        flex: 0 0 48%; 
+        box-sizing: border-box; 
+    }
+    .left-controls { order: 2; margin: 0; }
+    .right-controls { order: 3; margin: 0; }
 
-    .control-label { margin-bottom: 25px; display: block; text-align: center; width: 100%; }
-    .rhombus-container { margin-top: 15px; margin-bottom: 25px; gap: 15px; grid-template-columns: repeat(2, 45px); grid-template-rows: repeat(2, 45px); }
+    .control-label { margin-bottom: 15px; display: block; text-align: center; width: 100%; font-size: 0.85rem; }
+    .rhombus-container { margin-top: 10px; margin-bottom: 15px; gap: 12px; grid-template-columns: repeat(2, 42px); grid-template-rows: repeat(2, 42px); }
 
     .desktop-btn { display: none !important; }
-    .mobile-btn-container { order: 4; display: flex; justify-content: center; width: 100%; padding: 1rem 0 3rem 0; background: transparent; }
+    .mobile-btn-container { order: 4; flex: 0 0 100%; width: 100%; display: flex; justify-content: center; padding: 1rem 0 3rem 0; background: transparent; }
 
     .horizontal-ui { flex-direction: row; flex-wrap: wrap; padding: 0 10px; margin-bottom: 20px; width: 100%; box-sizing: border-box; }
     .tech-btn { flex: 1 1 calc(50% - 10px); font-size: 0.85rem; padding: 12px 10px; }
@@ -413,14 +444,12 @@ diamond-viewer { display: block !important; width: 100% !important; height: 100%
 
     .full-center { order: 2; flex: auto; width: 100%; max-width: 100%; height: 40vh; margin-top: 10px; overflow: visible; border-radius: 0; }
 
-    /* PROCESS MÓVIL: Centrado, Relativo y sin desbordamientos */
     .process-section { padding: 4rem 0; overflow: hidden; }
     .section-title { font-size: 1.8rem; margin-bottom: 2rem; padding: 0 5%; }
     .process-carousel-container { padding: 0; display: block; }
     .process-carousel-track { overflow-x: auto; scroll-snap-type: x mandatory; gap: 20px; flex: unset; padding: 0 7.5% 30px 7.5%; width: 100%; box-sizing: border-box; }
     .process-slide { flex: 0 0 85%; min-width: 85%; height: auto; scroll-snap-align: center; }
     
-    /* FIX: Position relative devuelve el volumen al contenedor en móvil */
     .process-inner { position: relative !important; height: auto; transform: none !important; padding: 25px 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-top: 2px solid var(--gold); }
     .process-image { transform: none !important; margin-bottom: 2rem !important; height: 180px; }
     .process-text-content { transform: none !important; }
