@@ -5,6 +5,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const flashOverlay = document.getElementById('flash-overlay');
     const thankYou = document.getElementById('thank-you-popup');
 
+    const footerYear = document.getElementById('footer-year');
+    if (footerYear) footerYear.textContent = new Date().getFullYear();
+
     if (darkRealm) {
         darkRealm.addEventListener('click', () => {
             if (flashOverlay) flashOverlay.classList.add('flash-in');

@@ -478,3 +478,67 @@ diamond-viewer { display: block !important; width: 100% !important; height: 100%
     
     .process-overlay { display: none !important; }
 }
+
+/* ───────────────────────────────────────────────
+   FOOTER
+─────────────────────────────────────────────── */
+.site-footer {
+    background-color: var(--text-dark);
+    color: rgba(255,255,255,0.55);
+    padding: 3rem 5%;
+    text-align: center;
+}
+
+.footer-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.footer-brand {
+    font-family: var(--font-title);
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.85);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.footer-tagline {
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    color: var(--gold);
+}
+
+.site-footer nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem 2rem;
+    margin: 0.5rem 0;
+}
+
+.site-footer nav a {
+    color: rgba(255,255,255,0.5);
+    text-decoration: none;
+    font-size: 0.8rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    transition: color 0.3s ease;
+}
+
+.site-footer nav a:hover { color: var(--gold); }
+
+.footer-copy {
+    font-size: 0.75rem;
+    margin-top: 0.5rem;
+    color: rgba(255,255,255,0.3);
+}
+
+@media (max-width: 1024px) {
+    .site-footer { padding: 2.5rem 5%; }
+    .site-footer nav { gap: 0.5rem 1.5rem; }
+}
